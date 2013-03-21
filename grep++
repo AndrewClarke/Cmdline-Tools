@@ -14,6 +14,9 @@ my (@prefix, @postfix);
 our ($smso, $rmso);
 my $exit = 1;
 
+# TODO: the consumption of flags has accelerated at an alarming rate.
+# It's time to start considering long options and retiring some shorts.
+#
 # flags: e:f:#BFHLchilnqstvx0:
 our ($contFlag, $ncount, $pcount);
 our ($Iflag, $nflag, $Fflag, $Hflag, $Lflag, $aflag, $cflag, $hflag, $Cflag);
@@ -407,6 +410,8 @@ sub process ($$) {
 	$enque = 1;
 
 	# gather up continuation lines if command flag says to
+        # TODO: a pattern to recognise continuation lines would be cool...
+        #
         if($contFlag) {
             while(/\\$/) {
                 getline || last;
