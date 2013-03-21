@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# dumps schema of table(s) from a MySQL database.
+# TODO: cope with other database engines as needed.
+
+usage() {
+    echo >&2 "usage: $0 [-d database] tabname ..."
+    exit 1
+}
+
+dbname=tod_dev
+while getopts :d: ch; do
+    case "$ch" in
+      d) dbname="$OPTARG";;
+      *) usage;;
+    esac
+done
+
+mysql -D $dbname -B -t <<END
+  select $*;
+END
+
