@@ -285,12 +285,16 @@ sub Options {
 	usage "-A only valid with -digits or +digits";
     }
 
+    ## following is HARMLESS ACTUALLY, but annoying to get the complaint when using $GREPPP_OPTS
+    #sage "-L and -[clv] are mutually exclusive"               if $Lflag && ($cflag || $lflag || $vflag);
+    # so... clear the Lflag if -c, -l or -v is set
+    $Lflag = 0 if $cflag || $lflag || $vflag;
+
     usage "-n and -[clq] are mutually exclusive"   if $nflag && length "$cflag$lflag$qflag";
-    usage "-c and -[ClqL] are mutually exclusive"  if $cflag && length "$Cflag$lflag$qflag$Lflag";
+    usage "-c and -[Clq] are mutually exclusive"   if $cflag && length "$Cflag$lflag$qflag";
     usage "-H and -h are mutually exclusive"       if $hflag && $Hflag;
 
     usage "-L and -[Sa] are mutually exclusive (without work)" if $Lflag && ($split || $aflag);
-    usage "-L and -[lv] are mutually exclusive"                if $Lflag && ($lflag || $vflag);
     usage "-I and list of filenames are mutually exclusive"    if $Iflag && @ARGV;
     usage "patterns expected" unless @patterns;
 
