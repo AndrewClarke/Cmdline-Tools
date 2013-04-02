@@ -1,27 +1,67 @@
 #!/bin/bash
+myname="${0##*/}"
 
 # performs a select on a MySQL database.
 # TODO: cope with other database engines as needed.
 
 dbname=tod_dev
 lflag=
+Bflag=-B
+tflag=-t
 
 usage() {
-    echo >&2 "usage: $0 [-d database] -l ['likepattern'] | tabname ...
+    [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
+
+    echo >&2 "usage: $myname [-d database] -l ['likepattern'] | tabname ...
 where   -d  select database (default $dbname)
         -l  list tables (optionally like pattern)"
 
     exit 1
 }
 
-while getopts :d:l ch; do
-    case "$ch" in
-      d) dbname="$OPTARG";;
-      l) lflag=1;;
-      *) usage;;
-    esac
+
+# why do BSD-inspired getopts like to be so complicated but hate +opt ???
+while [[ "X$1" = X[-+]* ]]; do
+    opt="${1#[-+]}"
+    val="${1%$opt}"
+    shift
+
+    while [[ -n "$opt" ]]; do
+        str="${opt#?}"
+        ch="${opt%$str}"
+        opt="${opt#$ch}"
+
+        # following opts consume a mandatory arg: -d
+        arg=
+        if [[ "X$val$ch" == X-[d] ]]; then
+            if [[ -z "$opt" ]]; then
+                arg="$1"
+                shift
+            else
+                arg="$opt"
+                opt=
+            fi
+        fi
+
+        case "$val$ch" in
+          -d) dbname="$arg" ;;
+          -l) lflag=1 ;;
+          +B) Bflag= ;;
+          +t) tflag= ;;
+          *)  usage "unknown option $val$ch" ;;
+        esac
+    done
 done
-shift $((OPTIND-1))
+
+## while getopts :d:l ch; do
+##     echo "CH = $ch, OPTARG = $OPTARG"
+##     case "$ch" in
+##       d) dbname="$OPTARG";;
+##       l) lflag=1;;
+##       *) usage;;
+##     esac
+## done
+## shift $((OPTIND-1))
 
 if [[ -z "$lflag" ]]; then
   [[ $# -eq 0 ]] && usage
@@ -33,4 +73,5 @@ elif [[ $# -eq 0 ]]; then
     echo "show tables;"
 else
     echo "show tables like '$*';"
-fi | mysql -D $dbname -B -t
+fi | mysql -D $dbname $Bflag $tflag
+
