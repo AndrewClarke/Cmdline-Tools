@@ -534,7 +534,10 @@ sub process ($$) {
 	}
     }
 
-    print "$fname:$count\n" if $cflag && $count;
+    if($cflag && $count) {
+      print "$fname:" unless $hflag;
+      print "$count\n";
+    }
 
     # under -v with (-q or -l) we only consider success if NO matches ie $count == 0
     if($count == 0 && $vflag && ($qflag || $lflag)) {
@@ -627,7 +630,7 @@ elsif(! @ARGV) {
         oneIndirect '-';
     }
     else {
-        $hflag = ! $Hflag;
+        $hflag = ! $Hflag unless defined $hflag;
         process 'stdin', \*STDIN;
     }
 }
