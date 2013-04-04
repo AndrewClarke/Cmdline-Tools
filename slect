@@ -8,15 +8,15 @@ usage() {
     exit 1
 }
 
-dbname=tod_dev
+: ${DBNAME:=mysql}
 while getopts :d: ch; do
     case "$ch" in
-      d) dbname="$OPTARG";;
+      d) DBNAME="$OPTARG";;
       *) usage;;
     esac
 done
 
-mysql -D $dbname -B -t <<END
+mysql -D $DBNAME -B -t <<END
   select $*;
 END
 
