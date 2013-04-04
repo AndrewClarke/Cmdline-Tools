@@ -561,12 +561,17 @@ sub oneFile ($) {
 
     return if $tflag && ! -T $fname;
 
+    if(-d $fname) {
+        warn "$0: $fname: Is a directory\n" unless $sflag;
+        return;
+    }
+
     if(open FFD, '<', $fname) {
         process $fname, \*FFD;
         close \*FFD;
     }
     else
-        { warn "$0: cannot open $fname: $!\n" }
+        { warn "$0: cannot open $fname: $!\n" unless $sflag }
 
 }   # oneFile
 
@@ -598,7 +603,7 @@ sub onePath ($) {
         next PIECE if $visited{$dir}++;
 
         unless(opendir DFD, $dir) {
-            # TODO: appropriate warnings unless $sflag
+            warn "$0: cannot open directory $dir: $!\n" unless $sflag;
             next PIECE;
         }
 
