@@ -18,10 +18,9 @@ my $exit = 1;
 # It's time to start considering long options and retiring some shorts.
 #
 # flags: e:f:#BFHLchilnqstvx0:
-our ($contFlag, $ncount, $pcount);
-our ($Iflag, $nflag, $Fflag, $Hflag, $Lflag, $aflag, $cflag, $hflag, $Cflag);
-our ($Aflag, $iflag, $lflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag);
-our ($jflag, $Dflag, $Zflag, $_0flag);
+our ($contFlag, $ncount, $pcount, $_0flag);
+our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, %Gflag, $hflag, $Hflag, $iflag, $Iflag);
+our ($jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
 
 my $isWin = $^O =~ /Win/i;
 my $pathSep = $isWin ? ';' : ':';
