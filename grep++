@@ -11,7 +11,7 @@ use re 'eval';
 
 my ($pattern, @patterns, $split, @F);
 my (@prefix, @postfix);
-our ($smso, $rmso);
+our ($smfn, $rmfn, $smso, $rmso);
 my $exit = 1;
 
 # TODO: the consumption of flags has accelerated at an alarming rate.
@@ -299,8 +299,8 @@ sub Options {
     usage "patterns expected" unless @patterns;
 
     if($Lflag) {
-        $smso = `tput smso`;
-        $rmso = `tput rmso`;
+        $smfn = `tput setaf 3`;
+        $rmfn = `tput sgr0`;
         $smso = `tput setaf 6`;
         $rmso = `tput sgr0`;
     }
@@ -464,7 +464,7 @@ sub process ($$) {
 
 	$prefix = '';
 	unless($hflag) {
-	    $prefix .= $fname;
+	    $prefix .= "$smfn$fname";
 	    $prefix .= ':' unless $nflag eq 'N';
 	}
 
@@ -475,7 +475,7 @@ sub process ($$) {
 	    $prefix .= ':' if $nflag ne 'N';
 	}
 
-	$prefix .= ' ' unless $hflag;
+	$prefix .= "$rmfn " unless $hflag;
 
 	if($Aflag && ($pcount || $ncount)) {
 	    $prefix .= $match != $vflag ? '@' : ' ';
