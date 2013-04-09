@@ -9,10 +9,11 @@ use constant {
     OFF => undef
 };
 
+my $pattern = shift;
 my ($state, $print, $first) = (OFF, OFF, OFF);
 
 while(<>) {
-    $first = $state = $print = ON if ! defined($state) && /\bdisplay_methods\b/g;
+    $first = $state = $print = ON if ! defined($state) && /$pattern/go;
 
     if(defined $state) {
         $print = ON;
