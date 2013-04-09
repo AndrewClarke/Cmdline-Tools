@@ -19,7 +19,7 @@ my $exit = 1;
 #
 # flags: e:f:#BFHLchilnqstvx0:
 our ($contFlag, $ncount, $pcount, $_0flag);
-our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, %Gflag, $hflag, $Hflag, $iflag, $Iflag);
+our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, $Gflag, $hflag, $Hflag, $iflag, $Iflag);
 our ($jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
 
 my $isWin = $^O =~ /Win/i;
