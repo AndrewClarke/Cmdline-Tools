@@ -41,7 +41,7 @@ sub usage {
     else {
       print <<MESSAGE;
 
-$0 [FLAGS] [[-e] pattern_list] [-f pattern_file] [pattern] [file...]
+$0 FLAGS [-e pattern [-e pattern]... | -f pattern_file | pattern] [file...]
 
 FLAGS:	-c	count matching lines
         -l	list files containing a match
@@ -62,6 +62,7 @@ FLAGS:	-c	count matching lines
         -#	delete #comments first (doesn't understand strings (YET))
         -\\	recognise continuation lines in source and glue together
         -j expr execute Perl expression to join lines into one masse
+        -J file execute Perl code in file to join lines into one masse
         -{      delete {comments} first (doesn't understand strings (YET))
         -F	split multiple patterns at newline, and ignore magic chars
         -L      highlight matching text (experimental)
@@ -284,7 +285,7 @@ sub Options {
 	usage "-A only valid with -digits or +digits";
     }
 
-    ## following is HARMLESS ACTUALLY, but annoying to get the complaint when using $GREPPP_OPTS
+    # following is HARMLESS ACTUALLY, but annoying to get the complaint when using $GREPPP_OPTS
     #sage "-L and -[clv] are mutually exclusive"               if $Lflag && ($cflag || $lflag || $vflag);
     # so... clear the Lflag if -c, -l or -v is set
     $Lflag = 0 if $cflag || $lflag || $vflag;
@@ -391,14 +392,15 @@ my $lineno;
 
 sub process ($$) {
     (my $fname, $FD) = @_;
+
     my ($nextra, $count, $line) = (0, 0, 0);
     my ($last, $match, $prefix, $enque, @queue);
+
     $lineno = 0;
 
 
     sub getline {
         my $x = <$FD>;
-        ## print "*** ", length($x), " $.\n";
         return undef unless $x;
         ++$lineno;
         $_ .= $x;
@@ -409,7 +411,6 @@ sub process ($$) {
     $/ = chr $_0flag if defined $_0flag;
 
     LINE: while(($_ = ''), getline) {
-        ## ++$lineno;
 	$enque = 1;
 
 	# gather up continuation lines if command flag says to
@@ -514,9 +515,7 @@ sub process ($$) {
 		print '  ', $ch x 40, "\n";
 	    }
 
-	    foreach $line (@queue) {
-		print "$line$/";
-	    }
+            print "$_$/" foreach @queue;
 	    @queue = ();
             print "$prefix$_";
             print $/ if $/ eq "\n" || ! /^\s*$/;
@@ -533,9 +532,11 @@ sub process ($$) {
 	}
     }
 
-    if($cflag && $count) {
-      print "$fname:" unless $hflag;
-      print "$count\n";
+    if($cflag) {
+        if($count) {
+            print "$fname:" unless $hflag;
+            print "$count\n";
+        }
     }
 
     # under -v with (-q or -l) we only consider success if NO matches ie $count == 0
