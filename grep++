@@ -54,6 +54,10 @@ FLAGS:	-c	count matching lines
         -D      treat arguments as \$PATH type lists. Search all files found.
         -h	don't print file name in front of matching lines
         -H	print file name even if only one file listed
+        -G      group lines from same file with separating blank line.
+              - use single -G to print a blank between each file
+              - use -GG to smartly bunch lines from contiguous sets of single
+                lines. Umm, try it to make sense of this poor explanation.
         -s	be silent about unreadable or missing files
         -t	ignore non-text files only (takes a damn good guess)
 
@@ -216,6 +220,11 @@ sub Options {
 
                 if($ch eq '#') {
                     push @prefix, 's/#.*//';
+                    next;
+                }
+
+                if($ch eq 'G') {
+                    $Gflag = $Gflag ? 'smart' : 'dumb';
                     next;
                 }
 
@@ -389,12 +398,14 @@ sub enque(\@$) {
 my $printed;
 my $FD;
 my $lineno;
+my ($ofname, $gbundled);   # used by -G processing
 
 sub process ($$) {
     (my $fname, $FD) = @_;
 
     my ($nextra, $count, $line) = (0, 0, 0);
     my ($last, $match, $prefix, $enque, @queue);
+    my $Gline;     # used by -G processing
 
     $lineno = 0;
 
@@ -510,6 +521,10 @@ sub process ($$) {
             else
 		{ --$nextra }
 
+            if($Gflag && $printed && $ofname && ! $last) {
+                print "\n";
+            }
+
 	    if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $lineno - 1) {
 		my $ch = defined $last ? '-' : '=';
 		print '  ', $ch x 40, "\n";
@@ -538,12 +553,19 @@ sub process ($$) {
             print "$count\n";
         }
     }
+    elsif($Gflag) {
+    }
 
     # under -v with (-q or -l) we only consider success if NO matches ie $count == 0
     if($count == 0 && $vflag && ($qflag || $lflag)) {
         exit 0 if $qflag;	# not sure if this should be after ALLLLL files
         print "$fname\n";
     }
+
+    # Can now record the old filename. Helps -G by acting as a switch
+    # (and it might become useful as a string too)
+    #
+    $ofname = $fname;
 
 }   # process
 
