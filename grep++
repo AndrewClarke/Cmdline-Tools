@@ -74,6 +74,7 @@ FLAGS:	-c	count matching lines
         -n	print line number of matching lines
         -N	print line number of matching lines as file[lineno]
         -v	invert the sense of a match - even behaves properly with -[clq]
+          TODO: make it possible to invert individual patterns (see -e and -a)
         -x	lines must match exactly - implicit ^pattern\$
         -X      extract match - print each match on one line (NI)
         -p expr	execute Perl expression prior to matching
@@ -303,7 +304,9 @@ sub Options {
     usage "-c and -[Clq] are mutually exclusive"   if $cflag && length "$Cflag$lflag$qflag";
     usage "-H and -h are mutually exclusive"       if $hflag && $Hflag;
 
-    usage "-L and -[Sa] are mutually exclusive (without work)" if $Lflag && ($split || $aflag);
+    # soon my pretties: -L with -a is now happy...
+    usage "-L and -S are mutually exclusive (without work)"    if $Lflag && $split;
+
     usage "-I and list of filenames are mutually exclusive"    if $Iflag && @ARGV;
     usage "patterns expected" unless @patterns;
 
@@ -362,10 +365,39 @@ sub match_a_line() {
         $match = 1;
 
         foreach $pat (@patterns) {
-            $elmatcho = $iflag ? /$pat/i : /$pat/;
+            if(! $Lflag) {
+                $elmatcho = $iflag ? /$pat/i : /$pat/
+            }
+            else {
+                $elmatcho = 0;
+                while($iflag ? /(?{$p = pos})$pat(?{push @blue, [$p, pos]})/gi
+                             : /(?{$p = pos})$pat(?{push @blue, [$p, pos]})/g) {
+                    $elmatcho = 1;
+                }
+            }
 
-            $match = 0 unless $elmatcho;
+            if(! $elmatcho) {
+                $match = 0;
+                @blue = ();
+            }
+
             last unless $match;
+        }
+
+        if($match && $Lflag) {
+            # sort and merge the marked areas
+            @blue = sort { $a->[0] <=> $b->[0] || $a->[1] <=> $b->[1] } @blue;
+
+            my $i = 0;
+            while($i < $#blue) {
+                if($blue[$i]->[1] < $blue[$i + 1]->[0]) {
+                    ++$i;
+                }
+                else {
+                    $blue[$i]->[1] = $blue[$i + 1]->[1];
+                    splice @blue, $i + 1, 1;
+                }
+            }
         }
     }
     elsif($Lflag) {
