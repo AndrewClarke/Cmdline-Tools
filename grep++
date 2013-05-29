@@ -20,7 +20,8 @@ my $exit = 1;
 # flags: e:f:#BFHLchilnqstvx0:
 our ($contFlag, $ncount, $pcount, $_0flag);
 our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, $Gflag, $hflag, $Hflag, $iflag, $Iflag);
-our ($jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
+our (@jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
+our $jflag;
 
 my $isWin = $^O =~ /Win/i;
 my $pathSep = $isWin ? ';' : ':';
@@ -123,6 +124,7 @@ MESSAGE
 
 sub Options {
     my $OPTARG;
+    my $depth = undef;      # help to collect precedented expressions
 
     $vflag = 0;
 
@@ -135,9 +137,19 @@ sub Options {
         }
     }
 
-    while($ARGV[0] =~ /^[-+].*/) {
+    while($ARGV[0] =~ /(?:^[][(){}]$)|(?:^[-+])/) {
         $_ = shift @ARGV;
         last if $_ eq '--';
+
+        if(/[[({]/) {
+            ++$depth;
+            next;
+        }
+
+        if(/[])}]/) {
+            --$depth;
+            next;
+        }
 
         s/^(.)//;
         my $op = $1;
@@ -148,91 +160,50 @@ sub Options {
             my $ch = $1;	# parameter or remaining flags are in $_
 
             if($val) {	# collect options which REQUIRE leading -
-                if($ch eq 'I') {
-                    $Iflag = $_ || shift @ARGV;
+                $OPTARG = $_ || shift @ARGV if $ch =~ /[I0efpPjJoOS]/;
+
+                $Iflag  = $OPTARG, last if $ch eq 'I';
+                $_0flag = $OPTARG, last if $ch eq '0';
+                $split  = $OPTARG, last if $ch eq 'S';
+
+                $Gflag = $Gflag ? 'smart' : 'dumb', next if $ch eq 'G';
+                $Cflag = s/^(\d+)// ? $1 : 1,       last if $ch eq 'C';
+
+                push(@patterns, $OPTARG), last if $ch eq 'e';
+                push(@prefix,   $OPTARG), last if $ch eq 'p';
+                push(@jflag,    $OPTARG), last if $ch eq 'j';
+                push(@postfix,  $OPTARG), last if $ch eq 'o';
+
+                push(@prefix, 's/#.*//'),                       next if $ch eq '#';       # {
+                push(@prefix, 's/(?<!@){[^}]*}/ /g'),           next if $ch eq '{';
+                push(@prefix, 's/^\s+//; s/\s+/ /g; s/\s*$//'), next if $ch eq 'B';
+
+                if($ch eq 'f') {
+                    open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                    chomp, push @patterns, $_ while <FFD>;
+                    close FFD;
                     last;
                 }
 
-                if($ch eq '0') {
-                    $_0flag = $_ || shift @ARGV;
+                if($ch eq 'P') {
+                    open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                    push @jflag, <FFD>;
+                    close FFD;
                     last;
                 }
 
-                if($ch eq 'e' || $ch eq 'f') {
-                    $OPTARG = $_ || shift @ARGV;
-
-                    if($ch eq 'e')
-                        { push @patterns, $OPTARG }
-                    else {
-                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
-			chomp, push @patterns, $_ while <FFD>;
-                        close FFD;
-                    }
-
+                if($ch eq 'J') {
+                    open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                    chomp, push @prefix, $_ while <FFD>;
+                    close FFD;
                     last;
                 }
 
-		if($ch eq 'C') {
-		    $Cflag = s/^(\d+)// ? $1 : 1;
-		    last;
-		}
-
-                if($ch eq 'p' || $ch eq 'P' || $ch eq 'j' || $ch eq 'J') {
-                    $OPTARG = $_ || shift @ARGV;
-
-                    if($ch eq 'p')
-                        { push @prefix, $OPTARG }
-                    elsif($ch eq 'j')
-                        { $jflag = $OPTARG }
-                    else {
-                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
-                        chomp, push @prefix, $_ while <FFD>;
-                        close FFD;
-                    }
-
+                if($ch eq 'O') {
+                    open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                    chomp, push @postfix, $_ while <FFD>;
+                    close FFD;
                     last;
-                }
-
-                if($ch eq 'o' || $ch eq 'O') {
-                    $OPTARG = $_ || shift @ARGV;
-
-                    if($ch eq 'o')
-                        { push @postfix, $OPTARG }
-                    else {
-                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
-                        chomp, push @postfix, $_ while <FFD>;
-                        close FFD;
-                    }
-
-                    last;
-                }
-
-                if($ch eq 'B') {
-                    push @prefix, 's/^\s+//; s/\s+/ /g; s/\s*$//';
-                    next;
-                }
-
-                if($ch eq 'S') {
-                    $OPTARG = $_ || shift @ARGV;
-
-                    $split = $OPTARG;
-                    last;
-                }
-
-                if($ch eq '#') {
-                    push @prefix, 's/#.*//';
-                    next;
-                }
-
-                if($ch eq 'G') {
-                    $Gflag = $Gflag ? 'smart' : 'dumb';
-                    next;
-                }
-
-                if($ch eq '{') {
-                    require 5.005;      # {
-                    push @prefix, 's/(?<!@){[^}]*}/ /g';
-                    next;
                 }
 
                 if($ch eq 'Z') {
@@ -283,6 +254,10 @@ sub Options {
 	    usage -helping if "$op$ch" eq '-?';
             usage "unknown flag: $op$ch";
         }
+    }
+
+    if($depth) {
+        usage "use of bracketing in expression list is not balanced";
     }
 
     push @patterns, shift @ARGV unless @patterns || ! @ARGV;
@@ -404,7 +379,6 @@ sub match_a_line() {
         while($iflag ? /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/gio
                      : /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/go) {
             $match = 1;
-            last unless $Lflag;
         }
     }
     elsif($/ eq '\n') {
@@ -674,10 +648,10 @@ sub onePath ($) {
 
 
 Options;
-if(length $jflag) {
-    $_ = $jflag;
+if(@jflag) {
+    $_ = join ';', @jflag;
     $jflag = eval "sub { $_ }";
-    $@ and die "$0: bad-expr for -j $_\n$@\n";
+    $@ and die "$0: bad-expr for -j or -J $_\n$@\n";
 }
 
 
