@@ -62,6 +62,6 @@ if [[ -z "$lflag" ]]; then
 elif [[ $# -eq 0 ]]; then
     echo "show tables;"
 else
-    echo "show tables like '$*';"
+    echo "show tables like '%$*%';"
 fi | mysql -D $DBNAME $Bflag $tflag
 
