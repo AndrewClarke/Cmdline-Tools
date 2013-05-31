@@ -1,0 +1,12 @@
+#!/bin/ksh
+
+find !(log|pkg|vendor|tmp)                  \
+    -type d                                 \
+    -path 'public/javascripts/*'            \
+    \( -name fckeditor -o -name highcharts -o -name jquery -o -name protolicious    \
+    -o -name prototype -o -name scriptaculous -o -name spinner -o -name tiny_mce    \
+    -o -name yui -o -name yui_tree -o -name bootstrap -o -name handlers \)          \
+    -prune -o \
+    -path 'db/migrate' -prune -o \
+  -type f \( -name '*.erb' -o -name '*.haml' -o -name '*.html' -o -name '*.js' -o -name '*.prawn' -o -name '*.rb' -o -name '*.rhtml' -o -name '*.rjs' \) -print | ctags-exuberant -L -
+

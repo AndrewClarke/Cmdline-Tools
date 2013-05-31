@@ -1,0 +1,81 @@
+#!/bin/bash
+
+shopt -s extglob
+
+usage() {
+    [[ $# -gt 0 ]] && echo >&2 "$@"
+
+    echo >&2 "\
+usage: $0 [-adlp] [-- grep++-flags ] pattern
+where   -a include more \$RAILS_ROOT top-level directories
+        -d include \$RAILS_ROOT/db directory
+        -l include \$RAILS_ROOT/lib in search
+        -p include \$RAILS_ROOT/public in search
+        -m only \$RAILS_ROOT/app/models
+        -v only \$RAILS_ROOT/app/views
+        -c only \$RAILS_ROOT/app/controllers
+        -h only \$RAILS_ROOT/app/helpers
+
+-m, -v, -c or -h don't play well with -a, but can combine with -d, -l and -p.
+"
+
+    exit 1
+}
+
+
+opts= aflag= dflag= lflag= pflag= mflag= vflag= cflag= hflag=
+# for convenience, a bunch of options without arguments are collected and passed on to grep++.
+
+while getopts :adlpABcCFGhHiLmnNqstvxXZ ch; do
+    case "$ch" in
+      a) let aflag++ ;;
+      d) dflag=1 ;;
+      l) lflag=1 ;;
+      p) pflag=1 ;;
+
+      m) mflag=1 ;;
+      v) vflag=1 ;;
+      c) cflag=1 ;;
+      h) hflag=1 ;;
+
+      [ABCFGHiLnNqstxXZ]) opts="-${opts#-}$ch" ;;
+
+      ?) [[ "X$OPTARG" == 'X?' ]] && usage
+         usage "invalid flag: $OPTARG"
+         ;;
+    esac
+done
+shift $((OPTIND-1))
+[[ $# -gt 0 ]] || usage "pattern expected"
+
+[[ -n "$mflag$vflag$cflag$hflag" && -n "$aflag" ]] && usage "-a cannot combine with -m, -v, -c or -h"
+
+
+typeset -a dirs
+if [[ -z "${APPL:=$RAILS_ROOT}" ]]; then
+    # give up and do all subdirectories if not in a Rails project
+    dirs=(*/)
+else
+    cd "$APPL"
+    if [[ -n "$aflag" ]]; then
+        # beware - a NOT pattern!
+        dirs=(!(db|lib|log|public|spec|test|tmp)/)
+        (( $aflag > 1 )) && dirs+=(db/ lib/ public/ spec/ test/ script/ vendor/)
+    elif [[ -z "$mflag$vflag$cflag$hflag" ]]; then
+        # beware - a NOT pattern!
+        dirs=(!(db|lib|log|public|spec|test|tmp|script|vendor|data)/)
+    else
+        [[ -n "$mflag" ]] && dirs+=(app/models/)
+        [[ -n "$vflag" ]] && dirs+=(app/views/)
+        [[ -n "$cflag" ]] && dirs+=(app/controllers/)
+        [[ -n "$hflag" ]] && dirs+=(app/helpers/)
+    fi
+
+    [[ -n "$dflag" ]] && dirs+=(db/)
+    [[ -n "$lflag" ]] && dirs+=(lib/)
+    [[ -n "$pflag" ]] && dirs+=(public/)
+fi
+
+find "${dirs[@]%/}" -type f -print0 | xargs -0 grep++ -Lsti $opts "$@"
+exit 0
+
