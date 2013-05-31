@@ -1,7 +1,7 @@
 #!/bin/bash
 myname="${0##*/}"
 
-# performs a select on a MySQL database.
+# performs a table schema dump on a MySQL database.
 # TODO: cope with other database engines as needed.
 
 : ${DBNAME:=mysql}
@@ -13,7 +13,7 @@ usage() {
     [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
 
     echo >&2 "usage: $myname [-d database] -l ['likepattern'] | tabname ...
-where   -d  select database (default $DBNAME)
+where   -d  select database (default \$DBNAME:=mysql)
         -l  list tables (optionally like pattern)"
 
     exit 1
@@ -54,11 +54,11 @@ done
 
 
 if [[ -z "$lflag" ]]; then
-  [[ $# -eq 0 ]] && usage
+    [[ $# -eq 0 ]] && usage
 
-  for i in "$@"; do
-    echo "describe $i;"
-  done
+    for i in "$@"; do
+        echo "describe $i;"
+    done
 elif [[ $# -eq 0 ]]; then
     echo "show tables;"
 else
