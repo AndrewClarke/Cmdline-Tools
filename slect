@@ -1,19 +1,110 @@
-#!/bin/bash
+#!/bin/ksh
 
 usage() {
-    echo >&2 "usage: $0 [-d database] select statement (without the select keyword ...)"
+    echo >&2 "usage: $0 [-d database] [options] stringy | constructed
+
+options -S<n> -L<n>
+
+where   -d overrides the chosen database, default is \${DBNAME:=mysql}
+        -S skip <n> records
+        -L limit to <n> records
+
+NOTE: MySQL heads can use -L n,m and it will insert a plain LIMIT clause.
+
+The final select can be supplied either with a literal select statement
+(do not write the SELECT keyword), or constructed using short-form options.
+
+Constructed queries can use the following options.
+
+    [-D] -t tabname [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
+
+where   -D  DISTINCT
+        -t  mandatory table name (only one allowed at the moment)
+        -w  where clause without the WHERE
+        -g  GROUP BY expressions, comma separated
+        -h  HAVING expression
+        -o  ORDER BY fields, comma separated
+
+        -V  assuming a temporal table, select only valid rows
+
+Only -D, -S and -L flags are allowed if providing a string.
+"
     exit 1
 }
 
+
 : ${DBNAME:=mysql}
-while getopts :d: ch; do
+unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag
+typeset -a wflag hflag
+
+while getopts :DvVd:g:h:L:o:S:t:w: ch; do
     case "$ch" in
-      d) DBNAME="$OPTARG";;
-      *) usage;;
+      D) Dflag='distinct ' ;;
+      v) vflag=1 ;;
+      V) Vflag=1 ;;
+      d) DBNAME="$OPTARG" ;;
+      g) gflag="$OPTARG" ;;
+      L) Lflag="$OPTARG" ;;
+      o) oflag="$OPTARG" ;;
+      S) Sflag="$OPTARG" ;;
+      t) tflag="$OPTARG" ;;
+
+      h) hflag+=("$OPTARG") ;;
+      w) wflag+=("$OPTARG") ;;
+
+      *) usage ;;
     esac
 done
+shift $((OPTIND-1))
 
-mysql -D $DBNAME -B -t <<END
-  select $*;
-END
+[[ -z "$tflag" && -n "$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
+
+[[ -n "$Vflag" ]] && wflag+=("valid_to is null")
+
+# sort out the -S and -L flags
+LIMIT=
+case "${#Sflag} ${#Lflag}" in
+  0\ 0) : ;;
+  *\ 0) LIMIT=" limit $Sflag,18446744073709551615" ;;
+  0\ *) LIMIT=" limit $Lflag" ;;
+  *\ *) LIMIT=" limit $Sflag,$Lflag" ;;
+esac
+
+# support commenting bits out from the command line for convenience
+typeset -a things
+for i in "${@//\{*([^\}])\}/}"; do [[ -n "$i" ]] && things+=("$i"); done
+set -- "${things[@]}"
+
+# build up the select statement
+if [[ -z "$tflag" ]]; then
+    SELECT="$*"
+    [[ -z "$SELECT" ]] && usage Missing SELECT body
+else
+    SELECT=
+    for i in "$@"; do
+        # optionally add a comma
+        [[ -n "$SELECT" && "$SELECT" != *, ]] && SELECT="$SELECT,"
+        [[ -n "$SELECT" ]] && SELECT="$SELECT "
+        SELECT="$SELECT$i"
+    done
+    [[ -z "$SELECT" ]] && SELECT='*'
+
+    where=
+    case ${#wflag[*]} in
+      0) : ;;
+      1) where="and ${wflag[*]}" ;;
+      *) where="${wflag[*]//@(*)/and (\1)}" ;;
+    esac
+
+    having=
+    case ${#hflag[*]} in
+      0) : ;;
+      1) having="and ${hflag[*]}" ;;
+      *) having="${hflag[*]//@(*)/and (\1)}" ;;
+    esac
+
+    SELECT="$SELECT from $tflag${where/#and / where }${gflag:+ group by $gflag}${having/#and / having }${oflag:+ order by $oflag}"
+fi
+
+echo select "$Dflag$SELECT$LIMIT;" | if [[ -n "$vflag" ]]; then cat; else mysql -D $DBNAME -B -t; fi
 
