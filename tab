@@ -8,13 +8,15 @@ myname="${0##*/}"
 lflag=
 Bflag=-B
 tflag=-t
+vflag=
 
 usage() {
     [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
 
-    echo >&2 "usage: $myname [-d database] -l ['likepattern'] | tabname ...
+    echo >&2 "usage: $myname [-v] [-d database] -l ['likepattern'] | tabname ...
 where   -d  select database (default \$DBNAME:=mysql)
-        -l  list tables (optionally like pattern)"
+        -l  list tables (optionally like pattern)
+        -v  emit table name before each table (how?)"
 
     exit 1
 }
@@ -45,6 +47,8 @@ while [[ "X$1" = X[-+]* ]]; do
         case "$val$ch" in
           -d) DBNAME="$arg" ;;
           -l) lflag=1 ;;
+          -v) vflag=1 ;;
+          +v) vflag= ;;
           +B) Bflag= ;;
           +t) tflag= ;;
           *)  usage "unknown option $val$ch" ;;
