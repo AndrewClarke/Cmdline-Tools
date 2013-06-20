@@ -1,0 +1,109 @@
+#!/bin/bash
+myname="${0##*/}"
+shopt -s extglob
+
+cd ${APPL:?Shell variable \$APPL must be defined} || exit 1
+
+error() {
+    if [[ $# -gt 0 ]]
+      then echo >&2 "ERROR: $@"
+      else echo >&2 "ERROR: unspecified"
+    fi
+    exit 1
+}
+
+
+usage() {
+    [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
+
+    echo >&2 "usage: $myname [-U | -F | -I] [test ...]
+
+where   -U  run test:units only
+        -F  run test:functionals only
+        -I  run test:integration only
+
+-U -F -I are mutually exclusive; if none are given, all test types
+are run
+
+If tests are named, they will be searched for, and must exist in
+the correct place if -U, -F or -I is given.
+
+Tests can be named like test/unit/.... or unit/.... or .....
+and this script will do it's best to pick the right one, including
+under the influence of any -U, -F or -I flag.
+"
+
+    exit 1
+}
+
+Uflag=0 Fflag=0 Iflag=0
+fang=
+while getopts :UFI ch; do
+    case "$ch" in
+      U) Uflag=1 ;;
+      F) Fflag=1 ;;
+      I) Iflag=1 ;;
+
+      *) usage "Unknown flag -$ch"
+    esac
+done
+shift $((OPTIND-1))
+
+case "$Uflag$Fflag$Iflag" in
+  000)         Type=            ;;
+  100) fang=-U Type=units       ;;
+  010) fang=-F Type=functionals ;;
+  001) fang=-I Type=integration ;;
+  *)   usage "Too many of -U, -F and -I flags given."
+esac
+
+
+[[ $# -eq 0 ]] && exec bundle exec rake test${Type:+:$Type}
+
+
+for i in "$@"; do
+    i="${i#test/}"  # duhhh
+
+    dir=
+    case "$i" in
+      unit/*)        type=units       dir=unit        ;;
+      functional/*)  type=functionals dir=functional  ;;
+      integration/*) type=integration dir=integration ;;
+    esac
+    i="${i#$dir/}"
+
+    if [[ -n "$dir" ]]; then
+        [[ -n "$Type" && "$type" != "$Type" ]] &&
+            error "Naming test/$dir/$i does not make sense with $fang"
+
+        i="test/$dir/$i"
+        [[ ! -r "$i" ]] && error "Cannot find $i"
+
+        read -p "Run test:$type TEST=$i: " || break
+        case "$REPLY" in
+          [qQ]) break ;;
+        esac
+
+        ( set -x; bundle exec rake test:$type TEST="$i" )
+        echo "THAT WAS $i"
+        echo
+        continue
+    fi
+
+    for f in test/@(unit|functional|integration)/$i; do
+        [[ ! -r "$f" ]] && error "Cannot find test $i"
+
+        case "$f" in
+          test/unit/*)        type=units       ;;
+          test/functional/*)  type=functionals ;;
+          test/integration/*) type=integration ;;
+          *) error "HUH? CANNOT HAPPEN?" ;;
+        esac
+
+        read -p "Run test:$type TEST=$f: " || break
+        ( set -x; bundle exec rake test:$type TEST="$f" )
+        echo "THAT WAS $f"
+        echo
+    done
+done
+
