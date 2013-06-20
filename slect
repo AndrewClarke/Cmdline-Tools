@@ -85,7 +85,9 @@ else
         # optionally add a comma
         [[ -n "$SELECT" && "$SELECT" != *, ]] && SELECT="$SELECT,"
         [[ -n "$SELECT" ]] && SELECT="$SELECT "
-        SELECT="$SELECT$i"
+
+        # support short-form for giving an alias
+        SELECT="$SELECT${i//:/ as }"
     done
     [[ -z "$SELECT" ]] && SELECT='*'
 
