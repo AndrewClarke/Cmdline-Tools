@@ -1,0 +1,12 @@
+
+set editing-mode vi
+
+## $if mode=vi
+## 
+## "\eOA":previous-history
+## "\eOB":next-history
+## "\eOD":backward-char
+## "\eOC":forward-char
+## 
+## $endif
+

@@ -1,0 +1,34 @@
+[user]
+name = Andrew Clarke
+email = aclarke@tickitsystems.com.au
+
+[alias]
+    diffy = diff --patience --minimal -w --word-diff=color
+
+[color]
+branch = auto
+diff = always
+status = auto
+
+[color "branch"]
+current = yellow reverse
+local = yellow
+remote = green
+
+[color "diff"]
+meta = yellow
+frag = cyan bold
+func = cyan
+old = magenta bold
+new = green
+
+[color "status"]
+added = yellow
+changed = green
+untracked = cyan
+
+[diff]
+wordRegex = "#.*$|:?'(\\\\.|[^'])*'|:?\"(\\\\.|[^\"])*\"|`(\\\\.|[^`])*`|:?(\\$|@|@@)[_[:alpha:]][_[:alnum:]]+|:?[_[:alpha:]][_[:alnum:]]+[?!=]?|[_[:alpha:]][_[:alnum:]]+:|\\$.|\\$-[[:alpha:]]|[-+]?[[:digit:]]+(\\.[[:digit:]]+)?([eE][-+]?[[:digit:]])?|[-+*/%&|^<=>!]=|[=!]~|\\*\\*|<<|>>|<=>|&&|\\|\\||\\.\\.|\\.\\.\\.|(==|\\*\\*|<<|>>|&&|\\|\\|)=|\\[[[:space:]]*\\]|\\{[[:space:]]*\\}|\\([[:space:]]*\\)|[^[:space:]]"
+
+[push]
+	default = simple

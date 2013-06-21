@@ -1,0 +1,35 @@
+
+startup_message off
+vbell off
+defscrollback 2000
+
+## escape "^Qq"
+
+# ------------------------------------------------------------------------------
+# STARTUP SCREENS
+# ------------------------------------------------------------------------------
+
+# Example of automatically running some programs in windows on screen startup.
+#
+#   The following will open top in the first window, an ssh session to monkey
+#   in the next window, and then open mutt and tail in windows 8 and 9
+#   respectively.
+#
+# screen top
+# screen -t monkey ssh monkey
+# screen -t mail 8 mutt
+# screen -t daemon 9 tail -f /var/log/daemon.log
+
+split
+screen bash
+split -v
+focus
+screen bash
+focus
+
+split -v
+screen bash
+focus
+screen bash
+focus
+
