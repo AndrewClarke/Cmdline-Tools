@@ -1,0 +1,3 @@
+
+function bek() ( cd $APPL && bundle exec rake "$@" )
+

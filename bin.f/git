@@ -1,0 +1,72 @@
+
+know_branch() {
+   export BRANCH="$(command git 2>/dev/null branch --list | sed -n 's/^\* //p')" >/dev/null 2>/dev/null
+}  # know_branch
+
+
+git() {
+    call=git result=0
+
+    if [[ "$2" == help ]]; then
+        echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
+        call= result=1
+    fi
+
+    case "$1" in
+      diff)
+        shift
+        set -- diff --patience --minimal -w --word-diff=color "$@"
+        ;;
+
+      DIFF)
+        shift
+        set -- diff --patience --minimal "$@"
+        ;;
+
+      huh)
+        shift
+        set -- status "$@" .
+        ;;
+
+      pulla)
+        shift
+        command git branch | sed 's/^ /-/' | {
+            this=
+            while read state name; do
+                [[ $state == '*' ]] && this="$name"
+                ( command git checkout "$name" && command git pull "$@" )
+            done
+            [[ -n "$this" ]] && command git checkout "$this" 2>&-
+        }
+        call= result=0
+        ;;
+
+      branch)
+        if [[ "$2" == @(list|merge|merged|track|delete|move|rename) ]]; then
+            echo >&2 "Not allowing $(tput setaf 3)git branch $2$(tput sgr0)! Do you mean one of --list --merged --track -d -D -M -m ?"
+            call= result=1
+        fi
+        ;;
+
+      stash)
+        if [[ "$2" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then
+            echo >&2 "Not allowing $(tput setaf 3)git stash$(tput sgr0) without a sub-command! Do you mean list, show or save?"
+            call= result=1
+        fi
+        ;;
+    esac
+
+    if [[ -n "$call" ]]; then
+        command $call "$@"
+        result=$?
+    fi
+
+    know_branch
+    return $result
+}  # git
+
+
+alias APP='cd ~/tickit-app && know_branch'
+alias VIEW='cd ~/tickit-view && know_branch'
+know_branch
+

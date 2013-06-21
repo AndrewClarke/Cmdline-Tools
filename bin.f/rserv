@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+rserv() {
+    tmux new-session \;                                     \
+         split-window -h \;                                 \
+         send-keys APP Enter \;                             \
+         send-keys bundle Space exec Space                  \
+                   script/server Space --debugger Enter \;  \
+         select-pane -L \;                                  \
+         send-keys APP Enter \;                             \
+         send-keys bey Space script/console Enter
+}
+

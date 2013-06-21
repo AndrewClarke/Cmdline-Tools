@@ -1,0 +1,42 @@
+
+function vid {
+    vim -d "$@"
+}
+
+function vidd {
+    for i in "$@"; do
+        vim -d "$i" ~-/"$i" || break
+    done
+}
+
+function vif {
+    vim "+/$1" $(grep -ils "$1" *.org *.src *.trg *.ext)
+}
+
+function vig {
+    typeset i
+
+    # go looking for the first non-option - to skip possible flags to grep
+    for i in "$@"; do
+        [[ "$i" != -* ]] && break
+    done
+
+    vim "+/$i" $(grep++ -l "$@")
+}
+
+function vio {
+    vim -o "$@"
+}
+
+function viO {
+    vim -O "$@"
+}
+
+function vit {
+    vim -t "$1"
+}
+
+function viw {
+    vim $(which "$@")
+}
+

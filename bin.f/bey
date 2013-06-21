@@ -1,0 +1,3 @@
+
+function bey() ( cd $APPL && bundle exec ruby "$@" )
+

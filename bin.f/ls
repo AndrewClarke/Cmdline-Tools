@@ -1,0 +1,11 @@
+
+unalias l lm L LM ll la ls 2>&-
+
+ls() { LANG=C /bin/ls --color=never "$@"; }
+l()  { LANG=C /bin/ls -Fla --color=auto "$@"; }
+lm() { l "$@" | less;    }
+L()  { l -d "$@";        }
+LM() { L "$@" | less;    }
+
+li() { { l 2>&- "$@" *.@(rb|sh|ksh|py|pl|pm|html|rhtml|erb|css|js|rcss|scss|haml) || echo No interesting files.; } | less; }
+
