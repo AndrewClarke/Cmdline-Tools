@@ -1,0 +1,3 @@
+
+function bex() ( cd $APPL && bundle exec "$@" )
+
