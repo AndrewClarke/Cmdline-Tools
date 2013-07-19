@@ -16,11 +16,12 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options.
 
-    [-D] -t tabname [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
+    [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
 
 where   -D  DISTINCT
         -t  mandatory table name (only one allowed at the moment)
         -w  where clause without the WHERE
+        -I  WHERE id=val; WHERE id in (list)
         -g  GROUP BY expressions, comma separated
         -h  HAVING expression
         -o  ORDER BY fields, comma separated
@@ -35,9 +36,9 @@ Only -D, -S and -L flags are allowed if providing a string.
 
 : ${DBNAME:=mysql}
 unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag
-typeset -a wflag hflag
+typeset -a wflag hflag Iflag
 
-while getopts :DvVd:g:h:L:o:S:t:w: ch; do
+while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
@@ -51,6 +52,7 @@ while getopts :DvVd:g:h:L:o:S:t:w: ch; do
 
       h) hflag+=("$OPTARG") ;;
       w) wflag+=("$OPTARG") ;;
+      I) Iflag+=("$OPTARG") ;;
 
       *) usage ;;
     esac
@@ -74,6 +76,23 @@ esac
 typeset -a things
 for i in "${@//\{*([^\}])\}/}"; do [[ -n "$i" ]] && things+=("$i"); done
 set -- "${things[@]}"
+
+# convert -I items to proper expressions
+# multiple items listed are turned into an IN expression
+typeset -a things
+for i in "${Iflag[@]}"; do
+    things+=(${i//+([\ ,])/ })
+done
+
+case "${#things[*]}" in
+  0) : ;;
+
+  1) typeset -a wflag=("id=$things" "${wflag[@]}") ;;
+
+  *) i="${things[*]}"
+     typeset -a wflag=("id in (${i// /,})" "${wflag[@]}") ;;
+esac
+
 
 # build up the select statement
 if [[ -z "$tflag" ]]; then
