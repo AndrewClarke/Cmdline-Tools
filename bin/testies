@@ -79,7 +79,7 @@ for i in "$@"; do
         i="test/$dir/$i"
         [[ ! -r "$i" ]] && error "Cannot find $i"
 
-        read -p "Run test:$type TEST=$i: " || break
+        [[ $# -gt 1 ]] && { read -p "Run test:$type TEST=$i: " || break; }
         case "$REPLY" in
           [qQ]) break ;;
         esac
@@ -100,7 +100,7 @@ for i in "$@"; do
           *) error "HUH? CANNOT HAPPEN?" ;;
         esac
 
-        read -p "Run test:$type TEST=$f: " || break
+        [[ $# -gt 1 ]] && { read -p "Run test:$type TEST=$f: " || break; }
         ( set -x; bundle exec rake test:$type TEST="$f" )
         echo "THAT WAS $f"
         echo
