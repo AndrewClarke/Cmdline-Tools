@@ -15,10 +15,11 @@ where   -a include more \$RAILS_ROOT top-level directories
         -V only \$RAILS_ROOT/app/views
         -C only \$RAILS_ROOT/app/controllers
         -H only \$RAILS_ROOT/app/helpers
+        -L only \$RAILS_ROOT/app/lib
         -P only \$RAILS_ROOT/public
         -T only \$RAILS_ROOT/test
 
--[MVCHPT] don't play well with -a, but can combine with -d, -l and -p.
+-[MVCHLPT] don't play well with -a, but can combine with -d, -l and -p.
 "
 
     exit 1
@@ -28,7 +29,7 @@ where   -a include more \$RAILS_ROOT top-level directories
 opts= aflag= dflag= lflag= pflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
 
-while getopts :adlpMVCHPTABcFGhiLnNqstvxXZ ch; do
+while getopts :adlpMVCHLPTABcFGhinNqstvxXZ ch; do
     case "$ch" in
       a) let aflag++ ;;
       d) dflag=1 ;;
@@ -39,10 +40,11 @@ while getopts :adlpMVCHPTABcFGhiLnNqstvxXZ ch; do
       V) Vflag=1 ;;
       C) Cflag=1 ;;
       H) Hflag=1 ;;
+      L) Lflag=1 ;;
       P) Pflag=1 ;;
       T) Tflag=1 ;;
 
-      [ABcFGhiLnNqstvxXZ]) opts="-${opts#-}$ch" ;;
+      [ABcFGhinNqstvxXZ]) opts="-${opts#-}$ch" ;;
 
       ?) [[ "X$OPTARG" == 'X?' ]] && usage
          usage "invalid flag: $OPTARG"
@@ -52,7 +54,7 @@ done
 shift $((OPTIND-1))
 [[ $# -gt 0 ]] || usage "pattern expected"
 
-[[ -n "$Mflag$Vflag$Cflag$Hflag$Pflag$Tflag" && -n "$aflag" ]] && usage "-a cannot combine with -M, -V, -C, -H, -P or -T"
+[[ -n "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag$Tflag" && -n "$aflag" ]] && usage "-a cannot combine with -M, -V, -C, -H, -L, -P or -T"
 
 
 typeset -a dirs
@@ -65,7 +67,7 @@ else
         # beware - a NOT pattern!
         dirs=(!(db|lib|log|public|spec|test|tmp)/)
         (( $aflag > 1 )) && dirs+=(db/ lib/ public/ spec/ test/ script/ vendor/)
-    elif [[ -z "$Mflag$Vflag$Cflag$Hflag$Pflag$Tflag" ]]; then
+    elif [[ -z "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag$Tflag" ]]; then
         # beware - a NOT pattern!
         dirs=(!(db|lib|log|public|spec|test|tmp|script|vendor|data)/)
     else
@@ -73,6 +75,7 @@ else
         [[ -n "$Vflag" ]] && dirs+=(app/views/)
         [[ -n "$Cflag" ]] && dirs+=(app/controllers/)
         [[ -n "$Hflag" ]] && dirs+=(app/helpers/)
+        [[ -n "$Lflag" ]] && dirs+=(lib/)
         [[ -n "$Pflag" ]] && dirs+=(public/)
         [[ -n "$Tflag" ]] && dirs+=(test/)
     fi
