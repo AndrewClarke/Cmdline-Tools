@@ -4,6 +4,7 @@ export APP=~/tickit-app VIEW=~/tickit-view
 export FPATH=$HOME/bin.f
 [[ -d /opt/unicon/bin ]] && export PATH="/opt/unicon/bin:$PATH"
 [[ -d ~/bin ]] && export PATH="$HOME/bin:$PATH"
+[[ -d ~/bin.local ]] && export PATH="$HOME/bin.local:$PATH"
 [[ -d $HOME/.rvm/bin ]] && export PATH=$PATH:$HOME/.rvm/bin
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
