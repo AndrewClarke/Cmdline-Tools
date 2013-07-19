@@ -73,13 +73,13 @@ case "${#Sflag} ${#Lflag}" in
 esac
 
 # support commenting bits out from the command line for convenience
-typeset -a things
+typeset -a things=()
 for i in "${@//\{*([^\}])\}/}"; do [[ -n "$i" ]] && things+=("$i"); done
 set -- "${things[@]}"
 
 # convert -I items to proper expressions
 # multiple items listed are turned into an IN expression
-typeset -a things
+typeset -a things=()
 for i in "${Iflag[@]}"; do
     things+=(${i//+([\ ,])/ })
 done
