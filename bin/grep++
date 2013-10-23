@@ -102,7 +102,7 @@ more would require building a smarter state machine into $0. -{ understands
 Wacro ie it knows that \@{something} is not a comment.
 
 If -n or +n is given, the other one is assigned the same value unless you
-explicitly give it a value.
+explicitly give it a value or put ! on the end of the one value you give.
 
 -D uses the platform-specific path separator character to suit your O/S.
 -D makes -I assume all lines from specified file are also \$PATH type values.
@@ -225,6 +225,11 @@ sub Options {
             if($ch =~ /[1-9]/) {
                 $ch .= $1 while s/^(\d)//;
                 ($val ? $pcount : $ncount) = $ch + 0;
+
+                if(s/^!//) {
+                  $ncount = 0 if   $val && ! defined $ncount;
+                  $pcount = 0 if ! $val && ! defined $pcount;
+                }
                 next;
             }
 
