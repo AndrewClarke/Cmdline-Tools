@@ -50,7 +50,7 @@ git() {
 
       stash)
         if [[ "$2" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then
-            echo >&2 "Not allowing $(tput setaf 3)git stash$(tput sgr0) without a sub-command! Do you mean list, show or save?"
+            echo >&2 "Not allowing $(tput setaf 3)git stash$(tput sgr0) without a sub-command! Do you mean list, show or save, or do you mean drop, pop, apply, branch, clear or create?"
             call= result=1
         fi
         ;;
