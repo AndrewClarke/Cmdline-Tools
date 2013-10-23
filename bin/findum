@@ -55,6 +55,7 @@ shift $((OPTIND-1))
 [[ $# -gt 0 ]] || usage "pattern expected"
 
 [[ -n "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag$Tflag" && -n "$aflag" ]] && usage "-a cannot combine with -M, -V, -C, -H, -L, -P or -T"
+[[ -n "$dflag$lflag$pflag" && "$aflag" -gt 1 ]] && usage "double use of -a precludes use of -d, -l and -p"
 
 
 typeset -a dirs
