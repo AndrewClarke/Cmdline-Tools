@@ -46,5 +46,14 @@ if ! shopt -oq posix; then
   fi
 fi
 
-export PS1='${DEPTH# }${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]$BRANCH\['"$(tput sgr0)"'\] }\['"$(tput setaf 6)"'\]\w\$\['"$(tput sgr0)"'\] '
+# NOTE: a few extra 'normal' characters are wrapped inside \[ \] so that
+# they compensate for the UTF encoded characters. Seems like bash isn't
+# capable of taking their visible-length vs. byte-length into account.
+# TIP: put the cursor on the magic characters and press sequence g8 -
+# you'll see the bytes constituting those glyphs.
+#
+export PS1='${DEPTH# }'
+export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]«\[BR:\]$BRANCH»\['"$(tput sgr0)"' \]}'
+export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tput sgr0)"'\]}'
+export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APPL_SUBDIR-\w}\[ \]▬▶\['"$(tput sgr0)"' \]'
 

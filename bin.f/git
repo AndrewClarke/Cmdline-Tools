@@ -13,16 +13,6 @@ git() {
     fi
 
     case "$1" in
-      diff)
-        shift
-        set -- diff --patience --minimal -w --word-diff=color "$@"
-        ;;
-
-      DIFF)
-        shift
-        set -- diff --patience --minimal "$@"
-        ;;
-
       huh)
         shift
         set -- status "$@" .

@@ -70,7 +70,7 @@ abbr tav tab
 abbr thakns thanks
 abbr Thakns Thanks
 
-abbr javascript JavaScript
+" abbr javascript JavaScript
 abbr ecma ECMA
 
 abbr docHTMLs  <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">

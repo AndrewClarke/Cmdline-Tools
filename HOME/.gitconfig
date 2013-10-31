@@ -4,7 +4,7 @@ name = Andrew Clarke
 email = aclarke@tickitsystems.com.au
 
 [alias]
-diffy = diff --patience --minimal -w --word-diff=color
+duff = !git diff --patience --minimal -w --word-diff=color --
 
 # list to branch
 ltb = !git log --abbrev-commit HEAD --not $(git for-each-ref --format='%(refname:short)' refs/heads | grep -v "^$(git symbolic-ref -q --short HEAD)$")
@@ -33,6 +33,7 @@ untracked = cyan
 
 [diff]
 wordRegex = "#.*$|:?'(\\\\.|[^'])*'|:?\"(\\\\.|[^\"])*\"|`(\\\\.|[^`])*`|:?(\\$|@|@@)[_[:alpha:]][_[:alnum:]]+|:?[_[:alpha:]][_[:alnum:]]+[?!=]?|[_[:alpha:]][_[:alnum:]]+:|\\$.|\\$-[[:alpha:]]|[-+]?[[:digit:]]+(\\.[[:digit:]]+)?([eE][-+]?[[:digit:]])?|[-+*/%&|^<=>!]=|[=!]~|\\*\\*|<<|>>|<=>|&&|\\|\\||\\.\\.|\\.\\.\\.|(==|\\*\\*|<<|>>|&&|\\|\\|)=|\\[[[:space:]]*\\]|\\{[[:space:]]*\\}|\\([[:space:]]*\\)|[^[:space:]]"
+algorithm = patience
 
 [push]
 default = simple
