@@ -7,6 +7,7 @@ set ignorecase nojoinspaces autoindent
 set expandtab smarttab nosmartindent
 set shiftwidth=4 tabstop=8 softtabstop=4
 set shiftwidth=2 tabstop=8 softtabstop=4
+set printfont=courier:h9 popt=paper:a4,left:5mm,right:5mm,top:5mm,bottom:5mm,syntax:n,portrait:n,formfeed:y
 
 " set showtabline=2
 set mouse=a
@@ -44,7 +45,7 @@ endfunction
 "## syntax off
 filetype plugin on
 
-set guifont=Courier\ New\ 10
+set guifont=Courier\ New\ 8
 
 let loaded_matchparen = 1
 " let did_load_filetypes = 1
