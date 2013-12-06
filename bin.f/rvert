@@ -1,0 +1,6 @@
+#!/bin/ksh
+
+rvert() {
+    tmux new-session \; split-window -h \; select-pane -L \;
+}
+
