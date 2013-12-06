@@ -16,7 +16,10 @@ usage() {
     echo >&2 "usage: $myname [-v] [-d database] -l ['likepattern'] | tabname ...
 where   -d  select database (default \$DBNAME:=mysql)
         -l  list tables (optionally like pattern)
-        -v  emit table name before each table (how?)"
+        -v  emit table name before each table (how?)
+
+-d ?  shows all available databases - no other flags allowed
+"
 
     exit 1
 }
@@ -57,7 +60,15 @@ while [[ "X$1" = X[-+]* ]]; do
 done
 
 
-if [[ -z "$lflag" ]]; then
+show_dbs=
+if [[ "$DBNAME" = '?' ]]; then
+    show_dbs=1
+    DBNAME=mysql
+fi
+
+if [[ -n "$show_dbs" ]]; then
+    echo "show databases;"
+elif [[ -z "$lflag" ]]; then
     [[ $# -eq 0 ]] && usage
 
     for i in "$@"; do
