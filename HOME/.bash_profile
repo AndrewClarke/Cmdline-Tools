@@ -1,4 +1,8 @@
 
+[[ -r $HOME/.vars ]] && . $HOME/.vars
+
+: ${ORIGIN_HOST:=$HOSTNAME} ${ORIGIN_SITE:=unset} ${ORIGIN_USER:=aclarke}
+export ORIGIN_HOST ORIGIN_SITE ORIGIN_USER
 export DEPTH=
 export APP=~/tickit-app VIEW=~/tickit-view
 export FPATH=$HOME/bin.f
