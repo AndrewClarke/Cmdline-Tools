@@ -1,8 +1,8 @@
 
-if ENV['RAILS_ENV']
+if ENV['RAILS_ENV'] && ENV['GEM_HOME']
   require 'rubygems'
 
-  $:.unshift '/home/aclarke/.rvm/gems/ree-1.8.7-2012.02@tod/gems/hirb-0.7.1/lib'
+  $:.unshift "#{ENV['GEM_HOME']}/gems/hirb-0.7.1/lib"
   require 'hirb'
   require 'active_record'
   extend Hirb::Console
