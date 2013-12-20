@@ -21,11 +21,30 @@ my $exit = 1;
 our ($contFlag, $ncount, $pcount, $_0flag);
 our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, $Gflag, $hflag, $Hflag, $iflag, $Iflag);
 our (@jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
-our $jflag;
+our ($jflag, $gflag);
 
 my $isWin = $^O =~ /Win/i;
 my $pathSep = $isWin ? ';' : ':';
 my $dirSep = $isWin ? '\\' : '/';
+
+
+package Sandpit;
+
+our ($line, $lineno);
+our ($indent, $indent0) = (0, -1);
+our $result;
+
+
+sub compileExprs (@) {
+    foreach (@_) {
+        $_ = eval "sub { $_ }";
+        $@ and die "$0: bad-expr: $_\n$@\n";
+    }
+}   # compileExprs
+
+
+
+package main;
 
 sub usage {
     my $helping;
@@ -82,7 +101,8 @@ FLAGS:	-c	count matching lines
         -P file	execute Perl expressions in file prior to matching
         -o expr	execute Perl expression prior to output
         -O file	execute Perl expressions in file prior to output
-        -S pat  split line with pat to \@F and treat patterns as boolan exprs
+        -S pat  split line with pat to \@F and treat patterns as boolean exprs
+        -g      treat all patterns as general Perl expressions with access to \$_
         +<nxt>  print <nxt> lines after matching line
         -<pre>  print <pre> lines before matchine line
 	-A      annotate context lines from +digits or -digits
@@ -245,6 +265,7 @@ sub Options {
 
             $aflag = $val, next if $ch eq 'a';
             $cflag = $val, next if $ch eq 'c';
+            $gflag = $val, next if $ch eq 'g';
             $hflag = $val, next if $ch eq 'h';
             $iflag = $val, next if $ch eq 'i';
             $lflag = $val, next if $ch eq 'l';
@@ -283,9 +304,10 @@ sub Options {
     usage "-n and -[clq] are mutually exclusive"   if $nflag && length "$cflag$lflag$qflag";
     usage "-c and -[Clq] are mutually exclusive"   if $cflag && length "$Cflag$lflag$qflag";
     usage "-H and -h are mutually exclusive"       if $hflag && $Hflag;
+    usage "-S and -g are mutually exclusive"       if $gflag && defined $split;
 
     # soon my pretties: -L with -a is now happy...
-    usage "-L and -S are mutually exclusive (without work)"    if $Lflag && $split;
+    usage "-L and -S are mutually exclusive (without work)"    if $Lflag && defined $split;
 
     usage "-I and list of filenames are mutually exclusive"    if $Iflag && @ARGV;
     usage "patterns expected" unless @patterns;
@@ -311,10 +333,14 @@ sub Options {
         }
     }
 
-    if(!$aflag && !$split) {
+    if($gflag || defined $split) {
+        Sandpit::compileExprs @patterns;
+    }
+    elsif(! $aflag) {
         # protect each component pattern from its compatriots (precedence)
-        foreach my $pat (@patterns)
-            { $pat = "(?:$pat)" }
+        if(@patterns > 1) {
+          $_ = "(?:$_)" foreach @patterns;
+        }
 
         $pattern = join '|', @patterns;
         $pattern = "^($pattern)\$" if $xflag;
@@ -329,27 +355,28 @@ sub Options {
 
 my @blue;       # colour the matched parts if -L
 sub match_a_line() {
-    my ($match, $pat, $elmatcho, $p);
+    my ($match, $elmatcho, $p);
 
     @blue = ();
-    if($split) {
-        @F = split $split;
+    if($gflag || defined $split) {
+        @F = split $split if defined $split;
 
-        foreach $pat (@patterns) {
-            $match = eval $pat;         # TODO precompile to sub refs
-            $@ and die "$0: bad-expr: $pat\n$@\n";
-            last if $aflag && !$match || !$aflag && $match;
+        foreach my $expr (@patterns) {
+            $match = ($Sandpit::result = $expr->()) ? 1 : 0;
+            last if $aflag && ! $match || ! $aflag && $match;
         }
     }
     elsif($aflag) {             # AND all patterns
         $match = 1;
 
-        foreach $pat (@patterns) {
+        foreach my $pat (@patterns) {
             if(! $Lflag) {
+                # TODO: this seems ripe for optimising - compile to an array and use /o
                 $elmatcho = $iflag ? /$pat/i : /$pat/
             }
             else {
                 $elmatcho = 0;
+                # TODO: this seems ripe for optimising - compile to an array and use /o
                 while($iflag ? /(?{$p = pos})$pat(?{push @blue, [$p, pos]})/gi
                              : /(?{$p = pos})$pat(?{push @blue, [$p, pos]})/g) {
                     $elmatcho = 1;
@@ -381,6 +408,7 @@ sub match_a_line() {
         }
     }
     elsif($Lflag) {
+        # TODO: this seems ripe for optimising - compile to an array and use /o
         while($iflag ? /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/gio
                      : /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/go) {
             $match = 1;
@@ -408,23 +436,26 @@ sub enque(\@$) {
 
 my $printed;
 my $FD;
-my $lineno;
+my $omatch;
 my ($ofname, $gbundled);   # used by -G processing
 
 sub process ($$) {
     (my $fname, $FD) = @_;
 
-    my ($nextra, $count, $line) = (0, 0, 0);
+    my ($nextra, $count) = (0, 0);
     my ($last, $match, $prefix, $enque, @queue);
     my $Gline;     # used by -G processing
 
-    $lineno = 0;
-
+    $Sandpit::lineno = 0;
+    $Sandpit::result = 0;
+    $Sandpit::indent = 0;
+    $Sandpit::indent0 = -1;
+    $omatch = 0;
 
     sub getline {
         my $x = <$FD>;
         return undef unless $x;
-        ++$lineno;
+        ++$Sandpit::lineno;
         $_ .= $x;
         return $_;
     }
@@ -452,7 +483,9 @@ sub process ($$) {
         }
 
         chomp;
-        $line = $_;	# save the unadulterated line. pattern matching may do damage to $_
+        $Sandpit::line = $_;	# save the unadulterated line. pattern matching may do damage to $_
+        $Sandpit::indent = length $1 if /^(\s+)\S/;
+        # hmmm - would it be better to calculate the indent after the pre-expr?
 
         foreach my $expr (@prefix) {
             eval $expr;
@@ -460,6 +493,9 @@ sub process ($$) {
         }
 
         $match = match_a_line;
+        $Sandpit::indent0 = $Sandpit::indent if $match && ! $omatch;
+        $Sandpit::indent0 = -1               if ! $match && $omatch;
+        $omatch = $match;
 
 	# under -v with (-q or -l) will consider success if NO matches ie $count == 0
 	# filename or exit status will be emitted after the end of the LINE loop
@@ -492,7 +528,7 @@ sub process ($$) {
 
 	if($nflag) {
 	    $prefix .= '[' if $nflag eq 'N';
-	    $prefix .= $lineno;
+	    $prefix .= $Sandpit::lineno;
 	    $prefix .= ']' if $nflag eq 'N';
 	    $prefix .= ':' if $nflag ne 'N';
 	}
@@ -506,7 +542,7 @@ sub process ($$) {
         if($match != $vflag or $nextra > 0) {
 	    $enque = 0;
             unless($Lflag) {
-                $_ = $line;
+                $_ = $Sandpit::line;
             }
             else {
 	        # highlighting crap
@@ -515,11 +551,11 @@ sub process ($$) {
 
                 while(my $n = shift @blue) {
                     ($lo, $hi) = @$n;
-                    $_ .= substr($line, $p, $lo - $p) . $smso . substr($line, $lo, $hi - $lo) . $rmso;
+                    $_ .= substr($Sandpit::line, $p, $lo - $p) . $smso . substr($Sandpit::line, $lo, $hi - $lo) . $rmso;
                     $p = $hi;
                 }
 
-                $_ .= substr($line, $p);
+                $_ .= substr($Sandpit::line, $p);
             }
 
             foreach my $expr (@postfix) {
@@ -536,7 +572,7 @@ sub process ($$) {
                 print "\n";
             }
 
-	    if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $lineno - 1) {
+	    if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $Sandpit::lineno - 1) {
 		my $ch = defined $last ? '-' : '=';
 		print '  ', $ch x 40, "\n";
 	    }
@@ -545,7 +581,7 @@ sub process ($$) {
 	    @queue = ();
             print "$prefix$_";
             print $/ if $/ eq "\n" || ! /^\s*$/;
-	    $last = $lineno;
+	    $last = $Sandpit::lineno;
 	    $printed = 1;
 
 	    last LINE if $Cflag && $count >= $Cflag && $nextra == 0;
@@ -554,7 +590,7 @@ sub process ($$) {
     continue {
 	# stash lines that might be needed for -<num> context printing
 	if($enque && ! ($cflag || $qflag || $lflag)) {
-	    enque @queue, "$prefix$line";
+	    enque @queue, "$prefix$Sandpit::line";
 	}
     }
 
