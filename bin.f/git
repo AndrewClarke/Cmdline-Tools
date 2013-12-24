@@ -56,7 +56,7 @@ git() {
 }  # git
 
 
-alias APP='cd ~/tickit-app && know_branch'
-alias VIEW='cd ~/tickit-view && know_branch'
+alias APP='cd ${APP:=~/tickit-app} && know_branch'
+alias VIEW='cd ${VIEW:=~/tickit-view} && know_branch'
 know_branch
 

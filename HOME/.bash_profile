@@ -4,7 +4,10 @@
 : ${ORIGIN_HOST:=$HOSTNAME} ${ORIGIN_SITE:=unset} ${ORIGIN_USER:=aclarke}
 export ORIGIN_HOST ORIGIN_SITE ORIGIN_USER
 export DEPTH=
-export APP=~/tickit-app VIEW=~/tickit-view
+case "$HOSTNAME" in
+  kubby) export APP=~/tickit/tod-3582 VIEW=~/tickit/rel-3.2 ;;
+  *)     export APP=~/tickit-app VIEW=~/tickit-view ;;
+esac
 export FPATH=$HOME/bin.f
 [[ -d /opt/unicon/bin ]] && export PATH="/opt/unicon/bin:$PATH"
 [[ -d ~/bin ]] && export PATH="$HOME/bin:$PATH"
