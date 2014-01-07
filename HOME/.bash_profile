@@ -4,10 +4,10 @@
 : ${ORIGIN_HOST:=$HOSTNAME} ${ORIGIN_SITE:=unset} ${ORIGIN_USER:=aclarke}
 export ORIGIN_HOST ORIGIN_SITE ORIGIN_USER
 export DEPTH=
-case "$HOSTNAME" in
-  kubby) export APP=~/tickit/tod-3582 VIEW=~/tickit/rel-3.2 ;;
-  *)     export APP=~/tickit-app VIEW=~/tickit-view ;;
-esac
+
+: ${APP:=~/tickit/rel-3.2}
+export APP
+
 export FPATH=$HOME/bin.f
 [[ -d /opt/unicon/bin ]] && export PATH="/opt/unicon/bin:$PATH"
 [[ -d ~/bin ]] && export PATH="$HOME/bin:$PATH"
@@ -16,8 +16,9 @@ export FPATH=$HOME/bin.f
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
 
-[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm # Load RVM into a shell session *as a function*
+[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
 
-unset LC_ADDRESS LC_IDENTIFICATION LC_MEASUREMENT LC_MONETARY LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE LC_TIME
+unset LC_ADDRESS LC_IDENTIFICATION LC_MEASUREMENT LC_MONETARY
+unset LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE LC_TIME
 export LANG=C LANGUAGE=C
 

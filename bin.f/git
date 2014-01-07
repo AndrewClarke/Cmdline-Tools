@@ -56,7 +56,25 @@ git() {
 }  # git
 
 
-alias APP='cd ${APP:=~/tickit-app} && know_branch'
-alias VIEW='cd ${VIEW:=~/tickit-view} && know_branch'
+app() {
+    if [[ $# -eq 0 ]]; then
+        echo "APP = $APP"
+    else
+        local vers="$1"
+        case "$vers" in
+          +([0-9]).+([0-9])) vers="rel-$vers" ;;
+          +([0-9]))          vers="tod-$vers" ;;
+        esac
+
+        if [[ -d ~/tickit ]]
+          then export APP=~/tickit/"$vers"
+          else export APP=~/tickit-"$vers"
+        fi
+
+        cd "$APP" && know_branch
+    fi
+}  # app
+
+
 know_branch
 

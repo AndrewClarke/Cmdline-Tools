@@ -27,22 +27,16 @@ let diff_tem = 0
 set diffexpr=MyDiff()
 function MyDiff()
     let opt = ""
-    if g:diff_tem
-        let opt = opt . "-I '^[ 	]*\\#_template' "
-    endif
-    if &diffopt =~ "icase"
-        let opt = opt . "-i "
-    endif
-    if &diffopt =~ "iwhite"
-        let opt = opt . "-bBw "
-    endif
+    if g:diff_tem           | let opt .= "-I '^[ \t]*\\#_template' " | endif
+    if &diffopt =~ "icase"  | let opt .= "-i "   | endif
+    if &diffopt =~ "iwhite" | let opt .= "-bBw " | endif
     silent execute "!diff -a " . opt . v:fname_in . " " . v:fname_new . " > " . v:fname_out
     redraw!
     redraws!
 endfunction
 
-"## let did_load_filetypes = 1
-"## syntax off
+" let did_load_filetypes = 1
+" syntax off
 filetype plugin on
 
 set guifont=Courier\ New\ 8
@@ -98,13 +92,6 @@ map <C-P> :prev<CR>
 " map <C-U> !Guniq<CR><C-G>
 
 map q :e#<CR>
-
-""## THIS HAS ISSUES - IMMEDIATELY!!! garbage. sigh.
-"" " make searching more magical
-"" nnoremap / /\v
-"" nnoremap ? ?\v
-"" " NOTE: the following cannot help with things like :g/blah/s/foo/bar/ or :s!/thing/!/thang/!
-"" cnoremap %s/ %s/\v
 
 " map <C-Z> !1Gwac.header -t %<CR>
 " map <C-U> !Guniq<CR><C-G>

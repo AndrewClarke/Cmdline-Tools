@@ -4,16 +4,16 @@ rdev() {
     tmux                                               \
         new-session                                 \; \
         split-window -h                             \; \
-        send-keys APP Enter                         \; \
+        send-keys app Enter                         \; \
         send-keys cd Space app/views Enter          \; \
         split-window                                \; \
-        send-keys APP Enter                         \; \
+        send-keys app Enter                         \; \
         send-keys cd Space app/helpers Enter        \; \
         select-pane -L                              \; \
-        send-keys APP Enter                         \; \
+        send-keys app Enter                         \; \
         send-keys cd Space app/models Enter         \; \
         split-window                                \; \
-        send-keys APP Enter                         \; \
+        send-keys app Enter                         \; \
         send-keys cd Space app/controllers Enter    \; \
         select-pane -U
 }
