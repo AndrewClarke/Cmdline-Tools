@@ -4,7 +4,7 @@
 rvert() {
     # crude but fair
     dive=
-    [[ "X$1" == X--app ]] && dive='send-keys APP Enter ;'
+    [[ "X$1" == X--app ]] && dive='send-keys app Enter ;'
 
     tmux                   \
         new-session     \; \
