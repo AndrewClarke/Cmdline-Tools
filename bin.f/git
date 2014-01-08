@@ -57,9 +57,13 @@ git() {
 
 
 app() {
-    if [[ $# -eq 0 ]]; then
-        echo "APP = $APP"
-    else
+    local vflag=
+    if [[ "X$1" == X-v ]]; then
+        vflag=1
+        shift
+    fi
+
+    if [[ $# -gt 0 ]]; then
         local vers="$1"
         case "$vers" in
           +([0-9]).+([0-9])) vers="rel-$vers" ;;
@@ -70,8 +74,11 @@ app() {
           then export APP=~/tickit/"$vers"
           else export APP=~/tickit-"$vers"
         fi
+    fi
 
-        cd "$APP" && know_branch
+    if [[ -z "$vflag" ]]
+      then cd "$APP" && know_branch
+      else echo "APP = $APP"
     fi
 }  # app
 
