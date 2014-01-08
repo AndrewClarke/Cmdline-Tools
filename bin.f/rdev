@@ -17,3 +17,4 @@ rdev() {
         send-keys cd Space app/controllers Enter    \; \
         select-pane -U
 }
+

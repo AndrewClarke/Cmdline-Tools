@@ -1,6 +1,16 @@
 #!/bin/ksh
 
+
 rvert() {
-    tmux new-session \; split-window -h \; select-pane -L \;
+    # crude but fair
+    dive=
+    [[ "X$1" == X--app ]] && dive='send-keys APP Enter ;'
+
+    tmux                   \
+        new-session     \; \
+        split-window -h \; \
+        $dive              \
+        select-pane -L  \; \
+        $dive
 }
 
