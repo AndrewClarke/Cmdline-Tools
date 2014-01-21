@@ -79,6 +79,9 @@ app() {
           then export APP=~/tickit/"$vers"
           else export APP=~/tickit-"$vers"
         fi
+    elif [[ -z "$vflag" && -n "$nflag" ]]; then
+        # for convenience, allow app -n to talk like -v
+        vflag=1
     fi
 
     [[ -z "$nflag" ]] && cd "$APP" && know_branch
