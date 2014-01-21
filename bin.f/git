@@ -57,11 +57,16 @@ git() {
 
 
 app() {
-    local vflag=
-    if [[ "X$1" == X-v ]]; then
-        vflag=1
-        shift
-    fi
+    local nflag= vflag=
+    while getopts :nv ch; do
+      case "$ch" in
+        n) nflag=1 ;;
+        v) vflag=1 ;;
+        *) echo >&2 "usage: app [-n] [-v] [branch]"
+           exit 1 ;;
+      esac
+    done
+    shift $((OPTIND-1))
 
     if [[ $# -gt 0 ]]; then
         local vers="$1"
@@ -76,10 +81,8 @@ app() {
         fi
     fi
 
-    if [[ -z "$vflag" ]]
-      then cd "$APP" && know_branch
-      else echo "APP = $APP"
-    fi
+    [[ -z "$nflag" ]] && cd "$APP" && know_branch
+    [[ -n "$vflag" ]] && echo "APP = $APP"
 }  # app
 
 
