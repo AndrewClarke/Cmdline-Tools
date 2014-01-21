@@ -2,15 +2,12 @@
 
 
 rvert() {
-    # crude but fair
-    dive=
-    [[ "X$1" == X--app ]] && dive='send-keys app Enter ;'
 
-    tmux                   \
-        new-session     \; \
-        split-window -h \; \
-        $dive              \
-        select-pane -L  \; \
-        $dive
+    tmux                        \
+        new-session         \;  \
+        split-window -h     \;  \
+        send-keys app Enter \;  \
+        select-pane -L      \;  \
+        send-keys app Enter \;
 }
 
