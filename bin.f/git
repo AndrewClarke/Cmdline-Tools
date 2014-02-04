@@ -71,8 +71,8 @@ app() {
     if [[ $# -gt 0 ]]; then
         local vers="$1"
         case "$vers" in
-          +([0-9]).+([0-9])) vers="rel-$vers" ;;
-          +([0-9]))          vers="tod-$vers" ;;
+          +([0-9])+(.+([0-9]))) vers="rel-$vers" ;;
+          +([0-9])*([a-z]))     vers="tod-$vers" ;;
         esac
 
         if [[ -d ~/tickit ]]
