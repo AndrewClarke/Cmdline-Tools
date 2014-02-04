@@ -2,7 +2,7 @@
 myname="${0##*/}"
 shopt -s extglob
 
-cd ${APPL:?Shell variable \$APPL must be defined} || exit 1
+cd ${APP:?Shell variable \$APP must be defined} || exit 1
 
 error() {
     if [[ $# -gt 0 ]]

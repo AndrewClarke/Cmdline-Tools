@@ -1,3 +1,3 @@
 
-function bek() ( cd $APPL && bundle exec rake "$@" )
+function bek() ( cd $APP && bundle exec rake "$@" )
 
