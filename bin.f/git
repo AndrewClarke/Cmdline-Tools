@@ -1,6 +1,7 @@
 
 know_branch() {
-   export BRANCH="$(command git 2>/dev/null branch --list | sed -n 's/^\* //p')" >/dev/null 2>/dev/null
+    export BRANCH="$(command git 2>/dev/null branch --list | sed -n 's/^\* //p')" >/dev/null 2>/dev/null
+    [[ -r config/database.yml ]] && eval $(perl -ne 'print "export DBNAME=$1\n" if (/^development:/ ... /^\S/) && /^\s+database:\s*(\S+)/' config/database.yml)
 }  # know_branch
 
 
@@ -20,6 +21,8 @@ git() {
 
       pulla)
         shift
+        ## command git stash save "preparing to have a big pull"
+
         command git branch | sed 's/^ /-/' | {
             this=
             while read state name; do
@@ -28,6 +31,9 @@ git() {
             done
             [[ -n "$this" ]] && command git checkout "$this" 2>&-
         }
+
+        ## command git stash pop
+
         call= result=0
         ;;
 
