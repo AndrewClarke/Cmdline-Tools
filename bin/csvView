@@ -1,0 +1,155 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use Getopt::Long qw(:config bundling no_auto_abbrev no_permute no_ignore_case);
+use Text::CSV;
+
+
+my ($listFields, $origin, $noheading, @fields, $oformat);
+GetOptions(
+    '0' => sub { $origin = 0 },
+    '1' => sub { $origin = 1 },
+    'u' => sub { $oformat = 'UNL' },
+    'c' => sub { $oformat = 'CSV' },
+    'n' => \$noheading,
+
+    'l' => \$listFields,
+    'f=s' => \@fields,
+) or die "Bad options";
+die "Cannot use -l with -n\n" if $listFields && $noheading;
+die "Cannot use -l with -f\n" if $listFields && @fields;
+@ARGV or die "File name expected";
+
+$origin //= 1;
+@fields = split /,/, join ',', @fields;
+my $fname = $ARGV[0];
+
+my $csv = Text::CSV->new({binary => 1}) or die "Cannot use CSV: ", Text::CSV->error_diag();
+## open my $fh, '<:encoding(utf8)', $fname or die "Cannot open $fname for reading: $!";
+open my $fh, '<', $fname or die "Cannot open $fname for reading: $!";
+
+my (@fieldNames, %fieldNames, %fieldNulls);
+
+if(! $noheading) {
+    my $row = $csv->getline($fh) or die "Cannot read first line of CSV for field names: ", Text::CSV->error_diag();
+
+    my $i = $origin;
+    foreach (@$row) {
+        push @fieldNames, $_;
+        $fieldNames{$_} = $i++;
+    }
+}
+
+if($listFields) {
+    my $i = $origin;
+    print $i++, ": $_\n" foreach @fieldNames;
+    exit(0);
+}
+
+if(@fields) {
+    my @list;
+
+    foreach (@fields) {
+        my ($a, $z) = /^(.+?)(?:\.\.(.+))?$/;
+        die "Cannot nominate field 0 unless -0 is given\n" if $a =~ /^0+$/ && $origin;
+        die "Must give numeric fields with -f when using -n\n" if $noheading && ($a !~ /^\d+$/ || $z !~ /^\d*$/);
+
+        if($a !~ /^\d+/) {
+            die "There is no field named '$a' in the heading line\n" unless exists $fieldNames{$a};
+            $a = $fieldNames{$a};
+        }
+
+        if($z ne '' && $z !~ /^\d+/) {
+            die "There is no field named '$z' in the heading line\n" unless exists $fieldNames{$z};
+            $z = $fieldNames{$z};
+        }
+
+        die "Field range must be sensible\n" if $z ne '' && $z < $a;
+
+        if($z eq '') {
+            push @list, int $a;
+        }
+        else {
+            $a = int $a;
+            push @list, $a++ while $a <= $z;
+        }
+    }
+
+    @fields = @list;
+}
+## DEBUG print "$_\n" foreach @fields;
+
+while(my $row = $csv->getline($fh)) {
+    my @columns = ();
+
+    if(! @fields) {
+        @columns = @$row;
+    }
+    else {
+        foreach (@fields) {
+            push @columns, $row->[$_ - $origin];
+        }
+    }
+
+    if($oformat eq 'UNL') {
+        s/([|"'\\])/\\$1/g foreach @columns;
+        print join "|", @columns, "\n";
+    }
+    else {
+        $csv->print(\*STDOUT, \@columns);
+        print "\n";
+    }
+}
+
+
+__END__
+
+
+    my @columns = $csv->fields();
+
+
+while($row = $csv->getline($fh)) {
+    my $i;
+    foreach (@$row) {
+        my $fld = $fieldNames[$i++];
+        my $len = length $_;
+
+        $fieldNulls{$fld} = 1 if $len == 0;
+    }
+}
+
+close $fh;
+
+foreach (@fieldNames) {
+    if($fieldNames{$_} == -1) {
+        print "$_ integer";
+    }
+    else {
+        print "$_ char($fieldNames{$_})";
+    }
+
+    print " not null" unless $fieldNulls{$_};
+
+    print "\n";
+}
+
+
+__END__
+
+
+
+
+
+
+use Getopt::Long;
+my $data   = "file.dat";
+my $length = 24;
+my $verbose;
+$result = GetOptions(
+    "length=i" => \$length,    # numeric
+    "file=s"   => \$data,      # string
+    "verbose"  => \$verbose);  # flag
+
