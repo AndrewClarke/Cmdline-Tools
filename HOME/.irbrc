@@ -1,5 +1,6 @@
 
-if ENV['RAILS_ENV'] && ENV['GEM_HOME']
+## if ENV['RAILS_ENV'] && ENV['GEM_HOME']
+if ENV['GEM_HOME']
   require 'rubygems'
 
   $:.unshift "#{ENV['GEM_HOME']}/gems/hirb-0.7.1/lib"
@@ -16,7 +17,7 @@ if ENV['RAILS_ENV'] && ENV['GEM_HOME']
     # must look into it!
     #
     case obj.class
-      when Hash : obj = [ obj ]
+      when Hash then obj = [ obj ]
     end
 
     # pass nil if you wanna remove the stored fields for a type
@@ -26,7 +27,10 @@ if ENV['RAILS_ENV'] && ENV['GEM_HOME']
       reset = true
     end
 
+    # WHAT was I thinking with this???
     xobj = obj.is_a?(Array) && obj.any? ? obj[0] : obj
+    # until further notice... this!
+    xobj = obj
 
     if xobj.is_a? ActiveRecord::Base
       if fields.length > 0 || reset
