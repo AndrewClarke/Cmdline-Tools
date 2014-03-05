@@ -97,5 +97,21 @@ app() {
 }  # app
 
 
+_raily_magic_cd() {
+    local top="$1"
+    shift
+    [[ -z "$APP" ]]          && { echo >&2 "\$APP is not defined"; return 1; }
+    [[ -d "$APP/app" ]]      || { echo >&2 "\$APP does not appear to be a Rails project"; return 1; }
+    [[ -d "$APP/app/$top" ]] || { echo >&2 "\$APP does not have an app/$top directory";   return 1; }
+
+    cd "$APP/app/$top"
+}
+
+
+M() { _raily_magic_cd models      "$@"; }
+V() { _raily_magic_cd views       "$@"; }
+C() { _raily_magic_cd controllers "$@"; }
+
+
 know_branch
 
