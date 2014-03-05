@@ -69,7 +69,7 @@ app() {
         n) nflag=1 ;;
         v) vflag=1 ;;
         *) echo >&2 "usage: app [-n] [-v] [branch]"
-           exit 1 ;;
+           return 1 ;;
       esac
     done
     shift $((OPTIND-1))
@@ -92,6 +92,8 @@ app() {
 
     [[ -z "$nflag" ]] && cd "$APP" && know_branch
     [[ -n "$vflag" ]] && echo "APP = $APP"
+
+    return 0
 }  # app
 
 
