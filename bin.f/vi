@@ -44,22 +44,28 @@ function viw {
 function vi {
     # if prove inside a $APP which is also a Rails project
     #     replace any arg starting with M/ V/ or C/ with $APP/app/@(models|views|controllers)
+    # ALSO: when lazy-cutting-pasting from diff lines, it's nice to trim off the leading [ab]/
 
-    if [[ -n "$APP" && -d "$APP/app" ]]; then   # deemed to be a Rails project...
-        if [[ "$PWD" == "$APP"?(/*) ]]; then
-            typeset -a args
-            for i in "$@"; do
-                case "$i" in
-                  M/*) i="$APP/app/models/${i#M/}" ;;
-                  V/*) i="$APP/app/views/${i#V/}" ;;
-                  C/*) i="$APP/app/controllers/${i#C/}" ;;
-                esac
-                args+=("$i")
-            done
+    local i raily=
+    [[ -n "$APP" && -d "$APP/app" ]] && [[ "$PWD" == "$APP"?(/*) ]] && raily=1
 
-            set -- "${args[@]}"
-        fi
-    fi
+    typeset -a args
+    for i in "$@"; do
+      if [[ -n "$raily" && "$i" = [MVC]/* ]]; then
+        case "$i" in
+          (M/*) i="$APP/app/models/${i#M/}" ;;
+          (V/*) i="$APP/app/views/${i#V/}" ;;
+          (C/*) i="$APP/app/controllers/${i#C/}" ;;
+        esac
+      elif [[ "$i" = a/* && ! -d a ]]; then
+        i="${i#a/}"
+      elif [[ "$i" = b/* && ! -d b ]]; then
+        i="${i#b/}"
+      fi
+
+      args+=("$i")
+    done
+    set -- "${args[@]}"
 
     vim "$@"
 }
