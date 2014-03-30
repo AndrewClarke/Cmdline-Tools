@@ -1,7 +1,7 @@
 
 know_branch() {
     export BRANCH="$(command git 2>/dev/null branch --list | sed -n 's/^\* //p')" >/dev/null 2>/dev/null
-    [[ -r config/database.yml ]] && eval $(perl -ne 'print "export DBNAME=$1\n" if (/^development:/ ... /^\S/) && /^\s+database:\s*(\w+)/' config/database.yml)
+    [[ -r config/database.yml ]] && eval $(perl -ne 'print "export DBNAME=$1\n" if (/^development:/ ... /^\S/) && /^\s+database:\s*(\w+)/' config/database.yml) >/dev/null 2>/dev/null
 }  # know_branch
 
 
@@ -57,7 +57,7 @@ git() {
         result=$?
     fi
 
-    know_branch
+    know_branch >/dev/null 2>/dev/null
     return $result
 }  # git
 
@@ -90,7 +90,7 @@ app() {
         vflag=1
     fi
 
-    [[ -z "$nflag" ]] && cd "$APP" && know_branch
+    [[ -z "$nflag" ]] && cd "$APP" && know_branch >/dev/null 2>/dev/null
     [[ -n "$vflag" ]] && echo "APP = $APP"
 
     return 0
