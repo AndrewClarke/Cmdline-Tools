@@ -65,6 +65,13 @@ abbr tav tab
 abbr thakns thanks
 abbr Thakns Thanks
 
+" words I keep messing up for Prawn::Document scripting
+abbr stoke_axis stroke_axis
+abbr stoke_bounds stroke_bounds
+abbr stoke_circle stroke_circle
+abbr stoke_color stroke_color
+
+
 " abbr javascript JavaScript
 abbr ecma ECMA
 
