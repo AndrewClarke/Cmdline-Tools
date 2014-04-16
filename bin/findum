@@ -6,7 +6,7 @@ usage() {
     [[ $# -gt 0 ]] && echo >&2 "$@"
 
     echo >&2 "\
-usage: $0 [-adlpvMVCHPT] [-- grep++-flags ] pattern
+usage: $0 [-adlpvMVCHPTQ] [-- grep++-flags ] pattern
 where   -a include more \$RAILS_ROOT top-level directories
         -d include \$RAILS_ROOT/db directory
         -l include \$RAILS_ROOT/lib in search
@@ -19,6 +19,7 @@ where   -a include more \$RAILS_ROOT top-level directories
         -L only \$RAILS_ROOT/app/lib
         -P only \$RAILS_ROOT/public
         -T only \$RAILS_ROOT/test
+        -Q query directories about to be hunted
 
 -[MVCHLPT] don't play well with -a, but can combine with -d, -l, -p and -v.
 "
@@ -27,10 +28,10 @@ where   -a include more \$RAILS_ROOT top-level directories
 }
 
 
-opts= aflag= dflag= lflag= pflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag=
+opts= aflag= dflag= lflag= pflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag= Qflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
 
-while getopts :adlpvMVCHLPTABcFGhinNqstxXZ ch; do
+while getopts :adlpvMVCHLPQTABcFGhinNqstxXZ ch; do
     case "$ch" in
       a) let aflag++ ;;
       d) dflag=1 ;;
@@ -45,6 +46,8 @@ while getopts :adlpvMVCHLPTABcFGhinNqstxXZ ch; do
       L) Lflag=1 ;;
       P) Pflag=1 ;;
       T) Tflag=1 ;;
+
+      Q) Qflag=1 ;;
 
       [ABcFGhinNqstxXZ]) opts="-${opts#-}$ch" ;;
 
@@ -88,6 +91,9 @@ else
     [[ -n "$pflag" ]] && dirs+=(public/)
 fi
 
-find "${dirs[@]%/}" -type f -print0 | xargs -0 grep++ -Lsti $opts "$@"
+if [[ -n "$Qflag" ]]
+  then echo "${dirs[@]%/}"
+  else find "${dirs[@]%/}" -type f -print0 | xargs -0 grep++ -Lsti $opts "$@"
+fi
 exit 0
 
