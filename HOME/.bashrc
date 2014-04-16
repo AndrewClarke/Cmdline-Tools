@@ -60,7 +60,7 @@ export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tpu
 export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APP_SUBDIR-\w}\[ \]▬▶\['"$(tput sgr0)"' \]'
 
 export PS1='${DEPTH# }'
-export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]<BR:$BRANCH>\['"$(tput sgr0)"'\]}${HOSTNAME:+\['"$(tput setaf 6; tput bold)"'\]@$HOSTNAME\['"$(tput sgr0)"'\]} '
+export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]<BR:$BRANCH>\['"$(tput sgr0)"'\]}${HOSTNAME:+\['"$(tput setaf 6; tput bold)"'\]@'"$(hostname -s)"'\['"$(tput sgr0)"'\]} '
 export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tput sgr0)"'\]}'
 export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APP_SUBDIR-\w} =>\['"$(tput sgr0)"'\] '
 
