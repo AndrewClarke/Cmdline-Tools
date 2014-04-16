@@ -6,11 +6,12 @@ usage() {
     [[ $# -gt 0 ]] && echo >&2 "$@"
 
     echo >&2 "\
-usage: $0 [-adlpMVCHPT] [-- grep++-flags ] pattern
+usage: $0 [-adlpvMVCHPT] [-- grep++-flags ] pattern
 where   -a include more \$RAILS_ROOT top-level directories
         -d include \$RAILS_ROOT/db directory
         -l include \$RAILS_ROOT/lib in search
         -p include \$RAILS_ROOT/public in search
+        -v include \$RAILS_ROOT/vendor in search
         -M only \$RAILS_ROOT/app/models
         -V only \$RAILS_ROOT/app/views
         -C only \$RAILS_ROOT/app/controllers
@@ -19,22 +20,23 @@ where   -a include more \$RAILS_ROOT top-level directories
         -P only \$RAILS_ROOT/public
         -T only \$RAILS_ROOT/test
 
--[MVCHLPT] don't play well with -a, but can combine with -d, -l and -p.
+-[MVCHLPT] don't play well with -a, but can combine with -d, -l, -p and -v.
 "
 
     exit 1
 }
 
 
-opts= aflag= dflag= lflag= pflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag=
+opts= aflag= dflag= lflag= pflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
 
-while getopts :adlpMVCHLPTABcFGhinNqstvxXZ ch; do
+while getopts :adlpvMVCHLPTABcFGhinNqstxXZ ch; do
     case "$ch" in
       a) let aflag++ ;;
       d) dflag=1 ;;
       l) lflag=1 ;;
       p) pflag=1 ;;
+      v) vflag=1 ;;
 
       M) Mflag=1 ;;
       V) Vflag=1 ;;
@@ -44,7 +46,7 @@ while getopts :adlpMVCHLPTABcFGhinNqstvxXZ ch; do
       P) Pflag=1 ;;
       T) Tflag=1 ;;
 
-      [ABcFGhinNqstvxXZ]) opts="-${opts#-}$ch" ;;
+      [ABcFGhinNqstxXZ]) opts="-${opts#-}$ch" ;;
 
       ?) [[ "X$OPTARG" == 'X?' ]] && usage
          usage "invalid flag: $OPTARG"
@@ -66,8 +68,8 @@ else
     cd "$APP"
     if [[ -n "$aflag" ]]; then
         # beware - a NOT pattern!
-        dirs=(!(db|lib|log|public|spec|test|tmp)/)
-        (( $aflag > 1 )) && dirs+=(db/ lib/ public/ spec/ test/ script/ vendor/)
+        dirs=(!(db|lib|log|public|spec|script|test|vendor|tmp)/)
+        (( $aflag > 1 )) && dirs+=(db/ lib/ public/ spec/ script/ test/ vendor/)
     elif [[ -z "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag$Tflag" ]]; then
         # beware - a NOT pattern!
         dirs=(!(db|lib|log|public|spec|test|tmp|script|vendor|data)/)
