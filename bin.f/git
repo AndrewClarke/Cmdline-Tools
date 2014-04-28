@@ -13,7 +13,8 @@ git() {
         call= result=1
     elif [[ "$PWD" == $HOME/tickit && "$1" == @(huh|status|pull|pulla) ]]; then
         HERE="$PWD"
-        trap 'cd "$HERE"' RETURN HUP INT QUIT TERM
+        OAPP="$APP"
+        trap 'cd "$HERE"; [[ -n "$OAPP" ]] && app -n "${OAPP##*/}"' RETURN HUP INT QUIT TERM
 
         _first=1
         for _d in @(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])); do
@@ -26,7 +27,6 @@ git() {
             ((result < x)) && result=$x
         done
 
-        cd "$HERE"
         return $result
     fi
 
@@ -84,8 +84,8 @@ app() {
     OPTIND=1
     while getopts :nv ch; do
       case "$ch" in
-        n) nflag=1 ;;
-        v) vflag=1 ;;
+        n) nflag=1 ;;   # no move - just echo or set
+        v) vflag=1 ;;   # verbalise
         *) echo >&2 "usage: app [-n] [-v] [branch]"
            return 1 ;;
       esac
@@ -103,9 +103,6 @@ app() {
           then export APP=~/tickit/"$vers"
           else export APP=~/tickit-"$vers"
         fi
-    elif [[ -z "$vflag" && -n "$nflag" ]]; then
-        # for convenience, allow app -n to talk like -v
-        vflag=1
     fi
 
     [[ -z "$nflag" ]] && cd "$APP" && know_branch >/dev/null 2>/dev/null
