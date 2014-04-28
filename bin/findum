@@ -31,6 +31,7 @@ where   -a include more \$RAILS_ROOT top-level directories
 opts= aflag= dflag= lflag= pflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag= Qflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
 
+OPTIND=1
 while getopts :adlpvMVCHLPQTABcFGhinNqstxXZ ch; do
     case "$ch" in
       a) let aflag++ ;;

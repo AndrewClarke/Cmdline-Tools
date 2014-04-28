@@ -38,6 +38,7 @@ Only -D, -S and -L flags are allowed if providing a string.
 unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag
 typeset -a wflag hflag Iflag
 
+OPTIND=1
 while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;

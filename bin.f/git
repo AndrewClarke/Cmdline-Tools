@@ -81,6 +81,7 @@ git() {
 
 app() {
     local nflag= vflag=
+    OPTIND=1
     while getopts :nv ch; do
       case "$ch" in
         n) nflag=1 ;;

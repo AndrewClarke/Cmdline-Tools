@@ -38,6 +38,7 @@ under the influence of any -U, -F or -I flag.
 
 Uflag=0 Fflag=0 Iflag=0
 fang=
+OPTIND=1
 while getopts :UFI ch; do
     case "$ch" in
       U) Uflag=1 ;;

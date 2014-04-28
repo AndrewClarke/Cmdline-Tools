@@ -25,6 +25,7 @@ where   -d  select database (default \$DBNAME:=mysql)
 }
 
 
+OPTIND=1
 # why do BSD-inspired getopts like to be so complicated but hate +opt ???
 while [[ "X$1" = X[-+]* ]]; do
     val="${1:0:1}"
