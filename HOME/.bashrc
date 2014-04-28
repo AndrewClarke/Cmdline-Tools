@@ -1,7 +1,7 @@
 
 case $- in
-    *i*) ;;
-      *) return;;
+  *i*) ;;
+    *) return;;
 esac
 
 stty erase '^h'     # death to DEC for foisting the VT100 on the world.
@@ -28,13 +28,18 @@ fi
 
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-for i in ~/bin.f/*; do
-    [[ -f "$i" && -x "$i" ]] && . $i
-done
+# bash is too retarded for a $FPATH - have to load 'em manually
+if [[ -d ~/bin.f/ ]]; then
+    for i in ~/bin.f/*; do
+        [[ -f "$i" && -x "$i" ]] && . $i
+    done
+fi
 
-# Add an "alert" alias for long running commands.  Use like so:
-#   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "$debian_chroot" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
 
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
@@ -54,12 +59,12 @@ fi
 # TIP: put the cursor on the magic characters and press sequence g8 -
 # you'll see the bytes constituting those glyphs.
 #
-export PS1='${DEPTH# }'
+export PS1='${PSpfx}${DEPTH# }'
 export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]«\[BR:\]$BRANCH»\['"$(tput sgr0)"' \]}'
 export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tput sgr0)"'\]}'
 export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APP_SUBDIR-\w}\[ \]▬▶\['"$(tput sgr0)"' \]'
 
-export PS1='${DEPTH# }'
+export PS1='${PSpfx}${DEPTH# }'
 export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]<BR:$BRANCH>\['"$(tput sgr0)"'\]}${HOSTNAME:+\['"$(tput setaf 6; tput bold)"'\]@'"$(hostname -s)"'\['"$(tput sgr0)"'\]} '
 export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tput sgr0)"'\]}'
 export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APP_SUBDIR-\w} =>\['"$(tput sgr0)"'\] '
