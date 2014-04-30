@@ -13,10 +13,12 @@ vflag=
 usage() {
     [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
 
-    echo >&2 "usage: $myname [-v] [-d database] -l ['likepattern'] | tabname ...
+    echo >&2 "usage: $myname [-v] [+t] [+B] [-d database]   -l ['likepattern'] | tabname ...
 where   -d  select database (default \$DBNAME:=mysql)
         -l  list tables (optionally like pattern)
         -v  emit table name before each table (how?)
+        -t  pass mysql --table option (default; switch off with +t)
+        -B  pass mysql --batch option (default; switch off with +B)
 
 -d ?  shows all available databases - no other flags allowed
 "
@@ -25,7 +27,6 @@ where   -d  select database (default \$DBNAME:=mysql)
 }
 
 
-OPTIND=1
 # why do BSD-inspired getopts like to be so complicated but hate +opt ???
 while [[ "X$1" = X[-+]* ]]; do
     val="${1:0:1}"
@@ -53,8 +54,11 @@ while [[ "X$1" = X[-+]* ]]; do
           -l) lflag=1 ;;
           -v) vflag=1 ;;
           +v) vflag= ;;
-          +B) Bflag= ;;
+          -t) tflag=-t ;;
           +t) tflag= ;;
+          -B) Bflag=-B ;;
+          +B) Bflag= ;;
+
           *)  usage "unknown option $val$ch" ;;
         esac
     done
