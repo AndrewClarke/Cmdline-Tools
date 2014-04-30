@@ -533,7 +533,7 @@ sub process ($$) {
 	    $prefix .= ':' if $nflag ne 'N';
 	}
 
-	$prefix .= "$rmfn " unless $hflag;
+	$prefix .= $rmfn unless $hflag;
 
 	if($Aflag && ($pcount || $ncount)) {
 	    $prefix .= $match != $vflag ? '@' : ' ';
