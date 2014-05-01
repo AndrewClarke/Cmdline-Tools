@@ -197,5 +197,5 @@ function TabOff()
    set noexpandtab nosmarttab
 endfunction
 
-hi Todo term=none ctermfg=none ctermbg=none
+hi Todo term=bold ctermfg=red ctermbg=none
 
