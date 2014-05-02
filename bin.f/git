@@ -86,17 +86,28 @@ git() {
 
 
 app() {
-    local nflag= vflag=
+    local nflag= vflag= lflag=
     OPTIND=1
-    while getopts :nv ch; do
+    while getopts :lnv ch; do
       case "$ch" in
+        l) lflag=1 ;;   # list available apps
         n) nflag=1 ;;   # no move - just echo or set
         v) vflag=1 ;;   # verbalise
-        *) echo >&2 "usage: app [-n] [-v] [branch]"
+        *) echo >&2 "usage: app [-l] [-n] [-v] [branch]"
            return 1 ;;
       esac
     done
     shift $((OPTIND-1))
+
+    if [[ -n "$lflag" ]]; then
+        if [[ ! -d ~/tickit ]]; then
+            echo >&2 "Cannot find ~/tickit directory"
+            return 1
+        fi
+
+        ls 2>&- -d ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::'
+        return 0
+    fi
 
     if [[ $# -gt 0 ]]; then
         local vers="$1"
@@ -117,10 +128,7 @@ app() {
             ;;
         esac
 
-        if [[ -d ~/tickit ]]
-          then export APP=~/tickit/"$vers"
-          else export APP=~/tickit-"$vers"
-        fi
+        export APP=~/tickit/"$vers"
     fi
 
     [[ -z "$nflag" ]] && cd "$APP" && know_branch >/dev/null 2>/dev/null
