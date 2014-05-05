@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# must be in a Rails environment - since that's where I'm using this...
+[[ -f Gemfile ]] || exit
+
+trap : 2        # INT kills the program but keeps the spin
+trap '' 3       # QUIT kills the program and stop spinning
+while
+    ( trap 2; exec "$@" ) & x=$!
+    trap "kill -2 $x 3; exit 1" 3
+do
+    wait $x
+done
+
