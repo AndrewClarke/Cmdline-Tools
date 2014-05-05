@@ -105,7 +105,24 @@ app() {
             return 1
         fi
 
-        ls 2>&- -d ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::'
+        ls 2>&- -d ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
+        {
+          first=yo
+          while read app; do
+              if [[ -z "$vflag" ]]; then
+                  echo $app
+              else
+                  if [[ -n "$first" ]]
+                    then first=
+                    else echo
+                  fi
+
+                  echo $app:
+                  ( \cd ~/tickit/$app && git branch | sed 's/^/  /' )
+              fi
+          done
+        }
+
         return 0
     fi
 
