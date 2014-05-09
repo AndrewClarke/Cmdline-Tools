@@ -23,11 +23,11 @@ git() {
     fi
 
     if [[ "$PWD" == $HOME/tickit && -n "$loopy" ]]; then
-        HERE="$PWD"
-        OAPP="$APP"
+        local HERE="$PWD"
+        local OAPP="$APP"
         trap 'cd "$HERE"; [[ -n "$OAPP" ]] && app -n "${OAPP##*/}"' RETURN HUP INT QUIT TERM
 
-        _first=1
+        local _first=1
         for _d in @(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])); do
             [[ -d "$HERE/$_d" ]] || continue
 
@@ -52,6 +52,7 @@ git() {
             git "$@" | sed '/./s/^/  /'
             x=$?
             ((result < x)) && result=$x
+            cd "$HERE"
         done
 
         return $result
