@@ -1,5 +1,6 @@
 #!/bin/bash
 myname="${0##*/}"
+shopt -s extglob
 
 # performs a table schema dump on a MySQL database.
 # TODO: cope with other database engines as needed.
@@ -77,11 +78,36 @@ elif [[ -z "$lflag" ]]; then
     [[ $# -eq 0 ]] && usage
 
     for i in "$@"; do
+        [[ -n "$vflag" ]] && echo "select 'TABLE $i' as 'table name';"
         echo "describe $i;"
     done
 elif [[ $# -eq 0 ]]; then
     echo "show tables;"
 else
     echo "show tables like '%$*%';"
-fi | mysql -D $DBNAME $Bflag $tflag
+fi | mysql -D $DBNAME $tflag $Bflag | {
+    first=1
+    while read line; do
+        case "$line" in
+          ('| TABLE '+([a-zA-Z0-9_])' |')
+            [[ -z "$first" ]] && echo
+            first=
+
+            name="${line#'| TABLE '}"
+            name="${name%%*(' ')'|'}"
+            echo "TABLE $name:"
+            ;;
+
+          ('| table name '*(' ')'|')
+            : ;;
+
+          (++(-)+)
+            : ;;
+
+          (*)
+            [[ -n "$vflag" ]] && echo -n "  "
+            echo "$line" ;;
+        esac
+    done
+}
 
