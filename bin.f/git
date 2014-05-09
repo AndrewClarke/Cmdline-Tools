@@ -11,7 +11,7 @@ git() {
     if [[ "$1" != help && "$2" == help ]]; then
         echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
         call= result=1
-    elif [[ "$1" == @(huh|status|pull|pulla) ]]; then
+    elif [[ "$1" == @(huh|status|fetch|pull|pulla) ]]; then
         loopy=1
     elif [[ "$1" == branch && $# -eq 1 ]]; then
         loopy=1
