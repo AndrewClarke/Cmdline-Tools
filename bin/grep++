@@ -21,7 +21,7 @@ my $exit = 1;
 our ($contFlag, $ncount, $pcount, $_0flag);
 our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, $Gflag, $hflag, $Hflag, $iflag, $Iflag);
 our (@jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
-our ($jflag, $gflag);
+our ($jflag, $gflag, $nahhh);
 
 my $isWin = $^O =~ /Win/i;
 my $pathSep = $isWin ? ';' : ':';
@@ -107,7 +107,9 @@ FLAGS:	-c	count matching lines
         -<pre>  print <pre> lines before matchine line
 	-A      annotate context lines from +digits or -digits
 
-        -C[#]	print first N lines matching per file (default 1).
+        -C[#]           print first N lines matching per file (default 1).
+        --nahhh[=#]     ignore lines longer than N (default 1000) to avoid
+                        minimised Javascript etc.
 
 Features marked (NI) are not implemented (or not properly)
 
@@ -174,6 +176,19 @@ sub Options {
         s/^(.)//;
         my $op = $1;
         my $val = $op eq '-' ? 1 : 0;
+
+        if($op && /-(\w+)(?:=(.*))?$/) {
+            my $cmd = $1;
+            $val = $2;
+
+            if($cmd eq 'nahhh') {
+                $nahhh = int($val) || 1000;
+                next;
+            }
+
+            usage "unknown flag: $op$_";
+            next;
+        }
 
         while($_) {
             s/^(.)//;
@@ -483,6 +498,8 @@ sub process ($$) {
         }
 
         chomp;
+        next LINE if defined $nahhh && length > $nahhh;
+
         $Sandpit::line = $_;	# save the unadulterated line. pattern matching may do damage to $_
         $Sandpit::indent = length $1 if /^(\s+)\S/;
         # hmmm - would it be better to calculate the indent after the pre-expr?
