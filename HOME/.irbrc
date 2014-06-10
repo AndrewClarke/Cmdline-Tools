@@ -1,6 +1,8 @@
 
+require 'rubygems'
+
 ## if ENV['RAILS_ENV'] && ENV['GEM_HOME']
-if ENV['GEM_HOME']
+if false && ENV['GEM_HOME']
   require 'rubygems'
 
   $:.unshift "#{ENV['GEM_HOME']}/gems/hirb-0.7.1/lib"
