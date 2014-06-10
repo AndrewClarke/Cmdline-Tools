@@ -42,9 +42,10 @@ function viw {
 
 
 function vi {
-    # if prove inside a $APP which is also a Rails project
-    #     replace any arg starting with M/ V/ or C/ with $APP/app/@(models|views|controllers)
-    # ALSO: when lazy-cutting-pasting from diff lines, it's nice to trim off the leading [ab]/
+    # if PWD is inside a $APP which is also a Rails project:
+    #   replace any arg starting with M/ V/ or C/ with $APP/app/@(models|views|controllers)
+    #   to help when lazy-cutting-pasting from diff lines, trim off the leading [ab]/
+    #   trim off trailing : for a similar reason
 
     local i raily=
     [[ -n "$APP" && -d "$APP/app" ]] && [[ "$PWD" == "$APP"?(/*) ]] && raily=1
@@ -62,6 +63,8 @@ function vi {
       elif [[ "$i" = b/* && ! -d b ]]; then
         i="${i#b/}"
       fi
+
+      [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
 
       args+=("$i")
     done
