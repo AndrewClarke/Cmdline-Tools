@@ -23,9 +23,9 @@ our ($aflag, $Aflag, $cflag, $Cflag, $Dflag, $Fflag, $Gflag, $hflag, $Hflag, $if
 our (@jflag, $lflag, $Lflag, $nflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag, $Zflag);
 our ($jflag, $gflag, $nahhh);
 
-my $isWin = $^O =~ /Win/i;
-my $pathSep = $isWin ? ';' : ':';
-my $dirSep = $isWin ? '\\' : '/';
+use constant IS_WIN => $^O =~ /Win/i;
+my $pathSep = IS_WIN ? ';' : ':';
+my $dirSep = IS_WIN ? '\\' : '/';
 
 
 package Sandpit;
@@ -150,6 +150,7 @@ sub Options {
 
     $vflag = 0;
 
+    # inject $GREPPP_OPTS from the env if it's self-injecting (leading -Z)
     $_ = $ENV{GREPPP_OPTS};
     if($ARGV[0] ne '-Z' && s/^-?Z//) {
         $Zflag++;
@@ -159,6 +160,9 @@ sub Options {
         }
     }
 
+    # the business with [](){} is the beginning of expressions on the cmdline
+    # something will use it one day...
+    #
     while($ARGV[0] =~ /(?:^[][(){}]$)|(?:^[-+])/) {
         $_ = shift @ARGV;
         last if $_ eq '--';
@@ -202,7 +206,7 @@ sub Options {
                 $split  = $OPTARG, last if $ch eq 'S';
 
                 $Gflag = $Gflag ? 'smart' : 'dumb', next if $ch eq 'G';
-                $Cflag = s/^(\d+)// ? $1 : 1,       last if $ch eq 'C';
+                $Cflag = s/^=?(\d+)// ? $1 : 1,     last if $ch eq 'C';
 
                 push(@patterns, $OPTARG), last if $ch eq 'e';
                 push(@prefix,   $OPTARG), last if $ch eq 'p';
@@ -327,7 +331,7 @@ sub Options {
     usage "-I and list of filenames are mutually exclusive"    if $Iflag && @ARGV;
     usage "patterns expected" unless @patterns;
 
-    if($Lflag) {
+    if($Lflag && ! IS_WIN) {        # Windows can wait...
         $smfn = `tput setaf 3`;
         $rmfn = `tput sgr0`;
         $smso = `tput setaf 6`;
