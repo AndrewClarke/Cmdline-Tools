@@ -116,7 +116,7 @@ app() {
         l) lflag=1 ;;   # list available apps
         n) nflag=1 ;;   # no move - just echo or set
         v) vflag=1 ;;   # verbalise
-        N) oflag=1 ;;   # go Native - make the current branch match the project
+        N) Nflag=1 ;;   # go Native - make the current branch match the project
 
         *) echo >&2 "usage: app [-l] [-n] [-v] [-N] [project]"
            return 1 ;;
