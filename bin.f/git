@@ -109,22 +109,29 @@ git() {
 
 
 app() {
-    local nflag= vflag= lflag=
+    local nflag= vflag= lflag= Nflag=
     OPTIND=1
-    while getopts :lnv ch; do
+    while getopts :lnvN ch; do
       case "$ch" in
         l) lflag=1 ;;   # list available apps
         n) nflag=1 ;;   # no move - just echo or set
         v) vflag=1 ;;   # verbalise
-        *) echo >&2 "usage: app [-l] [-n] [-v] [branch]"
+        N) oflag=1 ;;   # go Native - make the current branch match the project
+
+        *) echo >&2 "usage: app [-l] [-n] [-v] [-N] [project]"
            return 1 ;;
       esac
     done
     shift $((OPTIND-1))
 
+    if [[ ! -d ~/tickit ]]; then
+        echo >&2 "Cannot find ~/tickit directory"
+        return 1
+    fi
+
     if [[ -n "$lflag" ]]; then
-        if [[ ! -d ~/tickit ]]; then
-            echo >&2 "Cannot find ~/tickit directory"
+        if [[ -n "$nflag$Nflag" || $# -gt 0 ]]; then
+            echo >&2 "Cannot use -l with -n, -N or a named project"
             return 1
         fi
 
@@ -149,23 +156,30 @@ app() {
         return 0
     fi
 
+    if [[ -n "$Nflag" ]]; then
+        if [[ -n "$nflag$vflag" || $# -gt 0 ]]; then
+            echo >&2 "Cannot use -N with -n or a named project"
+            return 1
+        fi
+
+        if [[ "$PWD" != ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
+            echo >&2 "'app -N' only works if you are in a ~/tickit project"
+            return 1
+        fi
+
+        local xxx="${PWD#~/tickit/}"
+        xxx="${xxx%%/*}"
+        git checkout -m "$xxx"
+        return 0
+    fi
+
     if [[ $# -gt 0 ]]; then
         local vers="$1"
         case "$vers" in
+          -) cd ~/tickit; return 0 ;;
+
           +([0-9])+(.+([0-9]))) vers="rel-$vers" ;;
           +([0-9])*([a-z]))     vers="tod-$vers" ;;
-
-          -)
-            if [[ "$PWD" = ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
-                local xxx="${PWD#~/tickit/}"
-                xxx="${xxx%%/*}"
-                git checkout -m "$xxx"
-                return
-            fi
-
-            echo >&2 "'app -' only works if you are in a ~/tickit project"
-            return 1
-            ;;
         esac
 
         export APP=~/tickit/"$vers"
