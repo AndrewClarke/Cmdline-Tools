@@ -203,9 +203,9 @@ _raily_magic_cd() {
 }
 
 
-M() { _raily_magic_cd models      "$@"; }
-V() { _raily_magic_cd views       "$@"; }
-C() { _raily_magic_cd controllers "$@"; }
+M() { _raily_magic_cd models      "$@"; clear; }
+V() { _raily_magic_cd views       "$@"; clear; }
+C() { _raily_magic_cd controllers "$@"; clear; }
 
 
 know_branch
