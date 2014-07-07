@@ -30,7 +30,7 @@ git() {
         local _first=1
         for _d in @(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])); do
             [[ -d "$HERE/$_d" ]] || continue
-            [[ -f "$HERE/$_d/.gitskip" ]] && continue
+            [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
             if [[ -n "$iflag" ]]; then
                 while
