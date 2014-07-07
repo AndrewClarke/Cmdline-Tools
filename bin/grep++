@@ -107,8 +107,8 @@ FLAGS:	-c	count matching lines
         -<pre>  print <pre> lines before matchine line
 	-A      annotate context lines from +digits or -digits
 
-        -C[#]           print first N lines matching per file (default 1).
-        --nahhh[=#]     ignore lines longer than N (default 1000) to avoid
+        -C[#]           print first # lines matching per file (default 1).
+        --nahhh[=#]     ignore lines longer than # (default 250) to avoid
                         minimised Javascript etc.
 
 Features marked (NI) are not implemented (or not properly)
@@ -152,7 +152,10 @@ sub Options {
 
     # inject $GREPPP_OPTS from the env if it's self-injecting (leading -Z)
     $_ = $ENV{GREPPP_OPTS};
-    if($ARGV[0] ne '-Z' && s/^-?Z//) {
+    if($ARGV[0] eq '+Z') {
+        shift @ARGV;
+    }
+    elsif(s/^-Z//) {
         $Zflag++;
         foreach (split / /) {
             s/^/-/ unless /^[-+]/;
@@ -181,16 +184,29 @@ sub Options {
         my $op = $1;
         my $val = $op eq '-' ? 1 : 0;
 
-        if($op && /-(\w+)(?:=(.*))?$/) {
+        if($op eq '-' && /-(\w+)(?:=(.*))?$/) {
             my $cmd = $1;
             $val = $2;
 
             if($cmd eq 'nahhh') {
-                $nahhh = int($val) || 1000;
+                $nahhh = int($val) || 250;
                 next;
             }
 
-            usage "unknown flag: $op$_";
+            usage "unknown flag: --$_";
+            next;
+        }
+
+        if($op eq '+' && /\+(\w+)$/) {
+            my $cmd = $1;
+            $val = $2;
+
+            if($cmd eq 'nahhh') {
+                undef $nahhh;
+                next;
+            }
+
+            usage "unknown flag: ++$_";
             next;
         }
 
