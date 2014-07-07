@@ -101,7 +101,7 @@ fi
 
 if [[ -n "$Qflag" ]]
   then echo "${dirs[@]%/}"
-  else find "${dirs[@]%/}" -type f ! -name '*.pdf' ! -name '*.png' ! -name '*.jpg' -print0 | xargs -0 grep++ -Lsti $opts "$@"
+  else find "${dirs[@]%/}" -type f ! -name '*.pdf' ! -name '*.png' ! -name '*.jpg' -print0 | xargs -0 grep++ -Lsti --nahhh $opts "$@"
 fi
 exit 0
 
