@@ -16,7 +16,7 @@ git() {
     if [[ "$1" != help && "$2" == help ]]; then
         echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
         call= result=1
-    elif [[ "$1" == @(huh|status|fetch|pull|pulla) ]]; then
+    elif [[ "$1" == @(huh|status|fetch|pull|pulla|jones) ]]; then
         loopy=1
     elif [[ "$1" == branch && $# -eq 1 ]]; then
         loopy=1
@@ -81,6 +81,35 @@ git() {
         ## command git stash pop
 
         call= result=0
+        ;;
+
+      jones)      # as in, keeping up with...
+        call=
+        result=0
+
+        command git branch | sed 's/^ /-/; s/^\(.\) \(.*\)/\2 \1/' | sort | {
+            typeset -a branches
+            this=
+
+            while read name state; do
+                [[ "$state" == '*' ]] && this="$name"
+                branches+=("$name")
+            done
+
+            main="${branches[0]}"
+            dev="${branches[1]}"
+            if [[ "${#branches[@]}" -eq 2 && "$this" == tod-+([0-9])*([a-z]) ]] && [[ "$main" == rel-+([0-9])+(.+([0-9])) && "$dev" == tod-+([0-9])*([a-z]) ]]; then
+                # proven:
+                #  this directory only has 2 local branches: a release (branch it's following) and a development branch
+                #  current branch is the development branch
+
+                if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
+                    echo >&2 "Significant uncommitted work exists - cannot merge release $main"
+                else
+                    git merge -X patience origin/"$main"
+                fi
+            fi
+        }
         ;;
 
       branch)
