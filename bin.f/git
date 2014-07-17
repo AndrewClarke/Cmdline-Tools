@@ -106,7 +106,8 @@ git() {
                 if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
                     echo >&2 "Significant uncommitted work exists - cannot merge release $main"
                 else
-                    git merge -X patience origin/"$main"
+                    echo "Merging from origin/$main"
+                    git merge -X patience "origin/$main"
                 fi
             fi
         }
