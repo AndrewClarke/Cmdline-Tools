@@ -70,11 +70,11 @@ shift $((OPTIND-1))
 
 
 typeset -a dirs
-if [[ -z "${APP:=$RAILS_ROOT}" ]]; then
+if [[ -z "${APPL:=$RAILS_ROOT}" ]]; then
     # give up and do all subdirectories if not in a Rails project
     dirs=(*/)
 else
-    cd "$APP"
+    cd "$APPL"
     if [[ -n "$aflag" ]]; then
         # beware - a NOT pattern!
         dirs=(!(data|db|lib|log|public|script|spec|test|tmp|vendor)/)

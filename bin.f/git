@@ -22,10 +22,10 @@ git() {
         loopy=1
     fi
 
-    if [[ "$PWD" == $HOME/tickit && -n "$loopy" ]]; then
+    if [[ "$PWD" == "$APPL_TOP" && -n "$loopy" ]]; then
         local HERE="$PWD"
-        local OAPP="$APP"
-        trap 'cd "$HERE"; [[ -n "$OAPP" ]] && app -n "${OAPP##*/}"' RETURN HUP INT QUIT TERM
+        local OAPPL="$APPL"
+        trap 'cd "$HERE"; [[ -n "$OAPPL" ]] && app -n "${OAPPL##*/}"' RETURN HUP INT QUIT TERM
 
         local _first=1
         for _d in @(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])); do
@@ -49,7 +49,7 @@ git() {
 
             ((_first)) || echo
             _first=0
-            echo '~/tickit/'"$_d:"
+            echo '$APPL_TOP/'"$_d:"
             git "$@" | sed '/./s/^/  /'
             x=$?
             ((result < x)) && result=$x
@@ -154,8 +154,13 @@ app() {
     done
     shift $((OPTIND-1))
 
-    if [[ ! -d ~/tickit ]]; then
-        echo >&2 "Cannot find ~/tickit directory"
+    if [[ -z "$APPL_TOP" ]]; then
+        echo >&2 "Cannot find \$APPL_TOP environment variable"
+        return 1
+    fi
+
+    if [[ ! -d "$APPL_TOP" ]]; then
+        echo >&2 "Cannot find $APPL_TOP directory"
         return 1
     fi
 
@@ -165,7 +170,7 @@ app() {
             return 1
         fi
 
-        ls 2>&- -d ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
+        ls 2>&- -d "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
         {
           first=yo
           while read app; do
@@ -177,8 +182,8 @@ app() {
                     else echo
                   fi
 
-                  echo $app:
-                  ( \cd ~/tickit/$app && git branch | sed 's/^/  /' )
+                  echo "$app:"
+                  ( \cd "$APPL_TOP/$app" && git branch | sed 's/^/  /' )
               fi
           done
         }
@@ -192,12 +197,12 @@ app() {
             return 1
         fi
 
-        if [[ "$PWD" != ~/tickit/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
-            echo >&2 "'app -N' only works if you are in a ~/tickit project"
+        if [[ "$PWD" != "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
+            echo >&2 "'app -N' only works if you are in a Tickit project"
             return 1
         fi
 
-        local xxx="${PWD#~/tickit/}"
+        local xxx="${PWD#$APPL_TOP/}"
         xxx="${xxx%%/*}"
         git checkout -m "$xxx"
         return 0
@@ -222,18 +227,18 @@ app() {
     if [[ $# -gt 0 ]]; then
         local vers="$1"
         case "$vers" in
-          -) cd ~/tickit; return 0 ;;
+          -) cd "$APPL_TOP"; return 0 ;;
 
           +([0-9])+(.+([0-9]))) vers="rel-$vers" ;;
           +([0-9])*([a-z]))     vers="tod-$vers" ;;
         esac
 
-        export APP=~/tickit/"$vers"
+        export APPL="$APPL_TOP/$vers"
     fi
 
     [[ -n "$target" ]] && clear
-    [[ -z "$nflag" ]]  && cd "$APP$target" && know_branch >/dev/null 2>/dev/null
-    [[ -n "$vflag" ]]  && echo "APP = $APP"
+    [[ -z "$nflag" ]]  && cd "$APPL$target" && know_branch >/dev/null 2>/dev/null
+    [[ -n "$vflag" ]]  && echo "APPL = $APPL"
 
     return 0
 }  # app
@@ -242,11 +247,11 @@ app() {
 _raily_magic_cd() {
     local top="$1"
     shift
-    [[ -z "$APP" ]]          && { echo >&2 "\$APP is not defined"; return 1; }
-    [[ -d "$APP/app" ]]      || { echo >&2 "\$APP does not appear to be a Rails project"; return 1; }
-    [[ -d "$APP/app/$top" ]] || { echo >&2 "\$APP does not have an app/$top directory";   return 1; }
+    [[ -z "$APPL" ]]          && { echo >&2 "\$APPL is not defined"; return 1; }
+    [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project"; return 1; }
+    [[ -d "$APPL/app/$top" ]] || { echo >&2 "\$APPL does not have an app/$top directory";   return 1; }
 
-    cd "$APP/app/$top"
+    cd "$APPL/app/$top"
 }
 
 

@@ -42,21 +42,21 @@ function viw {
 
 
 function vi {
-    # if PWD is inside a $APP which is also a Rails project:
-    #   replace any arg starting with M/ V/ or C/ with $APP/app/@(models|views|controllers)
+    # if PWD is inside a $APPL which is also a Rails project:
+    #   replace any arg starting with M/ V/ or C/ with $APPL/app/@(models|views|controllers)
     #   to help when lazy-cutting-pasting from diff lines, trim off the leading [ab]/
     #   trim off trailing : for a similar reason
 
     local i raily=
-    [[ -n "$APP" && -d "$APP/app" ]] && [[ "$PWD" == "$APP"?(/*) ]] && raily=1
+    [[ -n "$APPL" && -d "$APPL/app" ]] && [[ "$PWD" == "$APPL"?(/*) ]] && raily=1
 
     typeset -a args
     for i in "$@"; do
       if [[ -n "$raily" && "$i" = [MVC]/* ]]; then
         case "$i" in
-          (M/*) i="$APP/app/models/${i#M/}" ;;
-          (V/*) i="$APP/app/views/${i#V/}" ;;
-          (C/*) i="$APP/app/controllers/${i#C/}" ;;
+          (M/*) i="$APPL/app/models/${i#M/}" ;;
+          (V/*) i="$APPL/app/views/${i#V/}" ;;
+          (C/*) i="$APPL/app/controllers/${i#C/}" ;;
         esac
       elif [[ "$i" = a/* && ! -d a ]]; then
         i="${i#a/}"

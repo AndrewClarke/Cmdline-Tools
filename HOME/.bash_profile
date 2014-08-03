@@ -5,8 +5,8 @@
 export ORIGIN_HOST ORIGIN_SITE ORIGIN_USER
 export DEPTH=
 
-: ${APP:=~/tickit/rel-3.2}
-export APP
+: ${APPL:=~/tickit/rel-3.2}
+export APPL
 
 export FPATH=$HOME/bin.f
 [[ -d /opt/unicon/bin ]] && export PATH="/opt/unicon/bin:$PATH"
