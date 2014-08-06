@@ -1,0 +1,3 @@
+#!/bin/ksh
+
+exec /usr/bin/ssh-add ~/.ssh/@(id_rsa|id_tickitinf|tickit-sydprod|tickit-ultraserve_id_dsa)
