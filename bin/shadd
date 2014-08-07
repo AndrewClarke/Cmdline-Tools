@@ -5,5 +5,7 @@ files=($({
   file ~/.ssh/* | sed -n 's/^\([^ ]*\): .* private key/\1/p'
 } | sort | uniq -u))
 
-[[ "${#files[@]}" -gt 0 ]] && exec /usr/bin/ssh-add "${files[@]}"
+[[ "${#files[@]}" -gt 0 ]] && /usr/bin/ssh-add "${files[@]}"
 
+echo
+ssh-add -l
