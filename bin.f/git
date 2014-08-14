@@ -1,7 +1,7 @@
 
 know_branch() {
     export BRANCH="$(command git 2>/dev/null branch --list | sed -n 's/^\* //p')" >/dev/null 2>/dev/null
-    [[ -r config/database.yml ]] && eval $(perl -ne 'print "export DBNAME=$1\n" if (/^development:/ ... /^\S/) && /^\s+database:\s*(\w+)/' config/database.yml) >/dev/null 2>/dev/null
+    [[ -r "$APPL/config/database.yml" ]] && eval $(perl -ne 'print "export DBNAME=$1\n" if (/^development:/ ... /^\S/) && /^\s+database:\s*(\w+)/' "$APPL/config/database.yml") >/dev/null 2>/dev/null
 }  # know_branch
 
 
