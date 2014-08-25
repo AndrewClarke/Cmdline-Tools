@@ -39,7 +39,8 @@ endfunction
 " syntax off
 filetype plugin on
 
-set guifont=Courier\ New\ 8
+" set guifont=Courier\ New\ 8
+set guifont=Courier\ 10\ Pitch\ 8
 
 let loaded_matchparen = 1
 " let did_load_filetypes = 1
