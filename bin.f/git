@@ -148,7 +148,7 @@ app() {
         v) vflag=1 ;;   # verbalise
         N) Nflag=1 ;;   # go Native - make the current branch match the project
 
-        *) echo >&2 "usage: app [-l] [-n] [-v] [-N] [M|V|C] [project]"
+        *) echo >&2 "usage: app [-l] [-n] [-v] [-N] [M|V|C|H] [project]"
            return 1 ;;
       esac
     done
@@ -209,16 +209,17 @@ app() {
     fi
 
     target=
-    if [[ "$1" == [MVC] ]]; then
+    if [[ "$1" == [MVCH] ]]; then
         if [[ -n "$nflag" ]]; then
-            echo >&2 "Cannot use -n with M, V, or C"
+            echo >&2 "Cannot use -n with M, V, C, or H"
             return 1
         fi
 
         case "$1" in
-          M) target=/app/models ;;
-          V) target=/app/views ;;
+          M) target=/app/models      ;;
+          V) target=/app/views       ;;
           C) target=/app/controllers ;;
+          H) target=/app/helpers     ;;
         esac
 
         shift
@@ -258,6 +259,7 @@ _raily_magic_cd() {
 M() { _raily_magic_cd models      "$@"; clear; }
 V() { _raily_magic_cd views       "$@"; clear; }
 C() { _raily_magic_cd controllers "$@"; clear; }
+H() { _raily_magic_cd helpers     "$@"; clear; }
 
 
 know_branch
