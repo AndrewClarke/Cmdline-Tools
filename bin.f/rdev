@@ -1,20 +1,16 @@
 #!/bin/ksh
 
 rdev() {
-    tmux                                               \
-        new-session                                 \; \
-        split-window -h                             \; \
-        send-keys app Enter                         \; \
-        send-keys cd Space app/views Enter          \; \
-        split-window                                \; \
-        send-keys app Enter                         \; \
-        send-keys cd Space app/helpers Enter        \; \
-        select-pane -L                              \; \
-        send-keys app Enter                         \; \
-        send-keys cd Space app/models Enter         \; \
-        split-window                                \; \
-        send-keys app Enter                         \; \
-        send-keys cd Space app/controllers Enter    \; \
+    tmux                           \
+        new-session             \; \
+        split-window -h         \; \
+        send-keys "app V" Enter \; \
+        split-window            \; \
+        send-keys "app H" Enter \; \
+        select-pane -L          \; \
+        send-keys "app M" Enter \; \
+        split-window            \; \
+        send-keys "app C" Enter \; \
         select-pane -U
 }
 
