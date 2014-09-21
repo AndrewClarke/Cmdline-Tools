@@ -26,6 +26,9 @@ where   -a include more \$RAILS_ROOT top-level directories
         -Q query directories about to be hunted
 
 -[MVCHLPT] don't play well with -a, but can combine with -d, -l, -p, -t and -v.
+
+Currently, the following flags are passed through to grep++:
+      -[ABcFGhinNqstxXZ]
 "
 
     exit 1
