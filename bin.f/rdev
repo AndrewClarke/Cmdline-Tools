@@ -1,16 +1,16 @@
 #!/bin/ksh
 
 rdev() {
-    tmux                           \
-        new-session             \; \
-        split-window -h         \; \
-        send-keys "app V" Enter \; \
-        split-window            \; \
-        send-keys "app H" Enter \; \
-        select-pane -L          \; \
-        send-keys "app M" Enter \; \
-        split-window            \; \
-        send-keys "app C" Enter \; \
+    tmux                             \
+        new-session               \; \
+        split-window -h           \; \
+        send-keys "app -V" Enter  \; \
+        split-window              \; \
+        send-keys "app -H" Enter  \; \
+        select-pane -L            \; \
+        send-keys "app -M" Enter  \; \
+        split-window              \; \
+        send-keys "app -C" Enter  \; \
         select-pane -U
 }
 
