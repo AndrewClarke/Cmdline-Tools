@@ -1,29 +1,31 @@
 #!/bin/ksh
 
 function usage {
-   echo >&2 "usage: $0 [-f] [-r]
+   echo >&2 "usage: $0 [-f | -m | -r]
 
 where:  -f  full: rollback, migrate and re-seed
         -r  rollback only
+        -m  migrate only
 
 Without -f, only runs 'rake db:migrate' && 'rake db:seed'
--f and -r are mutually exclusive.
+-f, -m and -r are mutually exclusive.
 "
    exit 1
 }
 
 
-fflag= rflag=
-while getopts :fr ch; do
+fflag= mflag= rflag=
+while getopts :fmr ch; do
     case "$ch" in
       f) fflag=1 ;;
+      m) mflag=1 ;;
       r) rflag=1 ;;
       *) usage ;;
     esac
 done
 shift $((OPTIND-1))
 
-[[ -n "$fflag" && -n "$rflag" ]] && usage
+[[ "$fflag$mflag$rflag" == 11* ]] && usage
 
 
 function bek {
@@ -48,7 +50,9 @@ fi
 
 cd "$APPL"
 
-if [[ -z "$fflag$rflag" ]]; then
+if [[ -n "$mflag" ]]; then
+    bek db:migrate
+elif [[ -z "$fflag$rflag" ]]; then
     bek db:migrate && bek --trace db:seed
 else
     last_mig="$(ls "$APPL/db/migrate" | tail -1)"
@@ -58,7 +62,6 @@ else
         echo "  $last_mig"
         return 1
     fi
-
 
     nthings=$(ls "$APPL/db/migrate"/*_survey?(s)_* | wc -l)
 

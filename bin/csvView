@@ -10,19 +10,22 @@ use Text::CSV;
 
 my ($listFields, $origin, $noheading, @fields, $oformat);
 GetOptions(
-    '0' => sub { $origin = 0 },
-    '1' => sub { $origin = 1 },
-    'u' => sub { $oformat = 'UNL' },
-    'c' => sub { $oformat = 'CSV' },
-    'n' => \$noheading,
+    '0' => sub { $origin = 0 },         # number fields starting from 0
+    '1' => sub { $origin = 1 },         # number fields starting from 1
+    'u' => sub { $oformat = 'UNL' },    # assume UNLOAD format file
+    'c' => sub { $oformat = 'CSV' },    # assume CSV format file
+    'n' => \$noheading,                 # assume no headings in the file (default for UNL)
 
     'l' => \$listFields,
     'f=s' => \@fields,
 ) or die "Bad options";
+
+die "Cannot use -l with -u\n" if $listFields && $oformat eq 'UNL';
 die "Cannot use -l with -n\n" if $listFields && $noheading;
 die "Cannot use -l with -f\n" if $listFields && @fields;
 @ARGV or die "File name expected";
 
+$noheading = 1 if $oformat eq 'UNL';
 $origin //= 1;
 @fields = split /,/, join ',', @fields;
 my $fname = $ARGV[0];
@@ -53,15 +56,18 @@ if(@fields) {
     my @list;
 
     foreach (@fields) {
+        # fields can be specified as F or F..F2
         my ($a, $z) = /^(.+?)(?:\.\.(.+))?$/;
         die "Cannot nominate field 0 unless -0 is given\n" if $a =~ /^0+$/ && $origin;
         die "Must give numeric fields with -f when using -n\n" if $noheading && ($a !~ /^\d+$/ || $z !~ /^\d*$/);
 
+        # if the field F is given by name
         if($a !~ /^\d+/) {
             die "There is no field named '$a' in the heading line\n" unless exists $fieldNames{$a};
             $a = $fieldNames{$a};
         }
 
+        # if trailing field F2 given by name
         if($z ne '' && $z !~ /^\d+/) {
             die "There is no field named '$z' in the heading line\n" unless exists $fieldNames{$z};
             $z = $fieldNames{$z};

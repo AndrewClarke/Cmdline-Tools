@@ -125,6 +125,11 @@ git() {
             echo >&2 "Not allowing $(tput setaf 3)git stash$(tput sgr0) without a sub-command! Do you mean list, show or save, or do you mean drop, pop, apply, branch, clear or create?"
             call= result=1
         fi
+
+        ## if [[ "$2" == save ]] && [[ $# -lt 3 || ${!#} == -* ]]; then
+        ##     echo >&2 "Try putting a message that means something to you, tiger!"
+        ##     call= result=1
+        ## fi
         ;;
     esac
 
@@ -138,36 +143,51 @@ git() {
 }  # git
 
 
+app_usage() {
+   echo >&2 "usage: app [-l] [-n] [-v] [-N] [-M|-V|-C|-H] [project]"
+   [[ $# -gt 0 ]] && echo >&2 "$@"
+   return 1
+}  # app_usage
+
+
 app() {
     local nflag= vflag= lflag= Nflag=
-    OPTIND=1
-    while getopts :lnvN ch; do
+    local Mflag= Vflag= Cflag= Hflag= OPTIND=1
+
+    while getopts :lnvNMVCH ch; do
       case "$ch" in
         l) lflag=1 ;;   # list available apps
         n) nflag=1 ;;   # no move - just echo or set
         v) vflag=1 ;;   # verbalise
         N) Nflag=1 ;;   # go Native - make the current branch match the project
 
-        *) echo >&2 "usage: app [-l] [-n] [-v] [-N] [M|V|C|H] [project]"
-           return 1 ;;
+        [MVCH]) eval ${ch}flag=${ch} ;;
+
+        *) app_usage; return
       esac
     done
     shift $((OPTIND-1))
 
+    case "$Mflag$Vflag$Cflag$Hflag" in
+      ??*)
+        app_usage "-M, -V, -C, and -H are mutually exclusive"; return
+    esac
+
+    if [[ -n "$nflag" && -n "$Mflag$Vflag$Cflag$Hflag" ]]; then
+        app_usage "Cannot use -n with -M, -V, -C, or -H"; return
+    fi
+
     if [[ -z "$APPL_TOP" ]]; then
-        echo >&2 "Cannot find \$APPL_TOP environment variable"
-        return 1
+        app_usage "Cannot find \$APPL_TOP environment variable"; return
     fi
 
     if [[ ! -d "$APPL_TOP" ]]; then
-        echo >&2 "Cannot find $APPL_TOP directory"
-        return 1
+        app_usage "Cannot find $APPL_TOP directory"; return
     fi
 
     if [[ -n "$lflag" ]]; then
         if [[ -n "$nflag$Nflag" || $# -gt 0 ]]; then
-            echo >&2 "Cannot use -l with -n, -N or a named project"
-            return 1
+            app_usage "Cannot use -l with -n, -N or a named project"; return
         fi
 
         ls 2>&- -d "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
@@ -193,13 +213,11 @@ app() {
 
     if [[ -n "$Nflag" ]]; then
         if [[ -n "$nflag$vflag" || $# -gt 0 ]]; then
-            echo >&2 "Cannot use -N with -n or a named project"
-            return 1
+            app_usage "Cannot use -N with -n or a named project"; return
         fi
 
         if [[ "$PWD" != "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
-            echo >&2 "'app -N' only works if you are in a Tickit project"
-            return 1
+            app_usage "'app -N' only works if you are in a Tickit project"; return
         fi
 
         local xxx="${PWD#$APPL_TOP/}"
@@ -209,21 +227,12 @@ app() {
     fi
 
     target=
-    if [[ "$1" == [MVCH] ]]; then
-        if [[ -n "$nflag" ]]; then
-            echo >&2 "Cannot use -n with M, V, C, or H"
-            return 1
-        fi
-
-        case "$1" in
-          M) target=/app/models      ;;
-          V) target=/app/views       ;;
-          C) target=/app/controllers ;;
-          H) target=/app/helpers     ;;
-        esac
-
-        shift
-    fi
+    case "$Mflag$Vflag$Cflag$Hflag" in
+      M) target=/app/models      ;;
+      V) target=/app/views       ;;
+      C) target=/app/controllers ;;
+      H) target=/app/helpers     ;;
+    esac
 
     if [[ $# -gt 0 ]]; then
         local vers="$1"
