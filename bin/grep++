@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Copyright (C) 1992-2012 Andrew Clarke
 # Free to a good home.
-$0 =~ s:.*/::;		# tidy up the program name
+$0 =~ s:.*/::;          # tidy up the program name
 
 use 5.8.0;              # should be sufficient
 use strict;
@@ -51,7 +51,7 @@ sub usage {
     if($helping = $_[0] eq -helping)
         { shift }
     else
-	{ select STDERR };
+        { select STDERR };
 
     print "$0: @_\n" if @_;
 
@@ -63,49 +63,49 @@ sub usage {
 
 $0 FLAGS [-e pattern [-e pattern]... | -f pattern_file | pattern] [file...]
 
-FLAGS:	-c	count matching lines
-        -l	list files containing a match
-        -q	just test matching status without printing
-        -Z	Apply \$GREPPP_OPTS as if typed on command line
-        	IF \$GREPPP_OPTS starts with -Z then it is auto-applied
-        -0ooo	set line terminator to oct(ooo)
+FLAGS:  -c      count matching lines
+        -l      list files containing a match
+        -q      just test matching status without printing
+        -Z      Apply \$GREPPP_OPTS as if typed on command line
+                IF \$GREPPP_OPTS starts with -Z then it is auto-applied
+        -0ooo   set line terminator to oct(ooo)
 
         -I file file supplies list of input files: may use - for STDIN
         -D      treat arguments as \$PATH type lists. Search all files found.
-        -h	don't print file name in front of matching lines
-        -H	print file name even if only one file listed
+        -h      don't print file name in front of matching lines
+        -H      print file name even if only one file listed
         -G      group lines from same file with separating blank line.
               - use single -G to print a blank between each file
               - use -GG to smartly bunch lines from contiguous sets of single
                 lines. Umm, try it to make sense of this poor explanation.
-        -s	be silent about unreadable or missing files
-        -t	ignore non-text files only (takes a damn good guess)
+        -s      be silent about unreadable or missing files
+        -t      ignore non-text files only (takes a damn good guess)
 
-        -a	AND - all expressions must match (default behaviour is OR)
-        -B	compress blanks and remove leading and trailing blanks
-        -#	delete #comments first (doesn't understand strings (YET))
-        -\\	recognise continuation lines in source and glue together
+        -a      AND - all expressions must match (default behaviour is OR)
+        -B      compress blanks and remove leading and trailing blanks
+        -#      delete #comments first (doesn't understand strings (YET))
+        -\\     recognise continuation lines in source and glue together
         -j expr execute Perl expression to join lines into one masse
         -J file execute Perl code in file to join lines into one masse
         -{      delete {comments} first (doesn't understand strings (YET))
-        -F	split multiple patterns at newline, and ignore magic chars
+        -F      split multiple patterns at newline, and ignore magic chars
         -L      highlight matching text (experimental)
-        -i	ignore upper/lower case distinctions
-        -n	print line number of matching lines
-        -N	print line number of matching lines as file[lineno]
-        -v	invert the sense of a match - even behaves properly with -[clq]
+        -i      ignore upper/lower case distinctions
+        -n      print line number of matching lines
+        -N      print line number of matching lines as file[lineno]
+        -v      invert the sense of a match - even behaves properly with -[clq]
           TODO: make it possible to invert individual patterns (see -e and -a)
-        -x	lines must match exactly - implicit ^pattern\$
+        -x      lines must match exactly - implicit ^pattern\$
         -X      extract match - print each match on one line (NI)
-        -p expr	execute Perl expression prior to matching
-        -P file	execute Perl expressions in file prior to matching
-        -o expr	execute Perl expression prior to output
-        -O file	execute Perl expressions in file prior to output
+        -p expr execute Perl expression prior to matching
+        -P file execute Perl expressions in file prior to matching
+        -o expr execute Perl expression prior to output
+        -O file execute Perl expressions in file prior to output
         -S pat  split line with pat to \@F and treat patterns as boolean exprs
         -g      treat all patterns as general Perl expressions with access to \$_
         +<nxt>  print <nxt> lines after matching line
         -<pre>  print <pre> lines before matchine line
-	-A      annotate context lines from +digits or -digits
+        -A      annotate context lines from +digits or -digits
 
         -C[#]           print first # lines matching per file (default 1).
         --nahhh[=#]     ignore lines longer than # (default 250) to avoid
@@ -212,9 +212,9 @@ sub Options {
 
         while($_) {
             s/^(.)//;
-            my $ch = $1;	# parameter or remaining flags are in $_
+            my $ch = $1;        # parameter or remaining flags are in $_
 
-            if($val) {	# collect options which REQUIRE leading -
+            if($val) {  # collect options which REQUIRE leading -
                 $OPTARG = $_ || shift @ARGV if $ch =~ /[I0efpPjJoOS]/;
 
                 $Iflag  = $OPTARG, last if $ch eq 'I';
@@ -312,7 +312,7 @@ sub Options {
 
             $contFlag = $val, next if $ch eq "\\";
 
-	    usage -helping if "$op$ch" eq '-?';
+            usage -helping if "$op$ch" eq '-?';
             usage "unknown flag: $op$ch";
         }
     }
@@ -324,11 +324,11 @@ sub Options {
     push @patterns, shift @ARGV unless @patterns || ! @ARGV;
 
     if(defined $pcount or defined $ncount) {
-	$pcount = $ncount unless defined $pcount;
-	$ncount = $pcount unless defined $ncount;
+        $pcount = $ncount unless defined $pcount;
+        $ncount = $pcount unless defined $ncount;
     }
     elsif($Aflag) {
-	usage "-A only valid with -digits or +digits";
+        usage "-A only valid with -digits or +digits";
     }
 
     # following is HARMLESS ACTUALLY, but annoying to get the complaint when using $GREPPP_OPTS
@@ -354,7 +354,7 @@ sub Options {
         $rmso = `tput sgr0`;
     }
 
-    if($Fflag) {	# like dumb old fgrep
+    if($Fflag) {        # like dumb old fgrep
         # split all patterns at a newline character
         my @pats = @patterns;
         @patterns = ();
@@ -362,7 +362,7 @@ sub Options {
         foreach my $i (@pats) {
             foreach (split /\n/, $i) {
                 next unless $_;
-                s/(\W)/\\$1/g;		# escape all magic chars
+                s/(\W)/\\$1/g;          # escape all magic chars
                 push @patterns, $i;
             }
         }
@@ -499,9 +499,9 @@ sub process ($$) {
     $/ = chr $_0flag if defined $_0flag;
 
     LINE: while(($_ = ''), getline) {
-	$enque = 1;
+        $enque = 1;
 
-	# gather up continuation lines if command flag says to
+        # gather up continuation lines if command flag says to
         # TODO: a pattern to recognise continuation lines would be cool...
         #
         if($contFlag) {
@@ -520,7 +520,7 @@ sub process ($$) {
         chomp;
         next LINE if defined $nahhh && length > $nahhh;
 
-        $Sandpit::line = $_;	# save the unadulterated line. pattern matching may do damage to $_
+        $Sandpit::line = $_;    # save the unadulterated line. pattern matching may do damage to $_
         $Sandpit::indent = length $1 if /^(\s+)\S/;
         # hmmm - would it be better to calculate the indent after the pre-expr?
 
@@ -534,55 +534,55 @@ sub process ($$) {
         $Sandpit::indent0 = -1               if ! $match && $omatch;
         $omatch = $match;
 
-	# under -v with (-q or -l) will consider success if NO matches ie $count == 0
-	# filename or exit status will be emitted after the end of the LINE loop
-	#
+        # under -v with (-q or -l) will consider success if NO matches ie $count == 0
+        # filename or exit status will be emitted after the end of the LINE loop
+        #
         if($vflag && ($qflag || $lflag)) {
             ++$count if $match;
-	    next LINE;
-	}
+            next LINE;
+        }
 
-	# a quick exit status for a positive match with -q
-	exit 0 if $qflag && $match;
+        # a quick exit status for a positive match with -q
+        exit 0 if $qflag && $match;
 
-	if($match != $vflag) {
-            $exit = 0 if $exit == 1;		# ultimately success if we get a match and no other errors
+        if($match != $vflag) {
+            $exit = 0 if $exit == 1;            # ultimately success if we get a match and no other errors
 
-	    ++$count;
-	    next LINE if $cflag;
+            ++$count;
+            next LINE if $cflag;
 
-	    if($lflag) {
-		print "$fname\n";
-		last LINE;
-	    }
-	}
+            if($lflag) {
+                print "$fname\n";
+                last LINE;
+            }
+        }
 
-	$prefix = '';
-	unless($hflag) {
-	    $prefix .= "$smfn$fname";
-	    $prefix .= ':' unless $nflag eq 'N';
-	}
+        $prefix = '';
+        unless($hflag) {
+            $prefix .= "$smfn$fname";
+            $prefix .= ':' unless $nflag eq 'N';
+        }
 
-	if($nflag) {
-	    $prefix .= '[' if $nflag eq 'N';
-	    $prefix .= $Sandpit::lineno;
-	    $prefix .= ']' if $nflag eq 'N';
-	    $prefix .= ':' if $nflag ne 'N';
-	}
+        if($nflag) {
+            $prefix .= '[' if $nflag eq 'N';
+            $prefix .= $Sandpit::lineno;
+            $prefix .= ']' if $nflag eq 'N';
+            $prefix .= ':' if $nflag ne 'N';
+        }
 
-	$prefix .= $rmfn unless $hflag;
+        $prefix .= $rmfn unless $hflag;
 
-	if($Aflag && ($pcount || $ncount)) {
-	    $prefix .= $match != $vflag ? '@' : ' ';
-	}
+        if($Aflag && ($pcount || $ncount)) {
+            $prefix .= $match != $vflag ? '@' : ' ';
+        }
 
         if($match != $vflag or $nextra > 0) {
-	    $enque = 0;
+            $enque = 0;
             unless($Lflag) {
                 $_ = $Sandpit::line;
             }
             else {
-	        # highlighting crap
+                # highlighting crap
                 $_ = '';
                 my ($p, $lo, $hi) = 0;
 
@@ -601,34 +601,34 @@ sub process ($$) {
             }
 
             if($match != $vflag)
-		{ $nextra = $ncount }
+                { $nextra = $ncount }
             else
-		{ --$nextra }
+                { --$nextra }
 
             if($Gflag && $printed && $ofname && ! $last) {
                 print "\n";
             }
 
-	    if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $Sandpit::lineno - 1) {
-		my $ch = defined $last ? '-' : '=';
-		print '  ', $ch x 40, "\n";
-	    }
+            if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $Sandpit::lineno - 1) {
+                my $ch = defined $last ? '-' : '=';
+                print '  ', $ch x 40, "\n";
+            }
 
             print "$_$/" foreach @queue;
-	    @queue = ();
+            @queue = ();
             print "$prefix$_";
             print $/ if $/ eq "\n" || ! /^\s*$/;
-	    $last = $Sandpit::lineno;
-	    $printed = 1;
+            $last = $Sandpit::lineno;
+            $printed = 1;
 
-	    last LINE if $Cflag && $count >= $Cflag && $nextra == 0;
+            last LINE if $Cflag && $count >= $Cflag && $nextra == 0;
         }
     }
     continue {
-	# stash lines that might be needed for -<num> context printing
-	if($enque && ! ($cflag || $qflag || $lflag)) {
-	    enque @queue, "$prefix$Sandpit::line";
-	}
+        # stash lines that might be needed for -<num> context printing
+        if($enque && ! ($cflag || $qflag || $lflag)) {
+            enque @queue, "$prefix$Sandpit::line";
+        }
     }
 
     if($cflag) {
@@ -642,7 +642,7 @@ sub process ($$) {
 
     # under -v with (-q or -l) we only consider success if NO matches ie $count == 0
     if($count == 0 && $vflag && ($qflag || $lflag)) {
-        exit 0 if $qflag;	# not sure if this should be after ALLLLL files
+        exit 0 if $qflag;       # not sure if this should be after ALLLLL files
         print "$fname\n";
     }
 
@@ -686,9 +686,9 @@ sub oneIndirect ($) {
     my $name = $_[0];
 
     if($name eq '-')
-	{ *IFD = *STDIN }
+        { *IFD = *STDIN }
     else
-	{ open IFD, '<', $name or die "cannot open $name: $!\n" }
+        { open IFD, '<', $name or die "cannot open $name: $!\n" }
 
     if($Dflag) {
         my $path;
