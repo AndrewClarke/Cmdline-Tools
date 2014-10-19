@@ -28,7 +28,7 @@ git() {
         trap 'cd "$HERE"; [[ -n "$OAPPL" ]] && app -n "${OAPPL##*/}"' RETURN HUP INT QUIT TERM
 
         local _first=1
-        for _d in @(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])); do
+        for _d in @(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])); do
             [[ -d "$HERE/$_d" ]] || continue
             [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
@@ -98,7 +98,7 @@ git() {
 
             main="${branches[0]}"
             dev="${branches[1]}"
-            if [[ "${#branches[@]}" -eq 2 && "$this" == tod-+([0-9])*([a-z]) ]] && [[ "$main" == rel-+([0-9])+(.+([0-9])) && "$dev" == tod-+([0-9])*([a-z]) ]]; then
+            if [[ "${#branches[@]}" -eq 2 && "$this" == tod-+([0-9])*([a-z]) ]] && [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$dev" == tod-+([0-9])*([a-z]) ]]; then
                 # proven:
                 #  this directory only has 2 local branches: a release (branch it's following) and a development branch
                 #  current branch is the development branch
@@ -119,6 +119,13 @@ git() {
             call= result=1
         fi
         ;;
+
+      ls)
+        shift
+        call=
+        ls "$@" $(command git status --porcelain | perl -ne 'chomp; print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
+        ;;
+
 
       stash)
         if [[ "$2" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then
@@ -190,7 +197,7 @@ app() {
             app_usage "Cannot use -l with -n, -N or a named project"; return
         fi
 
-        ls 2>&- -d "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
+        ls 2>&- -d "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])) | sed 's:.*/::' |
         {
           first=yo
           while read app; do
@@ -216,7 +223,7 @@ app() {
             app_usage "Cannot use -N with -n or a named project"; return
         fi
 
-        if [[ "$PWD" != "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))|tod-+([0-9])*([a-z]))?(/*) ]]; then
+        if [[ "$PWD" != "$APPL_TOP"/@(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z]))?(/*) ]]; then
             app_usage "'app -N' only works if you are in a Tickit project"; return
         fi
 
@@ -239,8 +246,8 @@ app() {
         case "$vers" in
           -) cd "$APPL_TOP"; return 0 ;;
 
-          +([0-9])+(.+([0-9]))) vers="rel-$vers" ;;
-          +([0-9])*([a-z]))     vers="tod-$vers" ;;
+          +([0-9])+(.+([0-9]))*([a-z])) vers="rel-$vers" ;;
+          +([0-9])*([a-z]))             vers="tod-$vers" ;;
         esac
 
         export APPL="$APPL_TOP/$vers"
