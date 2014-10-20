@@ -6,29 +6,51 @@ know_branch() {
 
 
 git() {
-    local call=git result=0 loopy= iflag=
+    local call=git result=0 loopable= iflag= at_top=
 
-    if [[ "X$1" == X-i ]]; then
-        iflag=1
-        shift
+    if [[ "$PWD" == "$APPL_TOP" ]]; then
+        at_top=1
+        tops=(@(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])))
     fi
+
+    while true; do
+        if [[ "X$1" == X-i ]]; then
+            iflag=1
+            shift
+            continue
+        fi
+
+        if [[ -n "$at_top" && "X$1" == X-L ]]; then
+            shift
+            tops=()
+            while [[ "$1" == @(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])) ]]; do
+                tops+=("$1")
+                shift
+            done
+            continue
+        fi
+
+        break
+    done
 
     if [[ "$1" != help && "$2" == help ]]; then
         echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
         call= result=1
     elif [[ "$1" == @(huh|status|fetch|push|pull|pulla|jones) ]]; then
-        loopy=1
-    elif [[ "$1" == branch && $# -eq 1 ]]; then
-        loopy=1
+        loopable=1
+    elif [[ "$1" == branch ]]; then
+        if [[ $# -eq 1 ]] || [[ $# -eq 2 && "X$2" == X-a ]]; then
+            loopable=1
+        fi
     fi
 
-    if [[ "$PWD" == "$APPL_TOP" && -n "$loopy" ]]; then
+    if [[ -n "$at_top" && -n "$loopable" ]]; then
         local HERE="$PWD"
         local OAPPL="$APPL"
         trap 'cd "$HERE"; [[ -n "$OAPPL" ]] && app -n "${OAPPL##*/}"' RETURN HUP INT QUIT TERM
 
         local _first=1
-        for _d in @(rel-+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])); do
+        for _d in "${tops[@]}"; do
             [[ -d "$HERE/$_d" ]] || continue
             [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
