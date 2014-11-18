@@ -27,6 +27,11 @@ shift $((OPTIND-1))
 
 [[ "$fflag$mflag$rflag" == 11* ]] && usage
 
+if [[ -n "$fflag$rflag" ]]; then
+    echo >&2 "use of -f or -r is now horribly passé"
+    return 1
+fi
+
 
 function bek {
   bundle exec rake "$@"
