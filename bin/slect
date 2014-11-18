@@ -1,20 +1,21 @@
 #!/bin/ksh
 
 usage() {
-    echo >&2 "usage: $0 [-d database] [options] stringy | constructed
+    echo >&2 "\
+usage: $0 [-d database] [options] stringy
+       $0 [-d database] [options] Constructed
 
-options -S<n> -L<n>
+General options:
+    -d  overrides the chosen database, default is \${DBNAME:=mysql}
+    -S  skip <n> records
+    -L  limit to <n> records
 
-where   -d overrides the chosen database, default is \${DBNAME:=mysql}
-        -S skip <n> records
-        -L limit to <n> records
-
-NOTE: MySQL heads can use -L n,m and it will insert a plain LIMIT clause.
+NOTE: MySQL fans can use -L n,m and it will insert a plain LIMIT clause.
 
 The final select can be supplied either with a literal select statement
 (do not write the SELECT keyword), or constructed using short-form options.
 
-Constructed queries can use the following options.
+Constructed queries can use the following options:
 
     [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
 
