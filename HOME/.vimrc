@@ -9,6 +9,17 @@ set shiftwidth=4 tabstop=8 softtabstop=4
 set shiftwidth=2 tabstop=8 softtabstop=4
 set printfont=courier:h9 popt=paper:a4,left:5mm,right:5mm,top:5mm,bottom:5mm,syntax:n,portrait:n,formfeed:y
 
+if has("multi_byte")
+  if &termencoding == ""
+    let &termencoding = &encoding
+  endif
+  set encoding=utf-8
+  setglobal fileencoding=utf-8
+  "setglobal bomb
+  set fileencodings=ucs-bom,utf-8,latin1
+endif
+
+
 " set showtabline=2
 set mouse=a
 
