@@ -20,6 +20,16 @@ if has("multi_byte")
 endif
 
 
+set statusline=%#Search#[%n]
+set statusline+=\ %{&ff}%y%r
+set statusline+=\ %l/%L:%-4(%v%)
+set statusline+=\ %<%F%m
+set statusline+=%=
+set statusline+=\ 0x%04B
+set statusline+=\ %*
+set laststatus=2
+
+
 " set showtabline=2
 set mouse=a
 
