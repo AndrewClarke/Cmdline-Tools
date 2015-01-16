@@ -9,7 +9,8 @@ export DEPTH=
 export APPL
 
 export FPATH=$HOME/bin.f
-[[ -d /opt/unicon/bin ]] && export PATH="/opt/unicon/bin:$PATH"
+
+[[ -n "$ICON" && -d "$ICON/" ]] && export PATH="$ICON/bin:$PATH"
 [[ -d ~/bin ]] && export PATH="$HOME/bin:$PATH"
 [[ -d ~/bin.local ]] && export PATH="$HOME/bin.local:$PATH"
 [[ -d $HOME/.rvm/bin ]] && export PATH=$PATH:$HOME/.rvm/bin
