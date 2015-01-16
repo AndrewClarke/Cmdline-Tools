@@ -173,7 +173,7 @@ git() {
 
 
 app_usage() {
-   echo >&2 "usage: app [-l] [-n] [-v] [-N] [-M|-V|-C|-H] [project]"
+   echo >&2 "usage: app [-l] [-n] [-v] [-N] [-M|-V|-C|-H|-L|-P] [project]"
    [[ $# -gt 0 ]] && echo >&2 "$@"
    return 1
 }  # app_usage
@@ -181,29 +181,30 @@ app_usage() {
 
 app() {
     local nflag= vflag= lflag= Nflag=
-    local Mflag= Vflag= Cflag= Hflag= OPTIND=1
+    local Mflag= Vflag= Cflag= Hflag= Lflag Pflag
+    local OPTIND=1
 
-    while getopts :lnvNMVCH ch; do
+    while getopts :lnvNMVCHLP ch; do
       case "$ch" in
         l) lflag=1 ;;   # list available apps
         n) nflag=1 ;;   # no move - just echo or set
         v) vflag=1 ;;   # verbalise
         N) Nflag=1 ;;   # go Native - make the current branch match the project
 
-        [MVCH]) eval ${ch}flag=${ch} ;;
+        [MVCHLP]) eval ${ch}flag=${ch} ;;
 
         *) app_usage; return
       esac
     done
     shift $((OPTIND-1))
 
-    case "$Mflag$Vflag$Cflag$Hflag" in
+    case "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag" in
       ??*)
-        app_usage "-M, -V, -C, and -H are mutually exclusive"; return
+        app_usage "-M, -V, -C, -H, -L, and -P are mutually exclusive"; return
     esac
 
-    if [[ -n "$nflag" && -n "$Mflag$Vflag$Cflag$Hflag" ]]; then
-        app_usage "Cannot use -n with -M, -V, -C, or -H"; return
+    if [[ -n "$nflag" && -n "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag" ]]; then
+        app_usage "Cannot use -n with -M, -V, -C, -H, -L, or -P"; return
     fi
 
     if [[ -z "$APPL_TOP" ]]; then
@@ -256,11 +257,13 @@ app() {
     fi
 
     target=
-    case "$Mflag$Vflag$Cflag$Hflag" in
+    case "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag" in
       M) target=/app/models      ;;
       V) target=/app/views       ;;
       C) target=/app/controllers ;;
       H) target=/app/helpers     ;;
+      L) target=/lib             ;;
+      P) target=/public          ;;
     esac
 
     if [[ $# -gt 0 ]]; then
@@ -298,6 +301,8 @@ M() { _raily_magic_cd models      "$@"; clear; }
 V() { _raily_magic_cd views       "$@"; clear; }
 C() { _raily_magic_cd controllers "$@"; clear; }
 H() { _raily_magic_cd helpers     "$@"; clear; }
+# dang - L is already taken
+P() { _raily_magic_cd public      "$@"; clear; }
 
 
 know_branch
