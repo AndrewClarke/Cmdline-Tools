@@ -53,24 +53,24 @@ function vi {
 
     typeset -a args
     for i in "$@"; do
-      if [[ -n "$raily" && "$i" = [MVCHLP]/* ]]; then
-        case "$i" in
-          (M/*) i="$APPL/app/models/${i#M/}" ;;
-          (V/*) i="$APPL/app/views/${i#V/}" ;;
-          (C/*) i="$APPL/app/controllers/${i#C/}" ;;
-          (H/*) i="$APPL/app/helpers/${i#H/}" ;;
-          (L/*) i="$APPL/lib/${i#L/}" ;;
-          (P/*) i="$APPL/public/${i#P/}" ;;
-        esac
-      elif [[ "$i" = a/* && ! -d a ]]; then
-        i="${i#a/}"
-      elif [[ "$i" = b/* && ! -d b ]]; then
-        i="${i#b/}"
-      fi
+        if [[ -n "$raily" && "$i" = [MVCHLP]/* ]]; then
+            case "$i" in
+              (M/*) i="$APPL/app/models/${i#M/}" ;;
+              (V/*) i="$APPL/app/views/${i#V/}" ;;
+              (C/*) i="$APPL/app/controllers/${i#C/}" ;;
+              (H/*) i="$APPL/app/helpers/${i#H/}" ;;
+              (L/*) i="$APPL/lib/${i#L/}" ;;
+              (P/*) i="$APPL/public/${i#P/}" ;;
+            esac
+        elif [[ "$i" = a/* && ! -d a ]]; then
+            i="${i#a/}"
+        elif [[ "$i" = b/* && ! -d b ]]; then
+            i="${i#b/}"
+        fi
 
-      [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
+        [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
 
-      args+=("$i")
+        args+=("$i")
     done
     set -- "${args[@]}"
 
