@@ -47,9 +47,11 @@ function vi {
     #   also support L/ or P/ for $APPL/@(lib|public)
     #   to help when lazy-cutting-pasting from diff lines, trim off the leading [ab]/
     #   trim off trailing : for a similar reason
+    #   if in a subdirectory but the filename does not exist as-is but exists from the root,
+    #   prepend the root (or a bunch of ../ maybe?) to address its true gome.
 
-    local i raily=
-    [[ -n "$APPL" && -d "$APPL/app" ]] && [[ "$PWD" == "$APPL"?(/*) ]] && raily=1
+    local n x reld dotty dotdot common i raily=
+    [[ -n "$APPL" && -d "$APPL/app" ]] && [[ "$PWD" == "$APPL"?(/*) ]] && raily="${PWD#$APPL/}/"
 
     typeset -a args
     for i in "$@"; do
@@ -69,6 +71,41 @@ function vi {
         fi
 
         [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
+        if [[ -n "$raily" ]] && [[ ! -e "$i" && -e "$APPL/$i" ]]; then
+            if [[ "$i" == $raily* ]]; then
+                i="${i#$raily}"
+            else
+                # find common longest directory subsequence of $raily and $i
+                reld="$raily" common= x= dotdot= n=0
+                while [[ "$i" = "$common$x"* && $n != 20 ]]; do
+                    let n+=1
+                    common="$common$x"
+
+                    x="${reld#*/}"
+                    x="${reld%$x}"
+                    reld="${reld#$x}"
+                done
+
+                if [[ $n = 20 ]]; then
+                    echo >&2 "vi smarties have gone mental"
+                    return 1
+                fi
+
+                dotty="${raily#$common}" dotdot= n=0
+                while [[ -n "$dotty" && $n != 20 ]]; do
+                    let n+=1
+                    dotty="${dotty#*/}"
+                    dotdot="../$dotdot"
+                done
+
+                if [[ $n = 20 ]]; then
+                    echo >&2 "vi smarties have gone mental"
+                    return 1
+                fi
+
+                i="$dotdot${i#$common}"
+            fi
+        fi
 
         args+=("$i")
     done
