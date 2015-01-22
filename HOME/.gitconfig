@@ -1,7 +1,8 @@
 
 [user]
 name = Andrew Clarke
-email = aclarke@tickitsystems.com.au
+## email = aclarke@tickitsystems.com.au
+email = a.andrew.clarke@gmail.com
 
 [alias]
 duff = !git diff --patience --minimal -w --word-diff=color
