@@ -1,8 +1,8 @@
 #!/bin/ksh
 
 files=($({
-  ssh-add -l | sed -n 's/^[0-9]* [0-9a-fA-F:]* \(.*\) ([RD]SA)$/\1/p' | while read fname; do echo "$fname"; echo "$fname"; done
-  file ~/.ssh/* | sed -n 's/^\([^ ]*\): .* private key/\1/p'
+  ssh-add -l | sed -n 's/^[0-9]* [0-9a-fA-F:]* \(.*\) ([RD]SA)$/\1/; /--$/d; p' | while read fname; do echo "$fname"; echo "$fname"; done
+  file ~/.ssh/!(*--) | sed -n 's/^\([^ ]*\): .* private key/\1/p'
 } | sort | uniq -u))
 
 [[ "${#files[@]}" -gt 0 ]] && /usr/bin/ssh-add "${files[@]}"
