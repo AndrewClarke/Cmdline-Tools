@@ -294,7 +294,7 @@ _raily_magic_cd() {
     [[ -d "$APPL/app/$top" ]] || { echo >&2 "\$APPL does not have an app/$top directory";   return 1; }
 
     cd "$APPL/app/$top"
-}
+}   # _raily_magic_cd
 
 
 M() { _raily_magic_cd models      "$@"; clear; }
