@@ -108,7 +108,7 @@ else
         [[ -n "$SELECT" ]] && SELECT="$SELECT "
 
         # support short-form for giving an alias
-        SELECT="$SELECT${i//:/ as }"
+        SELECT="$SELECT\`${i//:/ as }\`"
     done
     [[ -z "$SELECT" ]] && SELECT='*'
 
