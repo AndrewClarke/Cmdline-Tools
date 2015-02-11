@@ -6,7 +6,7 @@ usage() {
     [[ $# -gt 0 ]] && echo >&2 "ERROR: $@"
 
     echo >&2 "\
-usage: $0 [-adlpvMVCHPTQ] [-- grep++-flags ] pattern
+usage: $0 [-adlpvMVCHPTQ!:] [-- grep++-flags ] pattern
 where   -a include more \$RAILS_ROOT top-level directories
 
         -d  include \$RAILS_ROOT/db directory
@@ -23,9 +23,13 @@ where   -a include more \$RAILS_ROOT top-level directories
         -P  only \$RAILS_ROOT/public
         -T  only \$RAILS_ROOT/test
 
+        -!: a list with dlptvMVCHLPT - exclude these directories, augmented with:
+            c=config, f=features
+
         -Q  query directories about to be hunted
 
 -[MVCHLPT] don't play well with -a, but can combine with -d, -l, -p, -t and -v.
+-! plays well with -a and -dlptv, but is kinds silly with the capitals.
 
 Currently, the following flags are passed through to grep++:
       -[ABcFGhinNqstxXZ]
@@ -38,8 +42,9 @@ Currently, the following flags are passed through to grep++:
 opts= aflag= dflag= lflag= pflag= tflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag= Qflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
 
+notty=
 OPTIND=1
-while getopts :adlptvMVCHLPQTABcFGhinNqsxXZ ch; do
+while getopts :adlptvMVCHLPQTABcFGhinNqsxXZ!: ch; do
     case "$ch" in
       a) let aflag++ ;;
       d) dflag=1 ;;
@@ -56,6 +61,8 @@ while getopts :adlptvMVCHLPQTABcFGhinNqsxXZ ch; do
       P) Pflag=1 ;;
       T) Tflag=1 ;;
 
+      !) notty="$notty$OPTARG" ;;
+
       Q) Qflag=1 ;;
 
       [ABcFGhinNqstxXZ]) opts="-${opts#-}$ch" ;;
@@ -71,6 +78,9 @@ shift $((OPTIND-1))
 [[ -n "$Mflag$Vflag$Cflag$Hflag$Lflag$Pflag$Tflag" && -n "$aflag" ]] && usage "-a cannot combine with -M, -V, -C, -H, -L, -P or -T"
 [[ -n "$dflag$lflag$pflag$tflag$vflag" && "$aflag" -gt 1 ]] && usage "double use of -a precludes use of -d, -l, -p, -t and -v"
 
+if [[ -n "$notty" && "$notty" = *[^dlptvcfMVCHLPT]* ]]; then
+    usage "-!$notty contains invalid letters"
+fi
 
 typeset -a dirs
 if [[ -z "${APPL:=$RAILS_ROOT}" ]]; then
@@ -101,9 +111,33 @@ else
     [[ -n "$tflag" ]] && dirs+=(test/)
     [[ -n "$vflag" ]] && dirs+=(vendor/)
 
-    # make the dirs unique, expand app/ to app/*/
+    # make the dirs unique, expand app/ to app/*/, and allow for the notty business
     declare -A uniq_keys
     declare -a uniqs
+
+    # process notty by pretending we've seen the unwanted directory already
+    let i=0
+    while [[ $i -lt "${#notty}" ]]; do
+        case "${notty:$i:1}" in
+          d) uniq_keys[db/]=1 ;;
+          l) uniq_keys[lib/]=1 ;;
+          p) uniq_keys[public/]=1 ;;
+          t) uniq_keys[test/]=1 ;;
+          v) uniq_keys[vendor/]=1 ;;
+          c) uniq_keys[config/]=1 ;;
+          f) uniq_keys[features/]=1 ;;
+          M) uniq_keys[app/models/]=1 ;;
+          V) uniq_keys[app/views/]=1 ;;
+          C) uniq_keys[app/controllers/]=1 ;;
+          H) uniq_keys[app/helpers/]=1 ;;
+          L) uniq_keys[lib/]=1 ;;
+          P) uniq_keys[public/]=1 ;;
+          T) uniq_keys[test/]=1 ;;
+        esac
+        let i+=1
+    done
+
+    # check that the nominated directories are uniq AND not rejected by notty
     for i in "${dirs[@]}"; do
         if [[ "$i" = app/ ]]; then
             for x in app/*/; do
