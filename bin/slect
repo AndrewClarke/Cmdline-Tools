@@ -17,12 +17,13 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options:
 
-    [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
+    [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
 
 where   -D  DISTINCT
         -t  mandatory table name (only one allowed at the moment)
         -w  where clause without the WHERE
         -I  WHERE id=val; WHERE id in (list)
+        -c  count(*)
         -g  GROUP BY expressions, comma separated
         -h  HAVING expression
         -o  ORDER BY fields, comma separated
@@ -30,21 +31,25 @@ where   -D  DISTINCT
         -V  assuming a temporal table, select only valid rows
 
 Only -D, -S and -L flags are allowed if providing a string.
+
+-c without -D excludes a field list.
+-c with -D requires a field list, for count(distinct fields).
 "
     exit 1
 }
 
 
 : ${DBNAME:=mysql}
-unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag
+unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag
 typeset -a wflag hflag Iflag
 
 OPTIND=1
-while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
+while getopts :DvVd:cg:h:I:L:o:S:t:w: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
       V) Vflag=1 ;;
+      c) cflag=1 ;;
       d) DBNAME="$OPTARG" ;;
       g) gflag="$OPTARG" ;;
       L) Lflag="$OPTARG" ;;
@@ -61,7 +66,11 @@ while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
 done
 shift $((OPTIND-1))
 
-[[ -z "$tflag" && -n "$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
+[[ -z "$tflag" && -n "$cflag$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
+if [[ -n "$cflag" ]]; then
+  [[ -z "$Dflag" && $# -gt 0 ]] && usage Cannot use -c with a field list unless also using -D
+  [[ -n "$Dflag" && $# -eq 0 ]] && usage Cannot use -c and -d without a field list
+fi
 
 [[ -n "$Vflag" ]] && wflag+=("valid_to is null")
 
@@ -102,6 +111,10 @@ if [[ -z "$tflag" ]]; then
     [[ -z "$SELECT" ]] && usage Missing SELECT body
 else
     SELECT=
+    if [[ -n "$cflag" ]]; then
+        SELECT='count(*)'
+    fi
+
     for i in "$@"; do
         # optionally add a comma
         [[ -n "$SELECT" && "$SELECT" != *, ]] && SELECT="$SELECT,"
