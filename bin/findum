@@ -100,6 +100,25 @@ else
     [[ -n "$pflag" ]] && dirs+=(public/)
     [[ -n "$tflag" ]] && dirs+=(test/)
     [[ -n "$vflag" ]] && dirs+=(vendor/)
+
+    # make the dirs unique, expand app/ to app/*/
+    declare -A uniq_keys
+    declare -a uniqs
+    for i in "${dirs[@]}"; do
+        if [[ "$i" = app/ ]]; then
+            for x in app/*/; do
+                if [[ -z "${uniq_keys[$x]}" ]]; then
+                    uniq_keys[$x]=1
+                    uniqs+=($x)
+                fi
+            done
+        elif [[ -z "${uniq_keys[$i]}" ]]; then
+            uniq_keys[$i]=1
+            uniqs+=($i)
+        fi
+    done
+
+    dirs=("${uniqs[@]}")
 fi
 
 if [[ -n "$Qflag" ]]
