@@ -22,13 +22,14 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options:
 
-    [-D] -t tabname(s) [-j tab1:tab2]... [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
+    [-D] -t tabname(s) [-j tab1:tab2]... [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c | -C:] [fields]
 
 where   -D  DISTINCT
         -t  mandatory table names, comma separated
         -w  where clause without the WHERE
         -I  WHERE id=val; WHERE id in (list)
         -c  count(*)
+        -C: count([DISTINCT] column-or-expression)
         -g  GROUP BY expressions, comma separated
         -h  HAVING expression
         -o  ORDER BY fields, comma separated
@@ -38,28 +39,38 @@ where   -D  DISTINCT
 
 Only -D, -S and -L flags are allowed if providing a string.
 
--c without -D excludes a field list.
--c with -D requires a field list, for count(distinct fields).
+-C requires a field list, for count(fields)
+-C with -D adds the distinct keyword: count(distinct fields)
 "
     exit 1
 }
 
+# op = AVG | COUNT | MIN | MAX | SUM
+# COUNT(*)
+# op ( [DISTINCT | UNIQUE] column ) # default ALL
+# op ( expression-subset )
+
+#    -c  count(*)
+#    -C: count(column)
+# -D -C: count(distinct column)
+# -D and no fields is illegal
 
 : ${DBNAME:=mysql}
-unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag qflag
+unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag Cflag qflag
 typeset -a wflag hflag Iflag jflag
 batch_flag=--batch
 table_flag=--table
 
 OPTIND=1
-while getopts :DvVd:cg:h:I:j:L:o:qS:t:w:-: ch; do
+while getopts :DvVd:cC:g:h:I:j:L:o:qS:t:w:-: ch; do
     case "$ch" in
+      d) DBNAME="$OPTARG" ;;
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
       q) qflag=1 ;;
       V) Vflag=1 ;;
       c) cflag=1 ;;
-      d) DBNAME="$OPTARG" ;;
+      C) Cflag="$OPTARG" ;;
       g) gflag="$OPTARG" ;;
       L) Lflag="$OPTARG" ;;
       o) oflag="$OPTARG" ;;
@@ -86,10 +97,8 @@ done
 shift $((OPTIND-1))
 
 [[ -z "$tflag" && -n "$cflag$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
-if [[ -n "$cflag" ]]; then
-  [[ -z "$Dflag" && $# -gt 0 ]] && usage Cannot use -c with a field list unless also using -D
-  [[ -n "$Dflag" && $# -eq 0 ]] && usage Cannot use -c and -d without a field list
-fi
+[[ -n "$cflag" && -n "$Cflag" ]] && usage Cannot use -c and -C together
+[[ -n "$cflag" && -n "$Dflag" ]] && usage Cannot use -c and -D together
 
 [[ -n "$Vflag" ]] && wflag+=("valid_to is null")
 
@@ -145,6 +154,9 @@ else
     SELECT=
     if [[ -n "$cflag" ]]; then
         SELECT='count(*)'
+    elif [[ -n "$Cflag" ]]; then
+        SELECT="count($Dflag$Cflag)"
+        Dflag=
     fi
 
     for i in "$@"; do
