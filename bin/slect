@@ -11,6 +11,9 @@ General options:
     -L  limit to <n> records
     -v  verbose - show SQL but do not execute
 
+    --batch  pass --batch to mysql (default; switch off with --no-batch)
+    --table  pass --table to mysql (default; switch off with --no-table)
+
 NOTE: MySQL fans can use -L n,m and it will insert a plain LIMIT clause.
 
 The final select can be supplied either with a literal select statement
@@ -43,9 +46,11 @@ Only -D, -S and -L flags are allowed if providing a string.
 : ${DBNAME:=mysql}
 unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag
 typeset -a wflag hflag Iflag
+batch_flag=--batch
+table_flag=--table
 
 OPTIND=1
-while getopts :DvVd:cg:h:I:L:o:S:t:w: ch; do
+while getopts :DvVd:cg:h:I:L:o:S:t:w:-: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
@@ -61,6 +66,15 @@ while getopts :DvVd:cg:h:I:L:o:S:t:w: ch; do
       h) hflag+=("$OPTARG") ;;
       w) wflag+=("$OPTARG") ;;
       I) Iflag+=("$OPTARG") ;;
+
+      -)
+        case "$OPTARG" in
+          batch) batch_flag=--batch ;;
+          table) table_flag=--table ;;
+          no-batch) batch_flag= ;;
+          no-table) table_flag= ;;
+          *) usage "Invalid option: --$OPTARG" ;;
+        esac ;;
 
       *) usage ;;
     esac
@@ -143,5 +157,5 @@ else
     SELECT="$SELECT from $tflag${where/#and / where }${gflag:+ group by $gflag}${having/#and / having }${oflag:+ order by $oflag}"
 fi
 
-echo select "$Dflag$SELECT$LIMIT;" | if [[ -n "$vflag" ]]; then cat; else mysql -D $DBNAME -B -t; fi
+echo select "$Dflag$SELECT$LIMIT;" | if [[ -n "$vflag" ]]; then cat; else mysql -D $DBNAME $batch_flag $table_flag; fi
 
