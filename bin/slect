@@ -22,7 +22,7 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options:
 
-    [-D] -t tabname(s) [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
+    [-D] -t tabname(s) [-j tab1:tab2]... [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
 
 where   -D  DISTINCT
         -t  mandatory table names, comma separated
@@ -32,6 +32,7 @@ where   -D  DISTINCT
         -g  GROUP BY expressions, comma separated
         -h  HAVING expression
         -o  ORDER BY fields, comma separated
+        -j: tab1:tab2 - join tab1.tab2_id = tab2.id - Many -j may be given
 
         -V  assuming a temporal table, select only valid rows
 
@@ -46,12 +47,12 @@ Only -D, -S and -L flags are allowed if providing a string.
 
 : ${DBNAME:=mysql}
 unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag qflag
-typeset -a wflag hflag Iflag
+typeset -a wflag hflag Iflag jflag
 batch_flag=--batch
 table_flag=--table
 
 OPTIND=1
-while getopts :DvVd:cg:h:I:L:o:qS:t:w:-: ch; do
+while getopts :DvVd:cg:h:I:j:L:o:qS:t:w:-: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
@@ -68,6 +69,7 @@ while getopts :DvVd:cg:h:I:L:o:qS:t:w:-: ch; do
       h) hflag+=("$OPTARG") ;;
       w) wflag+=("$OPTARG") ;;
       I) Iflag+=("$OPTARG") ;;
+      j) jflag+=("$OPTARG") ;;
 
       -)
         case "$OPTARG" in
@@ -120,6 +122,19 @@ case "${#things[*]}" in
   *) i="${things[*]}"
      typeset -a wflag=("id in (${i// /,})" "${wflag[@]}") ;;
 esac
+
+# -j: tab1:tab2 - join tab1.tab2_id = tab2.id - Many -j may be given
+for i in "${jflag[@]}"; do
+    i="${i/@([a-zA-Z_]*([a-zA-Z_0-9])):@([a-zA-Z_]*([a-zA-Z_0-9]))s/\1.\3_id = \3s.id}"
+
+    if [[ -n "$qflag" ]]; then
+        # wrap words with ` to ward off ambiguity
+        i="${i//@([a-zA-Z_]*([a-zA-Z_0-9]))/\`\1\`}"
+        i="${i//@(\`id\`)/id}"
+    fi
+
+    wflag+=("$i")
+done
 
 
 # build up the select statement
