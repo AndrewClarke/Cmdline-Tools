@@ -9,6 +9,7 @@ General options:
     -d  overrides the chosen database, default is \${DBNAME:=mysql}
     -S  skip <n> records
     -L  limit to <n> records
+    -v  verbose - show SQL but do not execute
 
 NOTE: MySQL fans can use -L n,m and it will insert a plain LIMIT clause.
 
@@ -17,7 +18,7 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options:
 
-    [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
+    [-D] -t tabname [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c] [fields]
 
 where   -D  DISTINCT
         -t  mandatory table name (only one allowed at the moment)
