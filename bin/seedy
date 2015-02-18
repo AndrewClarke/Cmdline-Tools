@@ -1,11 +1,12 @@
 #!/bin/ksh
 
 function usage {
-   echo >&2 "usage: $0 [-f | -m | -r]
+   echo >&2 "usage: $0 [-f | -m | -r] [-t]
 
 where:  -f  full: rollback, migrate and re-seed
-        -r  rollback only
+        -r  rollback only (STEP not supported?)
         -m  migrate only
+        -t  pass --trace option to db:seed
 
 Without -f, only runs 'rake db:migrate' && 'rake db:seed'
 -f, -m and -r are mutually exclusive.
@@ -14,12 +15,13 @@ Without -f, only runs 'rake db:migrate' && 'rake db:seed'
 }
 
 
-fflag= mflag= rflag=
-while getopts :fmr ch; do
+fflag= mflag= rflag= tflag=
+while getopts :fmrt ch; do
     case "$ch" in
       f) fflag=1 ;;
       m) mflag=1 ;;
       r) rflag=1 ;;
+      t) tflag=--trace ;;
       *) usage ;;
     esac
 done
@@ -27,8 +29,8 @@ shift $((OPTIND-1))
 
 [[ "$fflag$mflag$rflag" == 11* ]] && usage
 
-if [[ -n "$fflag$rflag" ]]; then
-    echo >&2 "use of -f or -r is now horribly passé"
+if [[ -n "$fflag" ]]; then
+    echo >&2 "use of -f is now horribly passé"
     return 1
 fi
 
@@ -55,11 +57,12 @@ fi
 
 cd "$APPL"
 
-if [[ -n "$mflag" ]]; then
-    bek db:migrate
-elif [[ -z "$fflag$rflag" ]]; then
-    bek db:migrate && bek --trace db:seed
-else
+case "${mflag:+m}${rflag:+r}${fflag:+f}" in
+  m)  bek $tflag db:migrate ;;
+  r)  bek $tflag db:rollback "$@" ;;
+  '') bek $tflag db:migrate && bek --trace db:seed ;;
+
+  f)
     last_mig="$(ls "$APPL/db/migrate" | tail -1)"
 
     if [[ "$last_mig" != *_survey?(s)_* ]]; then
@@ -70,6 +73,7 @@ else
 
     nthings=$(ls "$APPL/db/migrate"/*_survey?(s)_* | wc -l)
 
-    bek db:migrate && bek db:rollback STEP=$nthings && { [[ -n "$rflag" ]] || { bek db:migrate && bek --trace db:seed; }; }
-fi
+    bek $tflag db:migrate && bek $tflag db:rollback STEP=$nthings && { [[ -n "$rflag" ]] || { bek $tflag db:migrate && bek --trace db:seed; }; }
+    ;;
+esac
 
