@@ -126,10 +126,10 @@ done
 case "${#things[*]}" in
   0) : ;;
 
-  1) typeset -a wflag=("id=$things" "${wflag[@]}") ;;
+  1) wflag+=("id=$things") ;;
 
   *) i="${things[*]}"
-     typeset -a wflag=("id in (${i// /,})" "${wflag[@]}") ;;
+     wflag+=("id in (${i// /,})") ;;
 esac
 
 # -j: tab1:tab2 - join tab1.tab2_id = tab2.id - Many -j may be given
