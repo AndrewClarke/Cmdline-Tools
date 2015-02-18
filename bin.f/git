@@ -44,6 +44,7 @@ git() {
         fi
     fi
 
+    ((result==0)) || return $result
     if [[ -n "$at_top" && -n "$loopable" ]]; then
         local HERE="$PWD"
         local OAPPL="$APPL"
@@ -51,7 +52,12 @@ git() {
 
         local _first=1
         for _d in "${tops[@]}"; do
-            [[ -d "$HERE/$_d" ]] || continue
+            if ! [[ -d "$HERE/$_d" ]]; then
+                echo >&2 "WARNING: project directory $_d does not exist or is not a directory."
+                ((result)) || result=1
+                continue
+            fi
+
             [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
             if [[ -n "$iflag" ]]; then
@@ -67,7 +73,11 @@ git() {
                 done
             fi
 
-            cd "$HERE/$_d" || continue
+            cd "$HERE/$_d" || {
+                echo >&2 "WARNING: cannot cd into project directory $_d"
+                ((result)) || result=1
+                continue
+            }
 
             ((_first)) || echo
             _first=0
@@ -107,7 +117,6 @@ git() {
 
       jones)      # as in, keeping up with...
         call=
-        result=0
 
         command git branch | sed 's/^ /-/; s/^\(.\) \(.*\)/\2 \1/' | sort | {
             typeset -a branches
@@ -162,7 +171,7 @@ git() {
         ;;
     esac
 
-    if [[ -n "$call" ]]; then
+    if ((result==0)) && [[ -n "$call" ]]; then
         command $call "$@"
         result=$?
     fi
