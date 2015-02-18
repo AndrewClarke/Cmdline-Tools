@@ -156,7 +156,7 @@ git() {
       ls)
         shift
         call=
-        ls "$@" $(command git status --porcelain | perl -ne 'chomp; print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
+        ls "$@" $(command git status --porcelain | perl -ne 'print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
         ;;
 
 
