@@ -10,6 +10,7 @@ General options:
     -S  skip <n> records
     -L  limit to <n> records
     -v  verbose - show SQL but do not execute
+    -q  mad-quote most identifiers to avoid keyword clash
 
     --batch  pass --batch to mysql (default; switch off with --no-batch)
     --table  pass --table to mysql (default; switch off with --no-table)
@@ -44,16 +45,17 @@ Only -D, -S and -L flags are allowed if providing a string.
 
 
 : ${DBNAME:=mysql}
-unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag
+unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag qflag
 typeset -a wflag hflag Iflag
 batch_flag=--batch
 table_flag=--table
 
 OPTIND=1
-while getopts :DvVd:cg:h:I:L:o:S:t:w:-: ch; do
+while getopts :DvVd:cg:h:I:L:o:qS:t:w:-: ch; do
     case "$ch" in
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
+      q) qflag=1 ;;
       V) Vflag=1 ;;
       c) cflag=1 ;;
       d) DBNAME="$OPTARG" ;;
@@ -136,7 +138,15 @@ else
         [[ -n "$SELECT" ]] && SELECT="$SELECT "
 
         # support short-form for giving an alias
-        SELECT="$SELECT\`${i//:/ as }\`"
+        i="${i//:/ as }"
+
+        if [[ -n "$qflag" ]]; then
+            # wrap words with ` to ward off ambiguity
+            i="${i//@([a-zA-Z_]*([a-zA-Z_0-9]))/\`\1\`}"
+            i="${i//@( \`[aA][sS]\` )/ as }"
+        fi
+
+        SELECT="$SELECT$i"
     done
     [[ -z "$SELECT" ]] && SELECT='*'
 
