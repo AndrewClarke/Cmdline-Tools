@@ -98,21 +98,23 @@ git() {
         ;;
 
       pulla)
-        shift
-        ## command git stash save "preparing to have a big pull"
 
-        command git branch | sed 's/^ /-/' | {
-            this=
-            while read state name; do
-                [[ $state == '*' ]] && this="$name"
-                ( command git checkout "$name" && command git pull "$@" )
-            done
-            [[ -n "$this" ]] && command git checkout "$this" 2>&-
-        }
+        if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
+            echo >&2 "Significant uncommitted work exists - cannot-a pull-a da project-as"
+            result=1
+        else
+            shift
+            command git branch | sed 's/^ /-/' | {
+                this=
+                while read state name; do
+                    [[ $state == '*' ]] && this="$name"
+                    ( command git checkout "$name" && command git pull "$@" )
+                done
+                [[ -n "$this" ]] && command git checkout "$this" 2>&-
+            }
 
-        ## command git stash pop
-
-        call= result=0
+            call= result=0
+        fi
         ;;
 
       jones)      # as in, keeping up with...
