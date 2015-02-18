@@ -8,11 +8,13 @@ know_branch() {
 git() {
     local call=git result=0 loopable= iflag= at_top=
 
+    # detect PWD is the top of all tickit projects, and collect list if so
     if [[ "$PWD" == "$APPL_TOP" ]]; then
         at_top=1
         tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])))
     fi
 
+    # parameters! WOOO!
     while true; do
         if [[ "X$1" == X-i ]]; then
             iflag=1
@@ -20,6 +22,7 @@ git() {
             continue
         fi
 
+        # if at top, then -L name name name ... limits interesting projects to those names
         if [[ -n "$at_top" && "X$1" == X-L ]]; then
             shift
             tops=()
@@ -34,35 +37,44 @@ git() {
     done
 
     if [[ "$1" != help && "$2" == help ]]; then
+        # report on a confused attempt to get help
         echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
         call= result=1
     elif [[ "$1" == @(huh|status|fetch|push|pull|pulla|jones) ]]; then
+        # detect git subcommands (including special ons in this script) wot are applicable in a loopy style from the top directory
         loopable=1
     elif [[ "$1" == branch ]]; then
+        # this one is also top-loopable in certain circumstances
         if [[ $# -eq 1 ]] || [[ $# -eq 2 && "X$2" == X-a ]]; then
             loopable=1
         fi
     fi
 
     ((result==0)) || return $result
+
+    # if the command is loopable (and at top) start looping
     if [[ -n "$at_top" && -n "$loopable" ]]; then
         local HERE="$PWD"
         local OAPPL="$APPL"
         trap 'cd "$HERE"; [[ -n "$OAPPL" ]] && app -n "${OAPPL##*/}"' RETURN HUP INT QUIT TERM
 
-        local _first=1
+        local _first=1  # tracker used to help insert polite blank lines appropriately
         for _d in "${tops[@]}"; do
+            # directory must exist - bad tpyngi for -L list can result in crap...
             if ! [[ -d "$HERE/$_d" ]]; then
                 echo >&2 "WARNING: project directory $_d does not exist or is not a directory."
                 ((result)) || result=1
                 continue
             fi
 
+            # directory must not have .gitskip - except for 2 lucky commands
             [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
+            # interactive? By your leave, your liege...
             if [[ -n "$iflag" ]]; then
                 while
                   read -p "Perform git $1 on $_d? " || { echo; break 2; }
+
                   case "$REPLY" in
                     [yY]*) break;;
                     [nN]*) continue 2;;
@@ -82,6 +94,8 @@ git() {
             ((_first)) || echo
             _first=0
             echo '$APPL_TOP/'"$_d:"
+
+            # recursive GIT time! Also, capture highest error result for exit status of this function.
             git "$@" | sed '/./s/^/  /'
             x=$?
             ((result < x)) && result=$x
@@ -90,15 +104,19 @@ git() {
 
         return $result
     fi
+    # That's the end of all the loopy excitement.
 
     case "$1" in
       huh)
+        # Status command for this directory only.
         shift
         set -- status "$@" .
         ;;
 
       pulla)
+        # pull for all known branches in this project.
 
+        # Block pulla if there's uncommitted changes, 'cos shit happens...
         if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
             echo >&2 "Significant uncommitted work exists - cannot-a pull-a da project-as"
             result=1
@@ -113,6 +131,7 @@ git() {
                 [[ -n "$this" ]] && command git checkout "$this" 2>&-
             }
 
+            # ooops - looks like we can't gather error status from all the pulls. Bash is too sucky
             call= result=0
         fi
         ;;
@@ -120,21 +139,27 @@ git() {
       jones)      # as in, keeping up with...
         call=
 
+        # Detect all branches in this project. Wait for it, you'll find out why...
+        # The sed is making the output of git branch a bit more regular so it's easy to parse with dumb shell.
         command git branch | sed 's/^ /-/; s/^\(.\) \(.*\)/\2 \1/' | sort | {
             typeset -a branches
             this=
 
+            # Gather list of branches and their statii.
             while read name state; do
                 [[ "$state" == '*' ]] && this="$name"
                 branches+=("$name")
             done
 
+            # Assuming there's 2 branches...
             main="${branches[0]}"
             dev="${branches[1]}"
+
+            # Merge the branch if it's alone in this project with a release branch.
             if [[ "${#branches[@]}" -eq 2 && "$this" == tod-+([0-9])*([a-z]) ]] && [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$dev" == tod-+([0-9])*([a-z]) ]]; then
-                # proven:
-                #  this directory only has 2 local branches: a release (branch it's following) and a development branch
-                #  current branch is the development branch
+                # Proven:
+                #  This directory only has 2 local branches: a release (branch it's following) and a development branch.
+                #  Current branch is the development branch.
 
                 if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
                     echo >&2 "Significant uncommitted work exists - cannot merge release $main"
@@ -154,6 +179,7 @@ git() {
         ;;
 
       ls)
+        # Same as ls but limited to files that git knows about.
         shift
         call=
         ls "$@" $(command git status --porcelain | perl -ne 'print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
@@ -178,7 +204,7 @@ git() {
         result=$?
     fi
 
-    know_branch >/dev/null 2>/dev/null
+    know_branch >/dev/null 2>/dev/null      # know it in the biblical sense
     return $result
 }  # git
 
