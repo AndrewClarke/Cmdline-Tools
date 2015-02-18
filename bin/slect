@@ -91,7 +91,7 @@ while getopts :DvVd:cC:g:h:I:j:L:o:qS:t:w:-: ch; do
           *) usage "Invalid option: --$OPTARG" ;;
         esac ;;
 
-      *) usage ;;
+      *) usage Invalid option: -$ch ;;
     esac
 done
 shift $((OPTIND-1))
