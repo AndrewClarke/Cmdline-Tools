@@ -47,11 +47,17 @@ sub compileExprs (@) {
 package main;
 
 sub usage {
-    my $helping;
-    if($helping = $_[0] eq -helping)
-        { shift }
-    else
-        { select STDERR };
+    my $helping = $_[0] eq -helping;
+    if(! $helping)
+        { select STDERR }
+    else {
+        shift;
+
+        if(-t STDOUT) {
+            my $pager = $ENV{PAGER} || "more";
+            open(STDOUT, "| $pager") or warn "cannot fork a pager: $!";
+        }
+    }
 
     print "$0: @_\n" if @_;
 
@@ -139,6 +145,8 @@ explicitly give it a value or put ! on the end of the one value you give.
   should be exclusive with several other flags...
 MESSAGE
     }
+
+    close(STDOUT) or warn "Cannot close STDOUT: $!\n";
 
     exit 2;
 }   # usage
