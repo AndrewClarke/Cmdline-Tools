@@ -6,9 +6,9 @@ esac
 
 stty erase '^h'     # death to DEC for foisting the VT100 on the world.
 
-shopt -s cmdhist histappend lithist autocd cdspell extglob globstar checkwinsize
+shopt -s cmdhist histappend lithist cdspell extglob globstar checkwinsize
 set -o vi histexpand
-set +H  # don't like ! expansion - ugh.
+set +H  # do not like ! expansion - ugh.
 unset -f command_not_found_handle
 
 export VISUAL=vi FCEDIT=vi EDITOR=vi

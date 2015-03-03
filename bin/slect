@@ -9,6 +9,11 @@ General options:
     -d  overrides the chosen database, default is \${DBNAME:=mysql}
     -S  skip <n> records
     -L  limit to <n> records
+    -v  verbose - show SQL but do not execute
+    -q  mad-quote most identifiers to avoid keyword clash
+
+    --batch  pass --batch to mysql (default; switch off with --no-batch)
+    --table  pass --table to mysql (default; switch off with --no-table)
 
 NOTE: MySQL fans can use -L n,m and it will insert a plain LIMIT clause.
 
@@ -17,35 +22,55 @@ The final select can be supplied either with a literal select statement
 
 Constructed queries can use the following options:
 
-    [-D] -t tabname [-I id] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [fields]
+    [-D] -t tabname(s) [-j tab1:tab2]... [-I id] [-V] [-w "where"] [-g "group"] [-h "having"] [-o "order"] [-c | -C:] [fields]
 
 where   -D  DISTINCT
-        -t  mandatory table name (only one allowed at the moment)
+        -t  mandatory table names, comma separated
         -w  where clause without the WHERE
         -I  WHERE id=val; WHERE id in (list)
+        -c  count(*)
+        -C: count([DISTINCT] column-or-expression)
         -g  GROUP BY expressions, comma separated
         -h  HAVING expression
         -o  ORDER BY fields, comma separated
+        -j: tab1:tab2 - join tab1.tab2_id = tab2.id - Many -j may be given
 
         -V  assuming a temporal table, select only valid rows
 
 Only -D, -S and -L flags are allowed if providing a string.
+
+-C requires a field list, for count(fields)
+-C with -D adds the distinct keyword: count(distinct fields)
 "
     exit 1
 }
 
+# op = AVG | COUNT | MIN | MAX | SUM
+# COUNT(*)
+# op ( [DISTINCT | UNIQUE] column ) # default ALL
+# op ( expression-subset )
+
+#    -c  count(*)
+#    -C: count(column)
+# -D -C: count(distinct column)
+# -D and no fields is illegal
 
 : ${DBNAME:=mysql}
-unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag
-typeset -a wflag hflag Iflag
+unset vflag Vflag Sflag Lflag Dflag tflag gflag oflag cflag Cflag qflag
+typeset -a wflag hflag Iflag jflag
+batch_flag=--batch
+table_flag=--table
 
 OPTIND=1
-while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
+while getopts :DvVd:cC:g:h:I:j:L:o:qS:t:w:-: ch; do
     case "$ch" in
+      d) DBNAME="$OPTARG" ;;
       D) Dflag='distinct ' ;;
       v) vflag=1 ;;
+      q) qflag=1 ;;
       V) Vflag=1 ;;
-      d) DBNAME="$OPTARG" ;;
+      c) cflag=1 ;;
+      C) Cflag="$OPTARG" ;;
       g) gflag="$OPTARG" ;;
       L) Lflag="$OPTARG" ;;
       o) oflag="$OPTARG" ;;
@@ -55,13 +80,25 @@ while getopts :DvVd:g:h:I:L:o:S:t:w: ch; do
       h) hflag+=("$OPTARG") ;;
       w) wflag+=("$OPTARG") ;;
       I) Iflag+=("$OPTARG") ;;
+      j) jflag+=("$OPTARG") ;;
 
-      *) usage ;;
+      -)
+        case "$OPTARG" in
+          batch) batch_flag=--batch ;;
+          table) table_flag=--table ;;
+          no-batch) batch_flag= ;;
+          no-table) table_flag= ;;
+          *) usage "Invalid option: --$OPTARG" ;;
+        esac ;;
+
+      *) usage Invalid option: -$ch ;;
     esac
 done
 shift $((OPTIND-1))
 
-[[ -z "$tflag" && -n "$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
+[[ -z "$tflag" && -n "$cflag$Vflag$wflag$gflag$hflag$oflag" ]] && usage Bad combination of flags
+[[ -n "$cflag" && -n "$Cflag" ]] && usage Cannot use -c and -C together
+[[ -n "$cflag" && -n "$Dflag" ]] && usage Cannot use -c and -D together
 
 [[ -n "$Vflag" ]] && wflag+=("valid_to is null")
 
@@ -89,11 +126,24 @@ done
 case "${#things[*]}" in
   0) : ;;
 
-  1) typeset -a wflag=("id=$things" "${wflag[@]}") ;;
+  1) wflag+=("id=$things") ;;
 
   *) i="${things[*]}"
-     typeset -a wflag=("id in (${i// /,})" "${wflag[@]}") ;;
+     wflag+=("id in (${i// /,})") ;;
 esac
+
+# -j: tab1:tab2 - join tab1.tab2_id = tab2.id - Many -j may be given
+for i in "${jflag[@]}"; do
+    i="${i/@([a-zA-Z_]*([a-zA-Z_0-9])):@([a-zA-Z_]*([a-zA-Z_0-9]))s/\1.\3_id = \3s.id}"
+
+    if [[ -n "$qflag" ]]; then
+        # wrap words with ` to ward off ambiguity
+        i="${i//@([a-zA-Z_]*([a-zA-Z_0-9]))/\`\1\`}"
+        i="${i//@(\`id\`)/id}"
+    fi
+
+    wflag+=("$i")
+done
 
 
 # build up the select statement
@@ -102,13 +152,28 @@ if [[ -z "$tflag" ]]; then
     [[ -z "$SELECT" ]] && usage Missing SELECT body
 else
     SELECT=
+    if [[ -n "$cflag" ]]; then
+        SELECT='count(*)'
+    elif [[ -n "$Cflag" ]]; then
+        SELECT="count($Dflag$Cflag)"
+        Dflag=
+    fi
+
     for i in "$@"; do
         # optionally add a comma
         [[ -n "$SELECT" && "$SELECT" != *, ]] && SELECT="$SELECT,"
         [[ -n "$SELECT" ]] && SELECT="$SELECT "
 
         # support short-form for giving an alias
-        SELECT="$SELECT${i//:/ as }"
+        i="${i//:/ as }"
+
+        if [[ -n "$qflag" ]]; then
+            # wrap words with ` to ward off ambiguity
+            i="${i//@([a-zA-Z_]*([a-zA-Z_0-9]))/\`\1\`}"
+            i="${i//@( \`[aA][sS]\` )/ as }"
+        fi
+
+        SELECT="$SELECT$i"
     done
     [[ -z "$SELECT" ]] && SELECT='*'
 
@@ -126,8 +191,16 @@ else
       *) having="${hflag[*]//@(*)/and (\1)}" ;;
     esac
 
+    # support short-form for giving an alias on the tables
+    tflag="${tflag//:/ as }"
+    if [[ -n "$qflag" ]]; then
+        # wrap words with ` to ward off ambiguity
+        tflag="${tflag//@([a-zA-Z_]*([a-zA-Z_0-9]))/\`\1\`}"
+        tflag="${tflag//@( \`[aA][sS]\` )/ as }"
+    fi
+
     SELECT="$SELECT from $tflag${where/#and / where }${gflag:+ group by $gflag}${having/#and / having }${oflag:+ order by $oflag}"
 fi
 
-echo select "$Dflag$SELECT$LIMIT;" | if [[ -n "$vflag" ]]; then cat; else mysql -D $DBNAME -B -t; fi
+echo select "$Dflag$SELECT$LIMIT;" | if [[ -n "$vflag" ]]; then cat; else mysql -D $DBNAME $batch_flag $table_flag; fi
 

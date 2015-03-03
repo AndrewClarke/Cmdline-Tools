@@ -19,6 +19,7 @@ export IPATH=$wacgen/source/iconlib
 [[ -d "$ICON/" ]] && export PATH="$ICON/bin:$PATH"
 ## [[ -d ~/bin/ ]] && export PATH="$HOME/bin:$PATH"
 ## [[ -d ~/bin.local/ ]] && export PATH="$HOME/bin.local:$PATH"
+
 [[ -d $HOME/.rvm/bin ]] && export PATH=$PATH:$HOME/.rvm/bin
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc

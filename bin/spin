@@ -1,9 +1,23 @@
 #!/bin/bash
 
 # must be in a Rails environment - since that's where I'm using this...
-[[ -f Gemfile ]] || exit
+[[ -f Gemfile ]] || {
+    echo >&2 ${0##*/}: must be in a Rails environment, same directory as the Gemfile
+    exit 1
+}
+
+scroll=:
+if [[ "X$1" = X-c ]]; then
+    scroll=scroll
+    shift
+fi
+
+[[ $# -gt 0 ]] || {
+    echo >&2 usage: ${0##*/} somecmd someargs
+    exit 1
+}
 
 trap : 2            # INT kills the program but keeps the spin
 trap 'exit 1' 3     # QUIT kills the program and stop spinning
-while ( trap 2 3; exec "$@" ); do :; done
+while ( trap 2 3; exec "$@" ); do $scroll; done
 

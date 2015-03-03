@@ -17,7 +17,7 @@ usage() {
     echo >&2 "usage: $myname [-v] [+t] [+B] [-d database]   -l ['likepattern'] | tabname ...
 where   -d  select database (default \$DBNAME:=mysql)
         -l  list tables (optionally like pattern)
-        -v  emit table name before each table (how?)
+        -v  emit table name before each table
         -t  pass mysql --table option (default; switch off with +t)
         -B  pass mysql --batch option (default; switch off with +B)
 
