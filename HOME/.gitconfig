@@ -3,6 +3,9 @@
 name = Andrew Clarke
 email = aclarke@tickitsystems.com.au
 
+[push]
+default = matching
+
 [alias]
 duff = !git diff --patience --minimal -w --word-diff=color
 
@@ -34,7 +37,4 @@ untracked = cyan
 [diff]
 wordRegex = "#.*$|:?'(\\\\.|[^'])*'|:?\"(\\\\.|[^\"])*\"|`(\\\\.|[^`])*`|:?(\\$|@|@@)[_[:alpha:]][_[:alnum:]]+|:?[_[:alpha:]][_[:alnum:]]+[?!=]?|[_[:alpha:]][_[:alnum:]]+:|\\$.|\\$-[[:alpha:]]|[-+]?[[:digit:]]+(\\.[[:digit:]]+)?([eE][-+]?[[:digit:]])?|[-+*/%&|^<=>!]=|[=!]~|\\*\\*|<<|>>|<=>|&&|\\|\\||\\.\\.|\\.\\.\\.|(==|\\*\\*|<<|>>|&&|\\|\\|)=|\\[[[:space:]]*\\]|\\{[[:space:]]*\\}|\\([[:space:]]*\\)|[^[:space:]]"
 algorithm = patience
-
-[push]
-default = simple
 
