@@ -5,8 +5,8 @@ set noruler noshowmatch noshowmode nowrapscan report=1 modelines=10
 set scrolloff=4 nohlsearch wrap linebreak sidescrolloff=5 sidescroll=1
 set ignorecase nojoinspaces autoindent
 set expandtab smarttab nosmartindent
-set shiftwidth=4 tabstop=8 softtabstop=4
 set shiftwidth=2 tabstop=8 softtabstop=4
+set shiftwidth=4 tabstop=8 softtabstop=4
 set printfont=courier:h9 popt=paper:a4,left:5mm,right:5mm,top:5mm,bottom:5mm,syntax:n,portrait:n,formfeed:y
 
 if has("multi_byte")
@@ -57,7 +57,7 @@ function MyDiff()
 endfunction
 
 " let did_load_filetypes = 1
-" syntax off
+syntax enable
 filetype plugin on
 
 " set guifont=Courier\ New\ 8
@@ -210,6 +210,12 @@ endfunction
 if has("autocmd")
   au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 endif
+
+" hate automatic comment copying
+au BufReadPost * set commentstring=
+
+" hate syntax coloring in diff mode
+au FilterWritePre * if &diff | syntax off | endif
 
 function TabOn()
     set expandtab smarttab
