@@ -1,8 +1,13 @@
 
 unalias l lm L LM ll la ls 2>&-
 
-ls() { LANG=C /bin/ls --color=never "$@"; }
-l()  { LANG=C /bin/ls -Fla --color=auto "$@"; }
+export __LS_FLAGS=
+
+function l+ { export __LS_FLAGS=-L; }
+function l- { export __LS_FLAGS=; }
+
+ls() { LANG=C /bin/ls $__LS_FLAGS --color=never "$@"; }
+l()  { LANG=C /bin/ls $__LS_FLAGS -Fla --color=auto "$@"; }
 lm() { l "$@" | less;    }
 L()  { l -d "$@";        }
 LM() { L "$@" | less;    }
