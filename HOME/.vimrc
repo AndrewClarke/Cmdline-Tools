@@ -5,8 +5,8 @@ set noruler noshowmatch noshowmode nowrapscan report=1 modelines=10
 set scrolloff=4 nohlsearch wrap linebreak sidescrolloff=5 sidescroll=1
 set ignorecase nojoinspaces autoindent
 set expandtab smarttab nosmartindent
-set shiftwidth=2 tabstop=8 softtabstop=4
 set shiftwidth=4 tabstop=8 softtabstop=4
+set shiftwidth=2 tabstop=8 softtabstop=4
 set printfont=courier:h9 popt=paper:a4,left:5mm,right:5mm,top:5mm,bottom:5mm,syntax:n,portrait:n,formfeed:y
 
 if has("multi_byte")
