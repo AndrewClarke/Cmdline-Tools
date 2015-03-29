@@ -212,7 +212,7 @@ if has("autocmd")
 endif
 
 " hate automatic comment copying
-au BufReadPost * set commentstring=
+au BufReadPost * set comments= commentstring= iskeyword-=:
 
 " hate syntax coloring in diff mode
 au FilterWritePre * if &diff | syntax off | endif
