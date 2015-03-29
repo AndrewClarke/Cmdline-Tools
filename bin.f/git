@@ -185,6 +185,10 @@ git() {
         ls "$@" $(command git status --porcelain | perl -ne 'print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
         ;;
 
+      duff)
+        shift
+        set -- diff --patience --minimal -w --word-diff=color "$@"
+        ;;
 
       stash)
         if [[ "$2" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then

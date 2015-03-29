@@ -8,8 +8,6 @@ email = a.andrew.clarke@gmail.com
 default = matching
 
 [alias]
-duff = !git diff --patience --minimal -w --word-diff=color
-
 # list to branch
 ltb = !git log --abbrev-commit HEAD --not $(git for-each-ref --format='%(refname:short)' refs/heads | grep -v "^$(git symbolic-ref -q --short HEAD)$")
 
