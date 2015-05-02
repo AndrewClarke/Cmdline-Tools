@@ -10,7 +10,8 @@ function vidd {
 }
 
 function vif {
-    vim "+/$1" $(grep -ils "$1" *.org *.src *.trg *.ext)
+    IFS=$'\n' set -a names -- $(grep -ils "$1" *.org *.src *.trg *.ext)
+    vim "+/$1" "${names[@]}"
 }
 
 function vig {
@@ -21,7 +22,7 @@ function vig {
         [[ "$i" != -* ]] && break
     done
 
-    vim "+/$i" $(grep++ -l "$@")
+    IFS=$'\n' vim "+/$i" $(grep++ -l "$@")
 }
 
 function vio {
