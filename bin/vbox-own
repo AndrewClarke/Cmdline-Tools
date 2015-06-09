@@ -1,0 +1,50 @@
+#!/bin/bash
+
+shopt -s extglob
+VM_LOCATION=/Yettie/VirtualBoxVMs
+
+
+function grab {
+    name="$1"
+
+    [[ -d "$VM_LOCATION/$name" ]] || {
+        echo "Cannot find $VM_LOCATION/$name"
+        exit 1
+    }
+
+    chown -R $who:users "$VM_LOCATION/$name"
+    find "$VM_LOCATION/$name" -depth -print | while read fname; do
+        if [[ -d "$fname" ]]
+          then setfacl -m u:aclarke:rwx "$fname"
+          else setfacl -m u:aclarke:rw  "$fname"
+        fi
+    done
+}
+
+
+if [[ "$LOGNAME" == aclarke ]]
+  then who=aclarke
+  else who="${SUDO_USER?Script cannot find sudo user}"
+fi
+
+if [[ "$who" == aclarke ]]; then
+    grab Brendan
+    grab Jacquie
+    grab Nicole
+    ## grab Andrew
+    ## grab Ryan
+else
+    declare -A dirs=([brendan]=Brendan [jacquie]=Jacquie [nicole]=Nicole [aclarke]=Andrew [ryan]=Ryan)
+
+    name="${dirs[$who]}"
+    [[ -n "$name" ]] || {
+        echo "Not a registered account"
+        exit 1
+    }
+
+    grab $name
+fi
+
+
+exit 0
+
