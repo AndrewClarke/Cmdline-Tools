@@ -7,7 +7,7 @@ function l+ { export __LS_FLAGS=-L; }
 function l- { export __LS_FLAGS=; }
 
 ls() { LANG=C /bin/ls $__LS_FLAGS --color=never "$@"; }
-l()  { LANG=C /bin/ls $__LS_FLAGS -Fla --color=auto "$@"; }
+l()  { LANG=C /bin/ls $__LS_FLAGS -Fla --color=never "$@"; }
 lm() { l "$@" | less;    }
 L()  { l -d "$@";        }
 LM() { L "$@" | less;    }
