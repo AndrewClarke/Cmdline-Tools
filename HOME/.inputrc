@@ -1,25 +1,15 @@
-set bell-style none
 
+set bell-style none
 set editing-mode vi
 
-## $if mode=vi
-## 
-## "\eOA":previous-history
-## "\eOB":next-history
-## "\eOD":backward-char
-## "\eOC":forward-char
-## 
-## $endif
-
-#
 # If set to on, words which have more than one possible completion without
 # any possible partial completion cause the matches to be listed immediately
 # instead of ringing the bell.
 #
 #set show-all-if-unmodified on
 
-#
 # If set to on, words which have more than one possible completion cause the
 # matches to be listed immediately instead of ringing the bell.
 #
 #set show-all-if-ambiguous on
+
