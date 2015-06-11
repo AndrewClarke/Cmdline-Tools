@@ -245,8 +245,8 @@ sub Options {
                 push(@jflag,    $OPTARG), last if $ch eq 'j';
                 push(@postfix,  $OPTARG), last if $ch eq 'o';
 
-                push(@prefix, 's/#.*//'),                       next if $ch eq '#';       # {
-                push(@prefix, 's/(?<!@){[^}]*}/ /g'),           next if $ch eq '{';
+                push(@prefix, 's/#(?!{).*//'),                  next if $ch eq '#';       # {
+                push(@prefix, 's/(?<![#@]){[^}]*}/ /g'),        next if $ch eq '{';
                 push(@prefix, 's/^\s+//; s/\s+/ /g; s/\s*$//'), next if $ch eq 'B';
 
                 if($ch eq 'f') {
