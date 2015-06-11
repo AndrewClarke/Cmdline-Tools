@@ -40,21 +40,23 @@ git() {
         break
     done
 
-    if [[ "$1" != help && "$2" == help ]]; then
+    cmd="$1"
+    shift
+    if [[ "$cmd" != help && "$1" == help ]]; then
         # report on a confused attempt to get help
-        echo >&2 "You probably mean git $(tput setaf 3)$1 --help ...$(tput sgr0) or $(tput setaf 3)git help $1 ...$(tput sgr0)"
-        call= result=1
-    elif [[ "$1" == @(huh|status|fetch|push|pull|pulla|jones) ]]; then
+        echo >&2 "You probably mean git $(tput setaf 3)$cmd --help ...$(tput sgr0) or $(tput setaf 3)git help $cmd ...$(tput sgr0)"
+        call= exit=1
+    elif [[ "$cmd" == @(huh|status|fetch|push|pull|pulla|jones) ]]; then
         # detect git subcommands (including special ons in this script) wot are applicable in a loopy style from the top directory
         loopable=1
-    elif [[ "$1" == branch ]]; then
+    elif [[ "$cmd" == branch ]]; then
         # this one is also top-loopable in certain circumstances
-        if [[ $# -eq 1 ]] || [[ $# -eq 2 && "X$2" == X-a ]]; then
+        if [[ $# -eq 0 ]] || [[ $# -eq 1 && "X$1" == X-a ]]; then
             loopable=1
         fi
     fi
 
-    ((result==0)) || return $result
+    ((exit==0)) || return $exit
 
     # if the command is loopable (and at top) start looping
     if [[ -n "$at_top" && -n "$loopable" ]]; then
@@ -64,20 +66,20 @@ git() {
 
         local _first=1  # tracker used to help insert polite blank lines appropriately
         for _d in "${tops[@]}"; do
-            # directory must exist - bad tpyngi for -L list can result in crap...
+            # directory must exist - bad tpyngi for -L list can exit in crap...
             if ! [[ -d "$HERE/$_d" ]]; then
                 echo >&2 "WARNING: project directory $_d does not exist or is not a directory."
-                ((result)) || result=1
+                ((exit)) || exit=1
                 continue
             fi
 
             # directory must not have .gitskip - except for 2 lucky commands
-            [[ "$1" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
+            [[ "$cmd" != @(status|branch) && -f "$HERE/$_d/.gitskip" ]] && continue
 
             # interactive? By your leave, your liege...
             if [[ -n "$iflag" ]]; then
                 while
-                  read -p "Perform git $1 on $_d? " || { echo; break 2; }
+                  read -p "Perform git $cmd on $_d? " || { echo; break 2; }
 
                   case "$REPLY" in
                     [yY]*) break;;
@@ -91,7 +93,7 @@ git() {
 
             cd "$HERE/$_d" || {
                 echo >&2 "WARNING: cannot cd into project directory $_d"
-                ((result)) || result=1
+                ((exit)) || exit=1
                 continue
             }
 
@@ -99,21 +101,21 @@ git() {
             _first=0
             echo '$APPL_TOP/'"$_d:"
 
-            # recursive GIT time! Also, capture highest error result for exit status of this function.
-            git "$@" | sed '/./s/^/  /'
+            # recursive GIT time! Also, capture highest error exit for exit status of this function.
+            git $cmd "$@" | sed '/./s/^/  /'
             x=$?
-            ((result < x)) && result=$x
+            ((exit < x)) && exit=$x
             cd "$HERE"
         done
 
-        return $result
+        return $exit
     fi
     # That's the end of all the loopy excitement.
 
-    case "$1" in
+    case "$cmd" in
       huh)
         # Status command for this directory only.
-        shift
+        cmd=
         set -- status "$@" .
         ;;
 
@@ -123,9 +125,8 @@ git() {
         # Block pulla if there's uncommitted changes, 'cos shit happens...
         if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
             echo >&2 "Significant uncommitted work exists - cannot-a pull-a da project-as"
-            result=1
+            exit=1
         else
-            shift
             command git branch | sed 's/^ /-/' | {
                 this=
                 while read state name; do
@@ -136,7 +137,7 @@ git() {
             }
 
             # ooops - looks like we can't gather error status from all the pulls. Bash is too sucky
-            call= result=0
+            call= exit=0
         fi
         ;;
 
@@ -176,44 +177,56 @@ git() {
         ;;
 
       branch)
-        if [[ "$2" == @(list|merge|merged|track|delete|move|rename) ]]; then
-            echo >&2 "Not allowing $(tput setaf 3)git branch $2$(tput sgr0)! Do you mean one of --list --merged --track -d -D -M -m ?"
-            call= result=1
+        if [[ "$1" == @(list|merge|merged|track|delete|move|rename) ]]; then
+            echo >&2 "Not allowing $(tput setaf 3)git branch $1$(tput sgr0)! Do you mean one of --list --merged --track -d -D -M -m ?"
+            call= exit=1
         fi
         ;;
 
       ls)
-        # Same as ls but limited to files that git knows about.
-        shift
+        # Same as ls but limited to files that git knows about that are changed.
         call=
-        ls "$@" $(command git status --porcelain | perl -ne 'print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
+        (
+            [[ -n "$in_proj" ]] && cd "$APPL"
+            ls -1 "$@" $(command \git status --porcelain | perl -ne 'print "$2\n" if /^([MADRCU].|.[MADRCU]) (.*)$/;' | sort -u)
+        )
+        ;;
+
+      lsa)
+        # Same as ls but limited to files that git claims are changed or new.
+        call=
+        (
+            [[ -n "$in_proj" ]] && cd "$APPL"
+            ls -1 "$@" $(command \git status --porcelain | perl -ne 'next if / \.gitskip$/; print "$2\n" if /^([?MADRCU].|.[?MADRCU]) (.*)$/;' | sort -u)
+        )
         ;;
 
       duff)
-        shift
-        set -- diff --patience --minimal -w --word-diff=color "$@"
+        cmd=diff
+        set -- --patience --minimal -w --word-diff=color "$@"
         ;;
 
       stash)
-        if [[ "$2" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then
+        if [[ "$1" != @(list|show|drop|pop|apply|branch|save|clear|create) ]]; then
             echo >&2 "Not allowing $(tput setaf 3)git stash$(tput sgr0) without a sub-command! Do you mean list, show or save, or do you mean drop, pop, apply, branch, clear or create?"
-            call= result=1
+            call= exit=1
         fi
 
-        ## if [[ "$2" == save ]] && [[ $# -lt 3 || ${!#} == -* ]]; then
+        ## if [[ "$1" == save ]] && [[ $# -lt 3 || ${!#} == -* ]]; then
         ##     echo >&2 "Try putting a message that means something to you, tiger!"
-        ##     call= result=1
+        ##     call= exit=1
         ## fi
         ;;
     esac
 
-    if ((result==0)) && [[ -n "$call" ]]; then
-        command $call "$@"
-        result=$?
-    fi
+    if ((exit==0)) && [[ -n "$call" ]]; then (
+        [[ "$cmd" == status && -n "$in_proj" ]] && cd "$APPL"
+        command $call $cmd "$@"
+        exit=$?
+    ); fi
 
     know_branch >/dev/null 2>/dev/null      # know it in the biblical sense
-    return $result
+    return $exit
 }  # git
 
 
