@@ -6,7 +6,7 @@ usage() {
     [[ $# -gt 0 ]] && echo >&2 "ERROR: $@"
 
     echo >&2 "\
-usage: $0 [-adlpvMVCHPTQ!:] [-- grep++-flags ] pattern
+usage: $0 [-adlpvMVCHPTIQ!:] [-- grep++-flags ] pattern
 where   -a include more \$RAILS_ROOT top-level directories
 
         -d  include \$RAILS_ROOT/db directory
@@ -23,10 +23,10 @@ where   -a include more \$RAILS_ROOT top-level directories
         -P  only \$RAILS_ROOT/public
         -T  only \$RAILS_ROOT/test
 
+        -I  comma-separated list of file extensions to ignore
+        -Q  query directories about to be hunted
         -!: a list with dlptvMVCHLPT - exclude these directories, augmented with:
             c=config, f=features
-
-        -Q  query directories about to be hunted
 
 -[MVCHLPT] don't play well with -a, but can combine with -d, -l, -p, -t and -v.
 -! plays well with -a and -dlptv, but is kinds silly with the capitals.
@@ -41,10 +41,11 @@ Currently, the following flags are passed through to grep++:
 
 opts= aflag= dflag= lflag= pflag= tflag= vflag= Mflag= Vflag= Cflag= Hflag= Pflag= Tflag= Qflag=
 # for convenience, a bunch of options without arguments are collected and passed on to grep++.
+declare -a ignores
 
 notty=
 OPTIND=1
-while getopts :adlptvMVCHLPQTABcFGhinNqsxXZ!: ch; do
+while getopts :adlptvMVCHLPQTABcFGhinNqsxXZI:!: ch; do
     case "$ch" in
       a) let aflag++ ;;
       d) dflag=1 ;;
@@ -62,6 +63,12 @@ while getopts :adlptvMVCHLPQTABcFGhinNqsxXZ!: ch; do
       T) Tflag=1 ;;
 
       !) notty="$notty$OPTARG" ;;
+
+      I)
+        for i in ${OPTARG//,/ }; do
+            ignores+=(! -name "*.$i")
+        done
+        ;;
 
       Q) Qflag=1 ;;
 
@@ -157,7 +164,7 @@ fi
 
 if [[ -n "$Qflag" ]]
   then echo "${dirs[@]%/}"
-  else find "${dirs[@]%/}" -type f ! -name '*.pdf' ! -name '*.png' ! -name '*.jpg' -print0 | xargs -0 grep++ -Lsti --nahhh $opts "$@"
+  else find "${dirs[@]%/}" -type f ! -name '*.pdf' ! -name '*.png' ! -name '*.jpg' "${ignores[@]}" -print0 | xargs -0 grep++ -Lsti --nahhh $opts "$@"
 fi
 exit 0
 
