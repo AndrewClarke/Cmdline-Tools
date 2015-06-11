@@ -61,7 +61,8 @@ syntax enable
 filetype plugin on
 
 " set guifont=Courier\ New\ 8
-set guifont=Courier\ 10\ Pitch\ 8
+set guifont=APL385\ Unicode\ 9,Courier\ 10\ Pitch\ 8
+set ambiwidth=double
 
 let loaded_matchparen = 1
 " let did_load_filetypes = 1
@@ -215,7 +216,7 @@ endif
 au BufReadPost * set comments= commentstring= iskeyword-=:
 
 " hate syntax coloring in diff mode
-au FilterWritePre * if &diff | syntax off | endif
+au FilterWritePre * if &diff | syntax off | set nofoldenable | endif
 
 function TabOn()
     set expandtab smarttab
@@ -226,4 +227,180 @@ function TabOff()
 endfunction
 
 hi Todo term=bold ctermfg=red ctermbg=none
+
+imap <C-X><<    «
+imap <C-X>>>        »
+imap <C-X>neg       ¯
+imap <C-X>-         ¯
+imap <C-X>*         ×
+imap <C-X>/         ÷
+imap <C-X>pi        π
+imap <C-X>inf       ∞
+imap <C-X>take      ↑
+imap <C-X>drop      ↓
+imap <C-X>=>        ⇒
+imap <C-X>impl      ⇒
+imap <C-X>ceil      ⌈
+imap <C-X>floor     ⌊
+imap <C-X>ne        ≠
+imap <C-X>le        ≤
+imap <C-X>ge        ≥
+imap <C-X>ma        ≡
+imap <C-X>nm        ≢
+imap <C-X><|    ⟨
+imap <C-X>>|      ⟩
+imap <C-X>gu        ⍋
+imap <C-X>gd        ⍒
+imap <C-X>iota      ⍳
+imap <C-X>rho       ⍴
+imap <C-X>circle    ○
+imap <C-X>quad      ⎕
+imap <C-X>[]        ⎕
+imap <C-X>[[        ⟦
+imap <C-X>]]        ⟧
+imap <C-X>{{        ⦃
+imap <C-X>}}        ⦄
+imap <C-X>assign    ←
+imap <C-X><-        ←
+imap <C-X>arrow     →
+imap <C-X>->        →
+imap <C-X>join      ⋈|           " 22C8 natural join
+imap <C-X>l-join    ⋉|           " 22C9 left semijoin
+imap <C-X>r-join    ⋊|           " 22CA right semijoin
+imap <C-X>a-join    ▷|           " 25B7 anti join
+imap <C-X>l-outer   ⟕|           " 27D5 left outer join
+imap <C-X>r-outer   ⟖|           " 27D6 right outer join
+imap <C-X>f-outer   ⟗|           " 27D7 full outer join
+imap <C-X>sigma     σ|           " 03C3 selection
+imap <C-X>theta     θ
+imap <C-X>ckboxf    ☐
+imap <C-X>ckboxt    ☑
+
+
+" STRICTLY SPEAKING: these are supposed to be circled letters
+imap <C-X>A_        Ⓐ|          " U+24B6
+imap <C-X>B_        Ⓑ|          " U+24B7
+imap <C-X>C_        Ⓒ|          " U+24B8
+imap <C-X>D_        Ⓓ|          " U+24B9
+imap <C-X>E_        Ⓔ|          " U+24BA
+imap <C-X>F_        Ⓕ|          " U+24BB
+imap <C-X>G_        Ⓖ|          " U+24BC
+imap <C-X>H_        Ⓗ|          " U+24BD
+imap <C-X>I_        Ⓘ|          " U+24BE
+imap <C-X>J_        Ⓙ|          " U+24BF
+imap <C-X>K_        Ⓚ|          " U+24C0
+imap <C-X>L_        Ⓛ|          " U+24C1
+imap <C-X>M_        Ⓜ|          " U+24C2
+imap <C-X>N_        Ⓝ|          " U+24C3
+imap <C-X>O_        Ⓞ|          " U+24C4
+imap <C-X>P_        Ⓟ|          " U+24C5
+imap <C-X>Q_        Ⓠ|          " U+24C6
+imap <C-X>R_        Ⓡ|          " U+24C7
+imap <C-X>S_        Ⓢ|          " U+24C8
+imap <C-X>T_        Ⓣ|          " U+24C9
+imap <C-X>U_        Ⓤ|          " U+24CA
+imap <C-X>V_        Ⓥ|          " U+24CB
+imap <C-X>W_        Ⓦ|          " U+24CC
+imap <C-X>X_        Ⓧ|          " U+24CD
+imap <C-X>Y_        Ⓨ|          " U+24CE
+imap <C-X>Z_        Ⓩ|          " U+24CF
+
+" section           §   U+00A7
+" diaeresis         ¨   U+00A8
+"                   «   U+00AB
+" neg               ¯   U+00AF
+"                   »   U+00BB
+" mul               ×   U+00D7
+" div               ÷   U+00F7
+" pi                π   U+03C0
+"                   ‖   U+2016
+"                   ‼   U+203C
+"                   ⁅   U+2045
+"                   ⁆   U+2046
+" take              ↑   U+2191
+" branch            →   U+2192
+" drop              ↓   U+2193
+"                   ⇒   U+21D2
+
+" for-all           ∀   U+2200
+" exists            ∃   U+2203
+" not-exists        ∄   U+2204
+"                   ∅   U+2205   empty set
+
+" member            ∈   U+2208
+" not member        ∉   U+2209
+" small member      ∊   U+220A
+" contains          ∈   U+220B
+" not contains      ∌   U+220C
+" small contains    ∍   U+200D
+
+"                   ∏   U+220F
+"                   ∐   U+2210
+"                   ∑   U+2211
+" subtract          −   U+2212
+" jot               ∘   U+2218
+" root              √   U+221A
+" inf               ∞   U+221E
+" abs               ∣   U+2223
+" and               ∧   U+2227
+" or                ∨   U+2228
+" intersection      ∩   U+2229
+" union             ∪   U+222A
+" not               ∼   U+223C
+" ne                ≠   U+2260
+" match             ≡   U+2261
+" mismatch          ≢   U+2262
+" le                ≤   U+2264
+" ge                ≥   U+2265
+" proper subset     ⊂   U+2282
+" proper superset   ⊃   U+2283
+" subset            ⊆   U+2286
+" superset          ⊇   U+2287
+" rotate-first      ⊖   U+2296
+" encode            ⊤   U+22A4
+" decode            ⊥   U+22A5
+" exponential       ⋆   U+22C6
+" ceiling           ⌈   U+2308
+" floor             ⌊   U+230A
+"                   〈  U+2329  double-width
+"                   〉  U+232A  double-width
+" matrix-divide     ⌹   U+2339
+" rotate-last       ⌽   U+233D
+" reduce-first      ⌿   U+233F
+" expand-first      ⍀   U+2340
+" transpose         ⍉   U+2349
+" grade-up          ⍋   U+234B
+" execute           ⍎   U+234E
+" grade-down        ⍒   U+2352
+" format            ⍕   U+2355
+" log               ⍟   U+235F
+" nor               ⍱   U+2371
+" nand              ⍲   U+2372
+" iota              ⍳   U+2373
+" rho               ⍴   U+2374
+" circle            ○   U+25CB
+
+
+"                   ⟦   U+27E6
+"                   ⟧   U+27E7
+"                   ⟨   U+27E8
+"                   ⟩   U+27E9
+"                   ⟪   U+27EA
+"                   ⟫   U+27EB
+"                   ⟬   U+27EC
+"                   ⟭   U+27ED
+"                   ⟮   U+27EE
+"                   ⟯   U+27EF
+
+"                   ⦃   U+2983
+"                   ⦄   U+2984
+"                   ⭅   U+2B45
+"                   ⭆   U+2B46
+"                   〈  U+3008  double-width
+"                   〉  U+3009  double-width
+"                   《  U+300A  double-width
+"                   》  U+300B  double-width
+
+
+" from U+3371 is a bunch of physical unit symbols
 

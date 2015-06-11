@@ -16,6 +16,7 @@ export wacgenlib=~/src/wacgen/lib-trunk
 export ICON=/opt/unicon-12.1
 export IPATH=$wacgen/source/iconlib
 
+export PATH="/usr/sbin:/sbin:$PATH"
 [[ -d "$ICON/" ]] && export PATH="$ICON/bin:$PATH"
 [[ -d ~/bin/ ]] && export PATH="$HOME/bin:$PATH"
 [[ -d ~/bin.local/ ]] && export PATH="$HOME/bin.local:$PATH"
