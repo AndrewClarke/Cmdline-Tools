@@ -59,13 +59,12 @@ fi
 # TIP: put the cursor on the magic characters and press sequence g8 -
 # you'll see the bytes constituting those glyphs.
 #
-export PS1='${PSpfx}${DEPTH# }'
+function rebuildPS1 {
+  if [[ -x ~/bin.f/_rebuildPS1 ]]; then
+    . ~/bin.f/_rebuildPS1
+    _rebuildPS1
+  fi
+}
 
-## ort PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]«\[BR:\]$BRANCH»\['"$(tput sgr0)"' \]}'
-export PS1="$PS1"'${BRANCH:+\['"$(tput setaf 6; tput bold)"'\]<BR:$BRANCH>\['"$(tput sgr0)"'\]}${HOSTNAME:+\['"$(tput setaf 6; tput bold)"'\]@'"$(hostname -s)"'\['"$(tput sgr0)"'\]} '
-
-export PS1="$PS1"'${PROJECT:+\['"$(tput setaf 6; tput bold)"'\]$PROJECT\['"$(tput sgr0)"'\]}'
-
-## ort PS1="$PS1"'\['"$(tput setaf 6)"'\]${APPL_SUBDIR-\w}\[ \]▬▶\['"$(tput sgr0)"' \]'
-export PS1="$PS1"'\['"$(tput setaf 6)"'\]${APPL_SUBDIR-\w} =>\['"$(tput sgr0)"'\] '
+rebuildPS1
 
