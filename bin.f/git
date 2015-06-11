@@ -6,12 +6,16 @@ know_branch() {
 
 
 git() {
-    local call=git result=0 loopable= iflag= at_top=
+    local call=git exit=0 loopable= iflag= at_top= in_proj=
 
     # detect PWD is the top of all tickit projects, and collect list if so
-    if [[ "$PWD" == "$APPL_TOP" ]]; then
-        at_top=1
-        tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])))
+    if [[ -n "$APPL_TOP" ]]; then
+        if [[ "$PWD" == "$APPL_TOP" ]]; then
+            at_top=1
+            tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z])))
+        elif [[ "$PWD" == "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|tod-+([0-9])*([a-z]))?(/*) ]]; then
+            in_proj=1
+        fi
     fi
 
     # parameters! WOOO!
