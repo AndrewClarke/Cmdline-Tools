@@ -50,9 +50,10 @@ function vi {
     #   if in a subdirectory but the filename does not exist as-is but exists from the root,
     #   prepend the root (or a bunch of ../ maybe?) to address its true gome.
 
-    local n x reld dotty dotdot common i raily=
+    local n x reld dotty dotdot common i raily= findim
     [[ -n "$APPL" && -d "$APPL/app" ]] && [[ "$PWD" == "$APPL"?(/*) ]] && raily="${PWD#$APPL/}/"
 
+    # look for arg starting with [MVCHLP]/ and expand it
     typeset -a args
     for i in "$@"; do
         if [[ -n "$raily" && "$i" = [MVCHLP]/* ]]; then
@@ -64,13 +65,24 @@ function vi {
               (L/*) i="$APPL/lib/${i#L/}" ;;
               (P/*) i="$APPL/public/${i#P/}" ;;
             esac
-        elif [[ "$i" = a/* && ! -d a ]]; then
+        elif [[ "$i" = a/* && ! -d a ]]; then       # name selected from a diff header?
             i="${i#a/}"
-        elif [[ "$i" = b/* && ! -d b ]]; then
+        elif [[ "$i" = b/* && ! -d b ]]; then       # name selected from a diff header?
             i="${i#b/}"
         fi
 
+        # trim trailing : IF the name doesn't actually exist (but who'd be dumb enough...)
         [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
+
+        # look for what appears to be a controller spec selected from a server log
+        if [[ -n "$raily" && "$i" =~ ^([_[:alnum:]]+::)*[_[:alnum:]]+(#([_[:alnum:]]+))?$ ]]; then
+            act="${BASH_REMATCH[3]}"
+            i="$APPL/app/controllers/$(perl -e '$_ = "'$i'"; s!(\w+)::!lc($1) . "/"!eg; s/(?<=\w)([A-Z])/"_" . lc $1/eg; s/#.*//; print lc $_').rb"
+            lineno="+1"
+            findim="+/^\s*def\s\+$act\>"
+        fi
+
+        # if in a rails project, look for a filename that can be resolved from the top
         if [[ -n "$raily" ]] && [[ ! -e "$i" && -e "$APPL/$i" ]]; then
             if [[ "$i" == $raily* ]]; then
                 i="${i#$raily}"
@@ -111,6 +123,6 @@ function vi {
     done
     set -- "${args[@]}"
 
-    vim "$@"
+    vim $lineno $findim "$@"
 }
 
