@@ -1,0 +1,130 @@
+#!/usr/bin/env python
+
+import virtualbox
+import time
+
+vbox = virtualbox.VirtualBox()
+
+
+# Launch machine:
+session = virtualbox.Session()
+vm = vbox.find_machine('Brendan')
+progress = vm.launch_vm_process(session, 'gui', '')
+progress.wait_for_completion(-1)
+print(vm.name)
+
+def event_handler(event):
+    print("%s %s %s" % (event.name, event.value, event.flags))
+
+time.sleep(60)
+
+# stop machine:
+progress = session.console.power_down()
+progress.wait_for_completion(-1)
+print("Powerdown State:")
+print(session.state)
+
+
+## # listing machines:
+## print("VM(s):\n + %s" % "\n + ".join([vm.name for vm in vbox.machines]))
+
+
+#take a screen shot,
+## h, w, _, _, _ = session.console.display.get_screen_resolution(0)
+## png = session.console.display.take_screen_shot_png_to_array(0, h, w)
+## with open('screenshot.png', 'wb') as f:
+##     f.write(png)
+
+## print("Running State:")
+## print(session.state)               # => Locked
+## print(session.machine.state)       # => SessionState(2)
+## print(session.state >= 2)          # => True
+
+
+"""
+
+Write text into a window on a running machine:
+
+> ipython
+In [1]: import virtualbox
+In [2]: vbox = virtualbox.VirtualBox()
+In [3]: vm = vbox.find_machine('test_vm')
+In [4]: session = vm.create_session()
+In [5]: session.console.keyboard.put_keys("Q: 'You want control?'\nA: 'Yes, but just a tad...'")
+
+Execute a command in the guest:
+
+> ipython
+In [1]: import virtualbox
+In [2]: vbox = virtualbox.VirtualBox()
+In [3]: vm = vbox.find_machine('test_vm')
+In [4]: session = vm.create_session()
+In [5]: gs = session.console.guest.create_session('Michael Dorman', 'password')
+In [6]: process, stdout, stderr = gs.execute('C:\\Windows\\System32\\cmd.exe', ['/C', 'tasklist'])
+In [7]: print stdout
+
+Image Name                   PID Session Name     Session#    Mem Usage
+========================= ====== ================ ======== ============
+System Idle Process            0 Console                 0         28 K
+System                         4 Console                 0        236 K
+smss.exe                     532 Console                 0        432 K
+csrss.exe                    596 Console                 0      3,440 K
+winlogon.exe                 620 Console                 0      2,380 K
+services.exe                 664 Console                 0      3,780 K
+lsass.exe                    676 Console                 0      6,276 K
+VBoxService.exe              856 Console                 0      3,972 K
+svchost.exe                  900 Console                 0      4,908 K
+svchost.exe                 1016 Console                 0      4,264 K
+svchost.exe                 1144 Console                 0     18,344 K
+svchost.exe                 1268 Console                 0      2,992 K
+svchost.exe                 1372 Console                 0      3,948 K
+spoolsv.exe                 1468 Console                 0      4,712 K
+svchost.exe                 2000 Console                 0      3,856 K
+wuauclt.exe                  400 Console                 0      7,176 K
+alg.exe                     1092 Console                 0      3,656 K
+wscntfy.exe                 1532 Console                 0      2,396 K
+explorer.exe                1728 Console                 0     14,796 K
+wmiprvse.exe                1832 Console                 0      7,096 K
+VBoxTray.exe                1940 Console                 0      3,196 K
+ctfmon.exe                  1948 Console                 0      3,292 K
+cmd.exe                     1284 Console                 0      2,576 K
+tasklist.exe                 124 Console                 0      4,584 K
+
+Using context to manage opened sessions and locks:
+
+> ipython
+In [1]: import virtualbox
+In [2]: vbox = virtualbox.VirtualBox()
+In [3]: vm = vbox.find_machine('test_vm')
+In [4]: with vm.create_session() as session:
+   ...:     with session.console.guest.create_session('Michael Dorman', 'password') as gs:
+   ...:         print(gs.directory_exists("C:\\Windows"))
+   ...:
+True
+
+On an already running VM, register to receive on guest keyboard events:
+
+>ipython
+In [1]: from virtualbox import library
+In [2]: import virtualbox
+In [3]: vbox = virtualbox.VirtualBox()
+In [4]: vm = vbox.find_machine('test_vm')
+In [5]: s = vm.create_session()
+In [6]: def test(a):
+   ...:     print(a.scancodes)
+   ...:
+In [7]: s.console.keyboard.set_on_guest_keyboard(test)
+Out[7]: 140448201250560
+In [8]: [35]
+[23]
+[163]
+[151]
+[57]
+[185]
+[35]
+[24]
+[163]
+[152]
+
+"""
+
