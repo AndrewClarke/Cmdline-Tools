@@ -60,8 +60,9 @@ endfunction
 syntax enable
 filetype plugin on
 
-" set guifont=Courier\ New\ 8
-set guifont=APL385\ Unicode\ 9,Courier\ 10\ Pitch\ 8
+set guifont=Courier\ New\ 8
+set guifont=APL385\ Unicode\ 9,Courier\ New\ 8,Courier\ 10\ Pitch\ 8
+set guifont=Courier\ New\ 8,Courier\ 10\ Pitch\ 8
 set ambiwidth=double
 
 let loaded_matchparen = 1
