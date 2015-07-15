@@ -47,7 +47,7 @@ git() {
         # report on a confused attempt to get help
         echo >&2 "You probably mean git $(tput setaf 3)$cmd --help ...$(tput sgr0) or $(tput setaf 3)git help $cmd ...$(tput sgr0)"
         call= exit=1
-    elif [[ "$cmd" == @(huh|status|fetch|push|pull|pulla|jones) ]]; then
+    elif [[ "$cmd" == @(huh|status|fetch|push|pull|pulla|jones|koolaid) ]]; then
         # detect git subcommands (including special ons in this script) wot are applicable in a loopy style from the top directory
         loopable=1
     elif [[ "$cmd" == branch ]]; then
@@ -165,7 +165,7 @@ git() {
         fi
         ;;
 
-      jones)      # as in, keeping up with...
+      jones)      # as in, keeping up with... merge stuff from main branch that this branch hangs off
         call=
 
         # Detect all branches in this project. Wait for it, you'll find out why...
@@ -191,11 +191,50 @@ git() {
                 #  Current branch is the development branch.
 
                 if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
-                    echo >&2 "Significant uncommitted work exists - cannot merge release $main"
+                    echo >&2 "Significant uncommitted work exists - cannot merge release $main to $dev"
                 else
                     echo "Merging from origin/$main"
                     git merge -X patience "origin/$main"
                 fi
+            else
+                echo >&2 "There must only be a rel- and a tod- branch, and you must currently be on the tod- branch"
+            fi
+        }
+        ;;
+
+      koolaid)  # as in, drink the Koolaid Mr Jones said. Merge stuff from this branch back to the main branch this one hangs off
+        call=
+
+        # Detect all branches in this project. Wait for it, you'll find out why...
+        # The sed is making the output of git branch a bit more regular so it's easy to parse with dumb shell.
+        command git branch | sed 's/^ /-/; s/^\(.\) \(.*\)/\2 \1/' | sort | {
+            typeset -a branches
+            this=
+
+            # Gather list of branches and their statii.
+            while read name state; do
+                [[ "$state" == '*' ]] && this="$name"
+                branches+=("$name")
+            done
+
+            # Assuming there's 2 branches...
+            main="${branches[0]}"
+            dev="${branches[1]}"
+
+            # Merge the branch if it's alone in this project with a release branch.
+            if [[ "${#branches[@]}" -eq 2 && "$this" == "$main" ]] && [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$dev" == tod-+([0-9])*([a-z]) ]]; then
+                # Proven:
+                #  This directory only has 2 local branches: a release (branch it's following) and a development branch.
+                #  Current branch is the main branch.
+
+                if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
+                    echo >&2 "Significant uncommitted work exists - cannot merge release $dev to $main"
+                else
+                    echo "Merging from origin/$dev to origin/$main"
+                    git merge -X patience "origin/$dev"
+                fi
+            else
+                echo >&2 "There must only be a rel- and a tod- branch, and you must currently be on the rel- branch"
             fi
         }
         ;;
