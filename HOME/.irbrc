@@ -11,7 +11,7 @@ if ENV['RAILS_ENV'] == 'development' && ENV['GEM_HOME']
   Hirb.enable
 
 
-  @@projs = Hash.new
+  $_irb_projections = Hash.new
   def proj obj, *fields
     # Convert a plain hash to a format that looks like one row.
     # HMMM - the Hirb doco DOES mention designing your own formatters -
@@ -35,9 +35,9 @@ if ENV['RAILS_ENV'] == 'development' && ENV['GEM_HOME']
 
     if xobj.is_a? ActiveRecord::Base
       if fields.length > 0 || reset
-        @@projs[xobj.class.name] = fields
+        $_irb_projections[xobj.class.name] = fields
       else
-        fields = @@projs[xobj.class.name]
+        fields = $_irb_projections[xobj.class.name]
       end
     end
 
