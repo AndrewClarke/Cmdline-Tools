@@ -48,8 +48,8 @@ function vi {
     #   also support L/ or P/ for $APPL/@(lib|public)
     #   to help when lazy-cutting-pasting from diff lines, trim off the leading [ab]/
     #   trim off trailing : for a similar reason
-    #   if in a subdirectory but the filename does not exist as-is but exists from the root,
-    #   prepend the root (or a bunch of ../ maybe?) to address its true gome.
+    #   if in a subdirectory but the filename does not exist as-is but exists from the APPL root,
+    #   prepend the root (or a bunch of ../ maybe?) to address its true home.
 
     local n x reld dotty dotdot common i raily= findim
     [[ -n "$APPL" && -d "$APPL/app" ]] && [[ "$PWD" == "$APPL"?(/*) ]] && raily="${PWD#$APPL/}/"
@@ -76,7 +76,7 @@ function vi {
         [[ ! -e "$i" && "$i" = *: ]] && i="${i%:}"
 
         # look for what appears to be a controller spec selected from a server log
-        if [[ -n "$raily" && "$i" =~ ^([_[:alnum:]]+::)*[_[:alnum:]]+(#([_[:alnum:]]+))?$ ]]; then
+        if [[ -n "$raily" && "$i" =~ ^([_[:alnum:]]+::)*[_[:alnum:]]+(#([_[:alnum:]]+))$ ]]; then
             act="${BASH_REMATCH[3]}"
             i="$APPL/app/controllers/$(perl -e '$_ = "'$i'"; s!(\w+)::!lc($1) . "/"!eg; s/(?<=\w)([A-Z])/"_" . lc $1/eg; s/#.*//; print lc $_').rb"
             lineno="+1"
