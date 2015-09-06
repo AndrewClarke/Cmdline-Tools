@@ -1,6 +1,7 @@
 
 set bell-style none
 set editing-mode vi
+set keymap vi
 
 # If set to on, words which have more than one possible completion without
 # any possible partial completion cause the matches to be listed immediately
@@ -12,4 +13,12 @@ set editing-mode vi
 # matches to be listed immediately instead of ringing the bell.
 #
 #set show-all-if-ambiguous on
+
+$if mode=vi
+"\b": backward-char
+$endif
+
+$if Bash
+"\b": backward-char
+$endif
 
