@@ -9,3 +9,8 @@ Usage
 I prefer to check this out to $HOME/.BUCKET and then use symlinks
 to refer to the files/directories from $HOME.
 
+    cd ~
+    git clone https://github.com/AndrewClarke/Cmdline-Tools.git .BUCKET
+    cd .BUCKET
+    ./mklinks
+

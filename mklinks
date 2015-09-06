@@ -1,0 +1,46 @@
+#!/bin/bash
+
+if [[ $# -ne 1 && "$1" != doit ]]; then
+    echo "
+All work described here is relative to \$HOME.
+This script will:
+
+Create directory .BUCKET-VICTIMS
+
+Move all files and directories from \$HOME that will be replaced into
+this directory.
+
+Link bin and bin.f from .BUCKET
+
+Link the following files from .BUCKET/HOME:
+    .bash_profile .bashrc .gitconfig .inputrc
+    .irbrc .my.cnf .screenrc .tmux.conf .vimrc
+
+If you are happy for this to happen, rerun this as:
+
+    mklinks doit
+"
+
+    exit
+fi
+
+function fatal {
+    echo "$@"
+    exit 1
+}
+
+cd ~/.BUCKET || fatal "Cannot cd into \$HOME/.BUCKET - what did you clone it as?"
+
+SAFE=~/.BUCKET-VICTIMS
+mkdir -p $SAFE || fatal "Cannot create directory $SAFE"
+
+for dir in bin bin.f; do
+    [[ -d ~/$dir && ! -d $SAFE/$dir ]] && mv ~/$dir $SAFE
+    ln -s .BUCKET/$dir ~/$dir
+done
+
+for fname in $(/bin/ls -A HOME); do
+    [[ -f ~/$fname && ! -f $SAFE/$fname ]] && mv ~/$fname $SAFE
+    ln -s .BUCKET/HOME/$fname ~/$fname
+done
+
