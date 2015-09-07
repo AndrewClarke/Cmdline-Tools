@@ -103,7 +103,7 @@ git() {
             echo '$APPL_TOP/'"$_d:"
 
             # recursive GIT time! Also, capture highest error exit for exit status of this function.
-            git $cmd "$@" | sed '/./s/^/  /'
+            git $cmd "$@" | sed '/nothing to commit, working directory clean/d; /./s/^/  /'
             x=$?
             ((exit < x)) && exit=$x
             cd "$HERE"

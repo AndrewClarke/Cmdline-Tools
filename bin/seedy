@@ -1,15 +1,19 @@
 #!/bin/ksh
 
 function usage {
+   [[ $# -gt 0 ]] && echo >&2 "$@"
+
    echo >&2 "usage: $0 [-f | -m | -r] [-t]
 
 where:  -f  full: rollback, migrate and re-seed
-        -r  rollback only (STEP not supported?)
+        -r  rollback only (STEP=n supported)
         -m  migrate only
         -t  pass --trace option to db:seed
 
 Without -f, only runs 'rake db:migrate' && 'rake db:seed'
 -f, -m and -r are mutually exclusive.
+
+default option is now -m, 'cos the db:seed step is unwelcome.
 "
    exit 1
 }
@@ -18,7 +22,7 @@ Without -f, only runs 'rake db:migrate' && 'rake db:seed'
 fflag= mflag= rflag= tflag=
 while getopts :fmrt ch; do
     case "$ch" in
-      f) fflag=1 ;;
+      f) fflag=f ;;
       m) mflag=1 ;;
       r) rflag=1 ;;
       t) tflag=--trace ;;
@@ -27,12 +31,11 @@ while getopts :fmrt ch; do
 done
 shift $((OPTIND-1))
 
-[[ "$fflag$mflag$rflag" == 11* ]] && usage
-
-if [[ -n "$fflag" ]]; then
-    echo >&2 "use of -f is now horribly passé"
-    return 1
-fi
+case "$fflag$mflag$rflag" in
+  *f*) usage "use of -f is now horribly passé";;
+  ??*) usage ;;
+  '') mflag=1 ;;
+esac
 
 
 function bek {
