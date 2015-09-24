@@ -10,9 +10,9 @@ I prefer to check this out to $HOME/.BUCKET and then use symlinks
 to refer to the files/directories from $HOME.
 
     cd ~
-    ## git clone https://github.com/AndrewClarke/Cmdline-Tools.git .BUCKET
-    git clone git@github.com:AndrewClarke/Cmdline-Tools.git .BUCKET   # prefer ssh protocol
+    git clone https://github.com/AndrewClarke/Cmdline-Tools.git .BUCKET
     cd .BUCKET
     ./mklinks
-
+    # switch to preferred git (ssh) protocol
+    git remote set-url origin git@github.com:AndrewClarke/Cmdline-Tools.git
 
