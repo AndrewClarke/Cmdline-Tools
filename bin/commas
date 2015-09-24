@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+
+
+sub fixup($$) {
+    ($l, $r) = @_;
+    # Try to steal a leading space if available - which is only
+    # a half-arsed solution at best for maintaining columns...
+    $l =~ s/ ( \d+)$/$1/;
+    return "$l,$r";
+}
+
+while(<>) {
+    1 while s/((?<!\.)\d+)(\d\d\d)(?!\d)/fixup $1,$2/e;
+    print;
+}
+
