@@ -52,8 +52,8 @@ function MyDiff()
     if &diffopt =~ "icase"  | let opt .= "-i "   | endif
     if &diffopt =~ "iwhite" | let opt .= "-bBw " | endif
     silent execute "!diff -a " . opt . v:fname_in . " " . v:fname_new . " > " . v:fname_out
-    redraw!
     redraws!
+    redraw!
 endfunction
 
 " let did_load_filetypes = 1
