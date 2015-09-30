@@ -1,0 +1,128 @@
+#!/bin/bash
+
+unset GETOPT_COMPATIBLE POSIXLY_CORRECT
+myname="${0##*/}"
+shopt -s extglob
+
+LOCAL_DB_STORAGE=~/db
+DESCRIPTOR=nominated
+
+function setup {
+    case "$Pflag$Cflag$Tflag" in
+      P) target=prod   DUMP_PATH=/opt/tmp DESCRIPTOR='PRODUCTION'   REMOTE_HOST=web1.aws.tod.net.au ;;
+      C) target=cust   DUMP_PATH=/opt/tmp DESCRIPTOR='Customer UAT' REMOTE_HOST=custuatweb1.aws.tod.net.au ;;
+      T) target=tickit DUMP_PATH=/opt/tmp DESCRIPTOR='Internal UAT' REMOTE_HOST=tickituat.aws.tod.net.au ;;
+      *) usage Exactly one of -P -C or -T must be given. ;;
+    esac
+}  # setup
+
+
+function usage {
+    exec >&2
+    [[ $# -gt 0 ]] && echo "$@"
+
+    echo "\
+Usage: $myname [-n] [-d | -l | -r] (-P | -C | -T) src-dbname
+
+Where   -n  no-execute. Only show commands to run. Exclusive with -l
+        -d  dump only. Do not fetch yet.
+        -l  list dump files on remote server for named database.
+        -r  restart (using rsync) the named transfer.
+
+    Exactly one of the following must be given:
+        -P  fetch from production.
+        -C  fetch from customer UAT.
+        -T  fetch from tickit UAT.
+
+-l cannot be used with -n or -r.
+-d cannot be used with -l or -r.
+When using -r, give the filename reported from -l, not a db name. 
+
+If -l and -r are not given, fetches a database from $DESCRIPTOR server
+to $LOCAL_DB_STORAGE.
+Use of -d stops the fetching - dumps only. Use -l later to find it.
+"
+
+    exit 1
+}  # usage
+
+
+function fatal {
+    exec >&2
+    echo "FATAL ERROR: $@"
+    exit 1
+}  # fatal
+
+
+function doit {
+    ( PS4=; set -x; exec "$@" )
+}
+
+
+function show {
+    echo "$@"
+}
+
+
+OPTIND=1
+dflag= lflag= nflag= rflag= Pflag= Cflag= Tflag=
+while getopts :dlnrPCT ch; do
+    case "$ch" in
+      d) dflag=d ;;
+      l) lflag=l ;;
+      n) nflag=echo ;;
+      r) rflag=r ;;
+      P) Pflag=P ;;
+      C) Cflag=C ;;
+      T) Tflag=T ;;
+
+      ?)
+        [[ "X$OPTARG" == 'X?' ]] && usage
+        usage "invalid flag: $OPTARG"
+    esac
+done
+shift $((OPTIND-1))
+[[ -n "$lflag" && -n "$dflag" ]] && usage Cannot use -l and -d
+[[ -n "$lflag" && -n "$nflag" ]] && usage Cannot use -l and -n
+[[ -n "$lflag" && -n "$rflag" ]] && usage Cannot use -l and -r
+[[ -n "$dflag" && -n "$rflag" ]] && usage Cannot use -d and -r
+
+setup
+
+if [[ $# -ne 1 ]]; then
+    if [[ -n "$rflag" ]]
+      then usage "Dump file name expected"
+      else usage "Database name expected"
+    fi
+fi
+
+if [[ -n "$rflag" ]]; then
+    DUMP_FILE="$1"
+else
+    DB="$1"
+    NOW="$(date +"%Y-%m-%d_%H-%M-%S")"
+    DUMP_FILE="backdb-$DB-$target-$NOW.sql.gz"
+fi
+
+DUMP_PATH_FILE="$DUMP_PATH/$DUMP_FILE"
+
+### if [[ -z "$nflag" ]]; then
+###     # Ensure the relevant SSH key is loaded into your ssh-agent.
+###     ssh_key=~/.ssh/tickit-sydprod.pem
+###     [[ -n "$(ssh-add -l | while read _ _ fname _; do [[ "$fname" == "$ssh_key" ]] && echo 1; done)" ]] || ssh-add "$ssh_key"
+### fi
+
+if [[ -n "$lflag" ]]; then
+    ssh -A ubuntu@$REMOTE_HOST sudo -u deploy -i /bin/ls -l "$DUMP_PATH/*-$DB-$target-*"
+    exit 0
+fi
+
+if [[ -z "$rflag" ]]; then
+    $nflag ssh -A ubuntu@$REMOTE_HOST sudo -u deploy -i /home/deploy/bin/dumpdb $DB $DUMP_PATH $DUMP_FILE || exit 1
+fi
+
+if [[ -z "$dflag" ]]; then
+  # NOTE: don't use -z on rsync - the gzipping of the file has done the best it can already.
+  $nflag rsync -e ssh --append --progress --remove-source-files deploy@$REMOTE_HOST:$DUMP_PATH_FILE $LOCAL_DB_STORAGE/$DUMP_FILE
+fi
+
