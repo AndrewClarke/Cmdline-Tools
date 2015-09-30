@@ -122,7 +122,7 @@ if [[ -z "$rflag" ]]; then
 fi
 
 if [[ -z "$dflag" ]]; then
-  # NOTE: don't use -z on rsync - the gzipping of the file has done the best it can already.
-  $nflag rsync -e ssh --append --progress --remove-source-files deploy@$REMOTE_HOST:$DUMP_PATH_FILE $LOCAL_DB_STORAGE/$DUMP_FILE
+    # NOTE: don't use -z on rsync - the gzipping of the file has done the best it can already.
+    $nflag rsync -e ssh --append --progress --remove-source-files deploy@$REMOTE_HOST:$DUMP_PATH_FILE $LOCAL_DB_STORAGE/$DUMP_FILE
 fi
 
