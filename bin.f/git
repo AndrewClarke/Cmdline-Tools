@@ -13,8 +13,8 @@ git() {
     if [[ -n "$APPL_TOP" ]]; then
         if [[ "$PWD" == "$APPL_TOP" ]]; then
             at_top=1
-            tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tos|ts)-+([0-9])*([a-z])|*_app))
-        elif [[ "$PWD" == "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tos|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
+            tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app))
+        elif [[ "$PWD" == "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
             in_proj=1
         fi
     fi
@@ -31,7 +31,7 @@ git() {
         if [[ -n "$at_top" && "X$1" == X-L ]]; then
             shift
             tops=()
-            while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tos|ts)-+([0-9])*([a-z])|*_app) ]]; do
+            while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) ]]; do
                 tops+=("$1")
                 shift
             done
@@ -120,13 +120,13 @@ git() {
         set -- status "$@" .
         ;;
 
-      spawn)        # git spawn [-m] [-f] @(tos|ts)-<number>
         know_branch >/dev/null 2>/dev/null
         if ! git pulla; then
             exit=1
             break
         fi
 
+      spawn)        # git spawn [-m] [-f] @(tod|ts)-<number>
         fflag=
         while [[ "X$1" == X-* ]]; do
             case "X$1" in
@@ -137,8 +137,8 @@ git() {
             shift
         done
 
-        if [[ $# -ne 1 ]] || [[ -z "$fflag" && "$1" != @(tos|ts)-+([0-9])*([a-z]) ]]; then
-            echo >&2 "usage: git spawn [-m] [-f] @(tos|ts)-something"
+        if [[ $# -ne 1 ]] || [[ -z "$fflag" && "$1" != @(tod|ts)-+([0-9])*([a-z]) ]]; then
+            echo >&2 "usage: git spawn [-m] [-f] @(tod|ts)-something"
             exit=1
         fi
 
@@ -195,7 +195,7 @@ git() {
             done
 
             # Merge the branch if it's current in this project, next to a release branch.
-            if [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$this" == @(tos|ts)-+([0-9])*([a-z]) ]]; then
+            if [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$this" == @(tod|ts)-+([0-9])*([a-z]) ]]; then
                 # Proven: This directory has a release branch it's following, and we are on a development branch.
                 if git status --porcelain | sed 's/^ /./; s/^\(.\)\(.\) \(.*\)$/\1 \2 \3/; /^[?!]/d' | grep -q .; then
                     echo >&2 "Significant uncommitted work exists - cannot merge release $main to $this"
@@ -204,7 +204,7 @@ git() {
                     git merge -X patience "origin/$main"
                 fi
             else
-                echo >&2 "There must be a single rel- and some @(tos|ts)- branches, and you must currently be on a @(tos|ts)- branch"
+                echo >&2 "There must be a single rel- and some @(tod|ts)- branches, and you must currently be on a @(tod|ts)- branch"
             fi
         }
         ;;
@@ -229,7 +229,7 @@ git() {
             dev="${branches[1]}"
 
             # Merge the branch if it's alone in this project with a release branch.
-            if [[ "${#branches[@]}" -eq 2 && "$this" == "$main" ]] && [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$dev" == @(tos|ts)-+([0-9])*([a-z]) ]]; then
+            if [[ "${#branches[@]}" -eq 2 && "$this" == "$main" ]] && [[ "$main" == rel-+([0-9])+(.+([0-9]))*([a-z]) && "$dev" == @(tod|ts)-+([0-9])*([a-z]) ]]; then
                 # Proven:
                 #  This directory only has 2 local branches: a release (branch it's following) and a development branch.
                 #  Current branch is the main branch.
@@ -241,7 +241,7 @@ git() {
                     git merge -X patience "origin/$dev"
                 fi
             else
-                echo >&2 "There must only be a rel- and a @(tos|ts)- branch, and you must currently be on the rel- branch"
+                echo >&2 "There must only be a rel- and a @(tod|ts)- branch, and you must currently be on the rel- branch"
             fi
         }
         ;;
@@ -348,7 +348,7 @@ app() {
             app_usage "Cannot use -l with -n, -N or a named project"; return
         fi
 
-        ls 2>&- -d "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tos|ts)-+([0-9])*([a-z])|*_app) | sed 's:.*/::' |
+        ls 2>&- -d "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) | sed 's:.*/::' |
         {
           first=yo
           while read app; do
@@ -374,7 +374,7 @@ app() {
             app_usage "Cannot use -N with -n or a named project"; return
         fi
 
-        if [[ "$PWD" != "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tos|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
+        if [[ "$PWD" != "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
             app_usage "'app -N' only works if you are in a Tickit project"; return
         fi
 
