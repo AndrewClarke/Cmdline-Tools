@@ -120,12 +120,6 @@ git() {
         set -- status "$@" .
         ;;
 
-        know_branch >/dev/null 2>/dev/null
-        if ! git pulla; then
-            exit=1
-            break
-        fi
-
       spawn)        # git spawn [-m] [-f] @(tod|ts)-<number>
         fflag=
         while [[ "X$1" == X-* ]]; do
@@ -140,11 +134,12 @@ git() {
         if [[ $# -ne 1 ]] || [[ -z "$fflag" && "$1" != @(tod|ts)-+([0-9])*([a-z]) ]]; then
             echo >&2 "usage: git spawn [-m] [-f] @(tod|ts)-something"
             exit=1
-        fi
-
-        if git push origin "$BRANCH":"$1" && git fetch && git checkout $mflag --track -b "$1" origin/"$1"
-          then call=
-          else exit=0
+        elif know_branch >/dev/null 2>/dev/null; ! git pulla; then
+            exit=1
+        elif git push origin "$BRANCH":"$1" && git fetch && git checkout $mflag --track -b "$1" origin/"$1"; then
+            call=
+        else
+            exit=0
         fi
         ;;
 
