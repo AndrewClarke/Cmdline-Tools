@@ -1,0 +1,60 @@
+#!/bin/bash
+
+
+JSL=/opt/jsl-0.3.0/src/Linux_All_DBG.OBJ/jsl
+
+
+function usage {
+    exec >&2
+
+echo "usage: $0 [-F] [-S] [-C] [-r] [-c configfile] [-o outputformat]
+  -F => give file listing
+  -S => give summary
+  -C => give context
+
+-o: -output-format :
+-c: config file
+-r recurse
+"
+    exit 1
+}
+
+
+Fflag=-nofilelisting Sflag=-nosummary Cflag=-nocontext rflag= config= output=
+while getopts :FSCrc:o: ch; do
+    case "$ch" in
+      (F) Fflag= ;;
+      (S) Sflag= ;;
+      (C) Cflag= ;;
+      (r) rflag=-recurse ;;
+      (c) config="$OPTARG" ;;
+      (o) output="$OPTARG" ;;
+      (*) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+
+function doit {
+    $JSL -nologo $Fflag $Sflag $Cflag $rflag ${config:+-conf "$config"} ${output:+-output-format "$outout"} "$@"
+}
+
+
+if [[ $# -eq 0 ]]; then
+    doit -stdin
+    result=$?
+else
+    result=0
+    for i in "$@"; do
+        doit -process "$i"
+        x=$?
+        if [[ $x -eq 2 ]]; then
+            result=2
+            break
+        fi
+        [[ $x -gt $result ]] && result=$x
+    done
+fi
+
+exit $result
+
