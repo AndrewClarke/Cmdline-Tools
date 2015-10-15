@@ -1,4 +1,5 @@
 #!/bin/bash
+myname="${0##*/}"
 
 
 JSL=/opt/jsl-0.3.0/src/Linux_All_DBG.OBJ/jsl
@@ -7,14 +8,15 @@ JSL=/opt/jsl-0.3.0/src/Linux_All_DBG.OBJ/jsl
 function usage {
     exec >&2
 
-echo "usage: $0 [-F] [-S] [-C] [-r] [-c configfile] [-o outputformat]
-  -F => give file listing
-  -S => give summary
-  -C => give context
+echo "usage: $myname [-F] [-S] [-C] [-r] [-c configfile] [-o outputformat]
 
--o: -output-format :
--c: config file
--r recurse
+where   -F  give file listing
+        -S  give summary
+        -C  give context
+        -r  recurse
+
+        -o: set the output-format (no, I don't know what the options are yet)
+        -c: use config file for settings
 "
     exit 1
 }
