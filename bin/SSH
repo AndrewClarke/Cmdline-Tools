@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# try to find a -l username or username@
+hasuser=
+for i in "$@"; do
+    if [[ "$i" == *@* || "X$i" == X-l* ]]; then
+        hasuser=1
+        break
+    fi
+done
+
+if [[ -z "$hasuser" ]]; then
+    echo -n "Username ($LOGNAME): "
+    read -e -t 4 username
+    res=$?
+    [[ $res -ne 0 ]] && echo
+    [[ $res -gt 0 && $res -lt 128 ]] && exit
+    set -- -l "${username:-$LOGNAME}" "$@"
+fi
+
+trap : 2 3 15
+ssh "$@"
+exit 0
+
