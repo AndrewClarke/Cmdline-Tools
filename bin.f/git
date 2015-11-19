@@ -21,21 +21,23 @@ git() {
 
     # Parameters! WOOO!
     while true; do
-        if [[ "X$1" == X-i ]]; then
-            iflag=1
-            shift
-            continue
-        fi
-
-        # if at top, then -L name name name ... limits interesting projects to those names
-        if [[ -n "$at_top" && "X$1" == X-L ]]; then
-            shift
-            tops=()
-            while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) ]]; do
-                tops+=("$1")
+        if [[ -n "$at_top" ]]; then
+            if [[ "X$1" == X-i ]]; then     # -i => interactive looping when above all projects.
+                iflag=1
                 shift
-            done
-            continue
+                continue
+            fi
+
+            # At top, -L name name name ... limits interesting projects to those names.
+            if [[ "X$1" == X-L ]]; then
+                shift
+                tops=()
+                while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) ]]; do
+                    tops+=("$1")
+                    shift
+                done
+                continue
+            fi
         fi
 
         break
