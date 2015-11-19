@@ -14,7 +14,7 @@ vflag=
 usage() {
     [[ $# -gt 0 ]] && echo >&2 "$myname:" "$@"
 
-    echo >&2 "usage: $myname [-v] [+t] [+B] [-d database]   -l ['likepattern'] | tabname ...
+    echo >&2 "usage: $myname [-v] [+t] [+B] [-d database] -l ['likepattern'] | tabname ...
 where   -d  select database (default \$DBNAME:=mysql)
         -l  list tables (optionally like pattern)
         -v  emit table name before each table
@@ -66,14 +66,15 @@ while [[ "X$1" = X[-+]* ]]; do
 done
 
 
-show_dbs=
+show_dbs= cleanit=
 if [[ "$DBNAME" = '?' ]]; then
-    show_dbs=1
+    show_dbs=1 cleanit=1
     DBNAME=mysql
 fi
 
 if [[ -n "$show_dbs" ]]; then
     echo "show databases;"
+    cleanit=1
 elif [[ -z "$lflag" ]]; then
     [[ $# -eq 0 ]] && usage
 
@@ -109,5 +110,9 @@ fi | mysql -D $DBNAME $tflag $Bflag | {
             echo "$line" ;;
         esac
     done
-}
+} | if [[ -n "$cleanit" ]]; then
+        sed 's/^| //; s/  *|$//; /^Database$/d'
+    else
+        cat
+    fi
 
