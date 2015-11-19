@@ -50,6 +50,21 @@ git() {
 
     cmd="$1"
     shift
+
+    # Special-case uniform syntax for commands I use that have irritating variations in syntax.
+    if [[ "$cmd" == *-* ]]; then
+        right="${cmd#*-}"
+        cmd="${cmd%-$right}"
+
+        case "$cmd-$right" in
+          branch-@(list|merged|track)) right="--$right" ;;
+          branch-merge)                right=--merged ;;
+        esac
+
+        set -- "$right" "$@"
+    fi
+
+
     if [[ "$cmd" != help && "$1" == help ]]; then
         # Report on a confused attempt to get help.
         echo >&2 "You probably mean git $(tput setaf 3)$cmd --help ...$(tput sgr0) or $(tput setaf 3)git help $cmd ...$(tput sgr0)"
