@@ -208,6 +208,14 @@ function WrapSelection() range
 endfunction
 
 
+function Renders() range
+    execute ":" . a:firstline . "," . a:lastline . "g/\\C \\(SELECT\\|SHOW FIELDS\\) /d"
+endfunction
+
+
+map <silent> <F8> :call Renders()<CR>
+
+
 " jump to the last position when reopening a file
 if has("autocmd")
   au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
