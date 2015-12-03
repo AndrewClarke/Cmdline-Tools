@@ -1,5 +1,6 @@
 
 require 'rubygems'
+require 'ruby-debug'
 
 if ENV['RAILS_ENV'] == 'development' && ENV['GEM_HOME']
   require 'rubygems'
