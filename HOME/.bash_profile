@@ -5,8 +5,8 @@
 export ORIGIN_HOST ORIGIN_SITE ORIGIN_USER
 export DEPTH=
 
-: ${APPL:=~/tickit/rel-3.2}
-export APPL
+## : ${APPL:=~/tickit/rel-3.2}
+## export APPL
 
 export FPATH=$HOME/bin.f
 
