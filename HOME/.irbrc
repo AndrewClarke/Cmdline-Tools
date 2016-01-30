@@ -1,4 +1,6 @@
 
+IRB.conf[:SAVE_HISTORY] = 1000
+
 require 'rubygems'
 require 'ruby-debug'
 
