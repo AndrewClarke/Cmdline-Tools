@@ -1,0 +1,41 @@
+#!/bin/bash
+
+EXPECTED_ARGS=4
+E_BADARGS=65
+
+if [[ $# -ne $EXPECTED_ARGS ]]; then
+  echo "Usage: `basename $0` instance_name email_off reset_password set_email_to_example_com"
+  echo "Turn off email reminder (if email_off is yes), reset admin password (if reset_password is yes) and set emails to @example.com"
+  exit $E_BADARGS
+fi
+
+INSTANCE=$1
+EMAIL_OFF=$2
+PASSWORD_RESET=$3
+EXAMPLE_COM=$4
+
+commands=""
+
+if [ "$EMAIL_OFF" = "yes" ]; then
+  commands=$commands"OrganisationPreferences.fetch.update_attribute(:send_email_reminders, false)\n"
+fi
+
+if [ "$PASSWORD_RESET" = "yes" ]; then
+  p1=`< /dev/urandom tr -dc A-Za-z0-9 | head -c8`
+  p2=`< /dev/urandom tr -dc A-Za-z | head -c1`
+  p3=`< /dev/urandom tr -dc 0-9 | head -c1`
+  pass=$p1$p2$p3
+  commands=$commands"puts User.super_user.name\nUser.super_user.update_attribute(:password, '$pass')\n"
+fi
+
+if [[ "$EXAMPLE_COM" = "yes" ]]; then
+    SQL="update users set email=concat(left(email, locate('@', email)), 'example.com');"
+    echo $SQL | mysql $INSTANCE
+fi
+
+if [ "$commands" != "" ]; then
+  commands=$commands"exit\n"
+  cd /opt/tickit/cluster/$INSTANCE.sydprod.tod.net.au/current
+  echo -e $commands | script/console
+fi
+

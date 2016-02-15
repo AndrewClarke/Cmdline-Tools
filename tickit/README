@@ -1,0 +1,11 @@
+
+All the scripts with no x permission are older ones for US Amazons?
+
+If so:
+* should copy-tickituat-to-tickituat and fetch_uat have the x bit removed?
+
+
+~/db needs to exist before you can use these scrips
+
+~/.ssh/sambauser and ~/.ssh/sambapass needs to exist so's you can copy files to the backup disk thingy
+

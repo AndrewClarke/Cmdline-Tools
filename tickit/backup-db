@@ -1,0 +1,164 @@
+#!/bin/bash
+
+unset GETOPT_COMPATIBLE POSIXLY_CORRECT
+myname="${0##*/}"
+shopt -s extglob
+
+LOCAL_DB_STORAGE=~/db
+DESCRIPTOR=nominated
+
+function setup {
+    case "$src" in
+      prod)
+        DESCRIPTOR='PRODUCTION'
+        REMOTE_HOST=web1.aws.tod.net.au
+        DUMP_PATH=/opt/tmp
+        NAS_DIR=sydprod
+        ;;
+
+      cust)
+        DESCRIPTOR='Customer UAT'
+        REMOTE_HOST=custuatweb1.aws.tod.net.au
+        DUMP_PATH=/opt/tmp
+        NAS_DIR=sydcustuat
+        ;;
+
+      tickit)
+        DESCRIPTOR='Tickit UAT'
+        REMOTE_HOST=tickituat.aws.tod.net.au
+        DUMP_PATH=/opt/tmp
+        NAS_DIR=sydtickituat
+        ;;
+    esac
+}  # setup
+
+
+function usage {
+    exec >&2
+    [[ $# -gt 0 ]] && echo "$@"
+
+    echo "\
+Usage: $myname [options] --<SITE> src-dbname
+
+Options are:
+  -h | --help       this help info
+  -n                no-execute. Only show commands to be run
+  -l                copy to local db storage only (not to tickit-nas)
+
+<SITE> is one of --custuat, --production or --tickituat,
+but may be abbreviated (eg --cust, --prod, --tickit)
+or given as -C, -P or -T.
+
+Backup a database from Customer UAT or Production servers,
+to $LOCAL_DB_STORAGE and tickit-nas.
+"
+
+    exit 1
+}  # usage
+
+
+function fatal {
+    exec >&2
+    echo "FATAL ERROR: $@"
+    exit 1
+}  # fatal
+
+
+function doit {
+    ( PS4=; set -x; exec "$@" )
+}
+
+
+function show {
+    echo "$@"
+}
+
+
+params="$(getopt -n "$myname" -o hnlT:C:P: -l help,custuat:,production:,tickit: -- "$@")" || usage
+eval set -- "$params"
+unset params
+
+
+let ndb=0
+src_db= src= action=doit lflag=
+
+while [[ $# -gt 0 ]]; do
+    arg="$1"
+    shift
+
+    case "$arg" in
+      --) break ;;
+      -n) action=show ;;
+      -l) lflag=1 ;;
+      -h|--help) usage ;;
+
+      -[TCP]*)
+        case "$arg" in
+          -T) src=tickit ;;
+          -C) src=cust ;;
+          -P) src=prod ;;
+        esac
+
+        case "$ndb" in
+          0) src_db="$1" ;;
+          *) usage "Too many DB names given" ;;
+        esac
+
+        let ndb+=1
+        shift
+        ;;
+
+      --@(custuat|production|tickit))
+        arg="${arg#--}"
+        case "$ndb" in
+          0) src_db="$1"; src="${arg%@(uat|uction)}" ;;
+          *) usage "Too many DB names given" ;;
+        esac
+
+        let ndb+=1
+        shift
+        ;;
+
+      *) usage "Invalid parameter: $arg" ;;
+    esac
+done
+
+[[ $ndb -eq 1 ]] || usage "DB name expected"
+
+
+if [[ "$src_db" == *custtest* ]]; then
+  echo "We don't backup databases named like *custtest*!"
+  exit
+fi
+
+setup
+
+SAMBAUSER=`cat ~/.ssh/sambauser 2>&-`
+SAMBAPASS=`cat ~/.ssh/sambapass 2>&-`
+
+NOW=$(date +"%Y-%m-%d_%H-%M-%S")
+DUMP_FILE=backdb-$src_db-$NOW.sql.gz
+DUMP_PATH_FILE=$DUMP_PATH/$DUMP_FILE
+
+# ensure the relevant SSH key is loaded into your ssh-agent
+ssh_key=~/.ssh/tickit-sydprod.pem
+[[ -n "$(ssh-add -l | while read _ _ fname _; do [[ "$fname" == "$ssh_key" ]] && echo 1; done)" ]] || ssh-add "$ssh_key"
+
+[[ "$action" == doit ]] && set -x
+$action ssh -A ubuntu@$REMOTE_HOST sudo -u deploy -i /home/deploy/bin/dumpdb $src_db $DUMP_PATH $DUMP_FILE
+$action scp    ubuntu@$REMOTE_HOST:$DUMP_PATH_FILE $LOCAL_DB_STORAGE
+$action ssh -A ubuntu@$REMOTE_HOST sudo -u deploy rm $DUMP_PATH_FILE
+set +x
+
+if [[ -z "$lflag" ]]; then
+    $action smbclient //192.168.250.12/backups $SAMBAPASS ${SAMBAUSER:+-U "$SAMBAUSER"} <<EOC
+        cd customer_backups
+        cd $NAS_DIR
+        mkdir $src_db
+        cd $src_db
+        lcd $LOCAL_DB_STORAGE
+        put $DUMP_FILE
+        ls $DUMP_FILE
+EOC
+fi
+

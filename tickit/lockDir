@@ -1,0 +1,38 @@
+
+export LockFile=.lock
+export MYPID=$$
+export umask=$(umask)
+
+: ${LOCKTRIES:=10} ${LOCKSLEEP:=3}
+export LOCKTRIES LOCKSLEEP
+
+# requires: $LockFile $MYPID $umask $LOCKTRIES $LOCKSLEEP
+
+function lockDir {
+    typeset -R10 JPID=$MYPID
+    typeset -i tries=0
+
+    set -o noclobber
+    umask 0333
+
+    until echo "$JPID" 2>/dev/null > $LockFile; do
+	OPID=$(<$LockFile)
+
+	if kill 2>/dev/null -0 $OPID; then
+	    let tries=$tries+1
+	    [[ $tries -gt $LOCKTRIES ]] && fatal "process pid=$OPID has locked this directory."
+	    [[ -z "$qflag" ]] && echo >&2 "Pausing in case lock pid=$OPID is temporary ($tries)..."
+	else
+	    echo >&2 "process pid=$OPID may have terminated abnormally - attempting to clear lock..."
+	    rm -f "$LockFile"
+            [[ -f "$LockFile" ]] && fatal "Cannot clear lock file $LockFile"
+	fi
+
+	doing sleep $tries for $LOCKSLEEP...
+	sleep $LOCKSLEEP
+    done
+
+    umask $umask
+    return 0
+
+}   # lockDir

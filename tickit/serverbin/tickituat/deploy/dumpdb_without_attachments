@@ -1,0 +1,35 @@
+#!/bin/bash
+
+EXPECTED_ARGS=3
+E_BADARGS=65
+
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` DB DUMP_PATH DUMP_FILE"
+  echo "Backup a database into a dump file in gz format, skipping the _data tables that store uploaded files"
+  exit $E_BADARGS
+fi
+
+
+DB=$1
+DUMP_PATH=$2
+DUMP_FILE=$3
+
+DUMP_PATH_FILE=$2/$3
+
+mysqldump $DB --ignore-table=$DB.documents_data --ignore-table=$DB.evidence_documents_data | gzip > $DUMP_PATH_FILE
+rcs=(${PIPESTATUS[*]})
+rc_dump=${rcs[0]}
+rc_zip=${rcs[1]}
+if [[ $rc_dump != 0 ]]; then
+  echo "Unable to do mysqldump for $DB."
+  exit $rc_dump
+fi
+if [[ $rc_zip != 0 ]]; then
+  echo "Unable to zip to dump file $DUMP_PATH_FILE."
+  exit $rc_zip
+fi
+
+ls -l $DUMP_PATH_FILE
+exit 0
+

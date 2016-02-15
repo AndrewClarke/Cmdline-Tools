@@ -1,0 +1,40 @@
+#!/bin/bash
+
+EXPECTED_ARGS=6
+E_BADARGS=65
+
+if [[ $# -ne $EXPECTED_ARGS ]]; then
+  echo "Usage: `basename $0` DUMP_PATH DUMP_FILE DEST_DB EMAIL_OFF PASSWORD_RESET SET_EMAILS_TO_EXAMPLE_COM"
+  echo "Restore database from a dump file and optionally turn off email reminder, reset admin password and set email to @example.com."
+  exit $E_BADARGS
+fi
+
+
+DUMP_PATH=$1
+DUMP_FILE=$2
+DEST_DB=$3
+EMAIL_OFF=$4
+PASSWORD_RESET=$5
+EXAMPLE_COM=$6
+
+DUMP_PATH_FILE=$DUMP_PATH/$DUMP_FILE
+
+sudo -u deploy -i /home/deploy/bin/restoredb $DUMP_PATH $DUMP_FILE $DEST_DB
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to restore database from file $DUMP_PATH_FILE"
+  exit $rc 
+fi
+
+rm $DUMP_PATH_FILE
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to clean up the dump file $DUMP_PATH_FILE"
+  exit $rc
+fi
+
+echo "Database $DEST_DB in `hostname` restored."
+
+sudo -u deploy -i /home/deploy/bin/config_instance $DEST_DB $EMAIL_OFF $PASSWORD_RESET $EXAMPLE_COM
+
+exit 0

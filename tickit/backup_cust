@@ -1,0 +1,70 @@
+#!/bin/bash
+
+unset GETOPT_COMPATIBLE POSIXLY_CORRECT
+myname="${0##*/}"
+target="${myname##*[-_]}"
+shopt -s extglob
+
+LOCAL_DB_STORAGE=~/db
+DESCRIPTOR=nominated
+
+function setup {
+    case "$target" in
+      cust)
+        DESCRIPTOR='PRODUCTION'
+        REMOTE_HOST=custuatweb1.aws.tod.net.au
+        DUMP_PATH=/opt/tmp
+        NAS_DIR=sydcustuat
+        ;;
+
+      prod)
+        DESCRIPTOR='Customer UAT'
+        REMOTE_HOST=web1.aws.tod.net.au
+        DUMP_PATH=/opt/tmp
+        NAS_DIR=sydprod
+        ;;
+    esac
+}  # setup
+
+setup
+
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: `basename $0` DB"
+  echo "Backup a database from Sydney $DESCRIPTOR server to $LOCAL_DB_STORAGE and tickit-nas."
+  exit 1
+fi
+
+src_db="$1"
+
+if [[ "$src_db" == *custtest* ]]; then
+  echo "We don't backup databases named like *custtest*!"
+  exit
+fi
+
+
+SAMBAUSER=`cat ~/.ssh/sambauser 2>&-`
+SAMBAPASS=`cat ~/.ssh/sambapass 2>&-`
+
+NOW=$(date +"%Y-%m-%d_%H-%M-%S")
+DUMP_FILE=backdb-$src_db-$NOW.sql.gz
+DUMP_PATH_FILE=$DUMP_PATH/$DUMP_FILE
+
+# ensure the relevant SSH key is loaded into your ssh-agent
+ssh_key=~/.ssh/tickit-sydprod.pem
+[[ -n "$(ssh-add -l | while read _ _ fname _; do [[ "$fname" == "$ssh_key" ]] && echo 1; done)" ]] || ssh-add "$ssh_key"
+
+ssh -A ubuntu@$REMOTE_HOST sudo -u deploy -i /home/deploy/bin/dumpdb $src_db $DUMP_PATH $DUMP_FILE
+scp    ubuntu@$REMOTE_HOST:$DUMP_PATH_FILE $LOCAL_DB_STORAGE
+ssh -A ubuntu@$REMOTE_HOST sudo -u deploy rm $DUMP_PATH_FILE
+
+smbclient //192.168.250.12/backups $SAMBAPASS ${SAMBAUSER:+-U "$SAMBAUSER"} <<EOC
+  cd customer_backups
+  cd $NAS_DIR
+  mkdir $src_db
+  cd $src_db
+  lcd $LOCAL_DB_STORAGE
+  put $DUMP_FILE
+  ls $DUMP_FILE
+EOC
+
