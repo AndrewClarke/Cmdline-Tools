@@ -429,7 +429,7 @@ app() {
         export APPL="$APPL_TOP/$vers"
     fi
 
-    [[ -n "$target" ]] && clear
+    clear
     [[ -z "$nflag" ]]  && cd "$APPL$target" && know_branch >/dev/null 2>/dev/null
     [[ -n "$vflag" ]]  && echo "APPL = $APPL"
 
@@ -439,21 +439,37 @@ app() {
 
 _raily_magic_cd() {
     local top="$1"
+    local HERE="$PWD"
     shift
-    [[ -z "$APPL" ]]          && { echo >&2 "\$APPL is not defined"; return 1; }
-    [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project"; return 1; }
-    [[ -d "$APPL/app/$top" ]] || { echo >&2 "\$APPL does not have an app/$top directory";   return 1; }
 
-    cd "$APPL/app/$top"
+    [[ -n "$APPL" ]]          || { echo >&2 "\$APPL is not defined.";                        return 1; }
+    [[ -d "$APPL" ]]          || { echo >&2 "\$APPL directory does not exist.";              return 1; }
+    [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project."; return 1; }
+
+    if   [[ -d "$APPL/app/$top"    ]]; then cd "$APPL/app/$top"
+    elif [[ -d "$APPL/public/$top" ]]; then cd "$APPL/public/$top"
+    elif [[ -d "$APPL/$top"        ]]; then cd "$APPL/$top"
+    else
+        echo >&2 "\$APPL does not have an app/$top, public/$top or a $top directory."
+        return 1
+    fi
+
+    [[ "$HERE" = $APPL?(/*) ]] || clear
+
 }   # _raily_magic_cd
 
 
-M() { _raily_magic_cd models      "$@"; clear; }
-V() { _raily_magic_cd views       "$@"; clear; }
-C() { _raily_magic_cd controllers "$@"; clear; }
-H() { _raily_magic_cd helpers     "$@"; clear; }
-# dang - L is already taken
-P() { _raily_magic_cd public      "$@"; clear; }
+M() { _raily_magic_cd models      "$@"; }
+V() { _raily_magic_cd views       "$@"; }
+C() { _raily_magic_cd controllers "$@"; }
+H() { _raily_magic_cd helpers     "$@"; }
+T() { _raily_magic_cd metal       "$@"; }
+R() { _raily_magic_cd presenters  "$@"; }
+W() { _raily_magic_cd sweepers    "$@"; }
+B() { _raily_magic_cd lib         "$@"; }
+P() { _raily_magic_cd public      "$@"; }
+J() { _raily_magic_cd javascripts "$@"; }
+S() { _raily_magic_cd stylesheets "$@"; }
 
 
 know_branch
