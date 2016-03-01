@@ -225,7 +225,8 @@ endif
 au BufReadPost * set comments= commentstring= iskeyword-=:
 
 " hate syntax coloring in diff mode
-au FilterWritePre * if &diff | syntax off | set nofoldenable | endif
+" au FilterWritePre * if &diff | syntax off | set nofoldenable | endif
+au FilterWritePre * if &diff | syntax off | endif
 
 function TabOn()
     set expandtab smarttab
