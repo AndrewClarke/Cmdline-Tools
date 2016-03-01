@@ -1,0 +1,3 @@
+
+clisp() { command clisp -q "$@"; }
+
