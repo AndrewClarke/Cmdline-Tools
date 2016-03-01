@@ -65,7 +65,8 @@ set guifont=APL385\ Unicode\ 9,Courier\ New\ 8,Courier\ 10\ Pitch\ 8
 set guifont=Courier\ New\ 8,Courier\ 10\ Pitch\ 8
 set ambiwidth=double
 
-let loaded_matchparen = 1
+hi MatchParen cterm=none ctermbg=darkblue ctermfg=white
+" let loaded_matchparen = 1
 " let did_load_filetypes = 1
 
 " abbr SQLCODE sqlca.sqlcode
