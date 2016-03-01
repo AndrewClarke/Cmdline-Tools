@@ -438,15 +438,15 @@ app() {
 
 
 _raily_magic_cd() {
-    local top="$1"
-    local HERE="$PWD"
+    local EXPWD="$PWD" top="$1"
     shift
 
     [[ -n "$APPL" ]]          || { echo >&2 "\$APPL is not defined.";                        return 1; }
     [[ -d "$APPL" ]]          || { echo >&2 "\$APPL directory does not exist.";              return 1; }
     [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project."; return 1; }
 
-    if   [[ -d "$APPL/app/$top"    ]]; then cd "$APPL/app/$top"
+      if [[ -z "$top"              ]]; then cd "$APPL"
+    elif [[ -d "$APPL/app/$top"    ]]; then cd "$APPL/app/$top"
     elif [[ -d "$APPL/public/$top" ]]; then cd "$APPL/public/$top"
     elif [[ -d "$APPL/$top"        ]]; then cd "$APPL/$top"
     else
@@ -454,22 +454,23 @@ _raily_magic_cd() {
         return 1
     fi
 
-    [[ "$HERE" = $APPL?(/*) ]] || clear
+    [[ "$EXPWD" = $APPL?(/*) ]] || clear
 
 }   # _raily_magic_cd
 
 
-M() { _raily_magic_cd models      "$@"; }
-V() { _raily_magic_cd views       "$@"; }
-C() { _raily_magic_cd controllers "$@"; }
-H() { _raily_magic_cd helpers     "$@"; }
-T() { _raily_magic_cd metal       "$@"; }
-R() { _raily_magic_cd presenters  "$@"; }
-W() { _raily_magic_cd sweepers    "$@"; }
-B() { _raily_magic_cd lib         "$@"; }
-P() { _raily_magic_cd public      "$@"; }
-J() { _raily_magic_cd javascripts "$@"; }
-S() { _raily_magic_cd stylesheets "$@"; }
+A() { _raily_magic_cd app             "$@"; }
+C() { _raily_magic_cd app/controllers "$@"; }
+H() { _raily_magic_cd app/helpers     "$@"; }
+T() { _raily_magic_cd app/metal       "$@"; }
+M() { _raily_magic_cd app/models      "$@"; }
+R() { _raily_magic_cd app/presenters  "$@"; }
+W() { _raily_magic_cd app/sweepers    "$@"; }
+V() { _raily_magic_cd app/views       "$@"; }
+B() { _raily_magic_cd lib             "$@"; }
+P() { _raily_magic_cd public          "$@"; }
+J() { _raily_magic_cd javascripts     "$@"; }
+S() { _raily_magic_cd stylesheets     "$@"; }
 
 
 know_branch
