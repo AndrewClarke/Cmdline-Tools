@@ -155,7 +155,7 @@ case "$dst-$backup" in
   prod-yes)   $action backup_prod "$dst_db" ;;
   cust-yes)   $action backup_cust "$dst_db" ;;
   tickit-yes) fatal "Will not back up a tickituat instance" ;;
-  prod-no)    fatal "EEEEK! You must back up production!" ;;
+  # prod-no)    fatal "EEEEK! You must back up production!" ;;
 esac
 
 if [[ -n "$locally" ]]; then
