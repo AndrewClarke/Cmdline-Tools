@@ -134,9 +134,11 @@ case "$dst" in
   tickit) dst_host=tickituat-internal ;;
 esac
 
+locally=
 if [[ "$src" != "$dst" ]]; then
     copy_cmd=/home/ubuntu/bin/copy_db_to
 elif [[ "$src_db" != "$dst_db" ]]; then
+    locally=1
     copy_cmd=/home/ubuntu/bin/copy_db_locally
 else
     fatal "cannot copy a database on top of itself"
@@ -156,6 +158,14 @@ case "$dst-$backup" in
   prod-no)    fatal "EEEEK! You must back up production!" ;;
 esac
 
-set -x
-$action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_host $dst_db $Eflag $Pflag $Xflag
+if [[ -n "$locally" ]]; then
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_db $Eflag $Pflag $Xflag
+    set +x
+else
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_host $dst_db $Eflag $Pflag $Xflag
+    set +x
+fi
+
 
