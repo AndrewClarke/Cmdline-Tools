@@ -111,7 +111,7 @@ fi | mysql -D $DBNAME $tflag $Bflag | {
         esac
     done
 } | if [[ -n "$cleanit" ]]; then
-        sed 's/^| //; s/  *|$//; /^Database$/d'
+        sed 's/^| //; s/  *|$//; /^Database$/d; /^mysql$/d; /^information_schema$/d; /^performance_schema$/d'
     else
         cat
     fi
