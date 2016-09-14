@@ -23,11 +23,11 @@ Options are:
   --passwd-reset    reset admin password
   --example-com     set all emails to <user>@example.com
 
-<SITE> is one of --custuat, --production or --tickituat,
-but may be abbreviated (eg --cust, --prod, --tickit)
-or given as -C, -P or -T.
+<SITE> is one of --production, --custuat or --tickituat,
+but may be abbreviated (eg --prod, --cust, --tickit)
+or given as -P, -C or -T.
 
-Copy a database between Tickit UAT, Customer UAT or Production servers,
+Copy a database between Production, Customer UAT or Tickit UAT servers,
 and optionally turn off email reminders, reset admin password and set
 emails to @example.com.
 
@@ -58,7 +58,7 @@ function show {
     echo "$@"
 }
 
-params="$(getopt -n "$myname" -o hnT:C:P: -l help,backup,no-backup,email-off,passwd-reset,password-reset,example-com,custuat:,production:,tickituat: -- "$@")" || usage
+params="$(getopt -n "$myname" -o hnP:C:T: -l help,backup,no-backup,email-off,passwd-reset,password-reset,example-com,production:,custuat:,tickituat: -- "$@")" || usage
 eval set -- "$params"
 unset params
 
@@ -83,11 +83,11 @@ while [[ $# -gt 0 ]]; do
       --passw?(or)d-reset) Pflag=yes ;;
       --example-com)       Xflag=yes ;;
 
-      -[TCP]*)
+      -[PCT]*)
         case "$arg" in
-          -T) box=tickit ;;
-          -C) box=cust ;;
           -P) box=prod ;;
+          -C) box=cust ;;
+          -T) box=tickit ;;
         esac
 
         case "$ndb" in
@@ -100,11 +100,11 @@ while [[ $# -gt 0 ]]; do
         shift
         ;;
 
-      --@(custuat|production|tickituat))
+      --@(production|custuat|tickituat))
         arg="${arg#--}"
         case "$ndb" in
-          0) src_db="$1"; src="${arg%@(uat|uction)}" ;;
-          1) dst_db="$1"; dst="${arg%@(uat|uction)}" ;;
+          0) src_db="$1"; src="${arg%@(uction|uat)}" ;;
+          1) dst_db="$1"; dst="${arg%@(uction|uat)}" ;;
           *) usage "Too many DB names given" ;;
         esac
 
@@ -119,7 +119,7 @@ done
 [[ $ndb -eq 2 ]] || usage "DB names expected"
 
 # REFUSE to copy tickituat to anywhere else.
-[[ "$src-$dst" == tickit-@(prod|cust) ]] && fatal "cannot copy a Tickit UAT to Customer UAT or Production"
+[[ "$src-$dst" == tickit-@(prod|cust) ]] && fatal "cannot copy a Tickit UAT to Production or Customer UAT"
 
 
 case "$src" in
@@ -134,9 +134,11 @@ case "$dst" in
   tickit) dst_host=tickituat-internal ;;
 esac
 
+locally=
 if [[ "$src" != "$dst" ]]; then
     copy_cmd=/home/ubuntu/bin/copy_db_to
 elif [[ "$src_db" != "$dst_db" ]]; then
+    locally=1
     copy_cmd=/home/ubuntu/bin/copy_db_locally
 else
     fatal "cannot copy a database on top of itself"
