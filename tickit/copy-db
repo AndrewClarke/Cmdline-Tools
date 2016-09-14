@@ -155,9 +155,16 @@ case "$dst-$backup" in
   prod-yes)   $action backup_prod "$dst_db" ;;
   cust-yes)   $action backup_cust "$dst_db" ;;
   tickit-yes) fatal "Will not back up a tickituat instance" ;;
-  prod-no)    fatal "EEEEK! You must back up production!" ;;
+  # prod-no)    fatal "EEEEK! You must back up production!" ;;
 esac
 
-set -x
-$action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_host $dst_db $Eflag $Pflag $Xflag
+if [[ -n "$locally" ]]; then
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_db $Eflag $Pflag $Xflag
+    set +x
+else
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_host $dst_db $Eflag $Pflag $Xflag
+    set +x
+fi
 
