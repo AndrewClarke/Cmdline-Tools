@@ -34,14 +34,17 @@ cd ~/.BUCKET || fatal "Cannot cd into \$HOME/.BUCKET - what did you clone it as?
 SAFE=~/.BUCKET-VICTIMS
 mkdir -p $SAFE || fatal "Cannot create directory $SAFE"
 
+export PS4=
 for dir in bin bin.f; do
-    if [[ -d ~/$dir && ! -L ~/$dir ]] && [[ ! -d $SAFE/$dir ]] && mv ~/$dir $SAFE; then
+    if [[ ! -L ~/$dir ]]; then
+        [[ -d ~/$dir ]] && mv ~/$dir $SAFE
         (set -x; ln -s .BUCKET/$dir ~/$dir)
     fi
 done
 
 for fname in $(/bin/ls -A HOME); do
-    if [[ -f ~/$fname && ! -L ~/$fname ]] && [[ ! -f $SAFE/$fname ]] && mv ~/$fname $SAFE; then
+    if [[ ! -L ~/$fname ]]; then
+        [[ -f ~/$fname ]] && mv ~/$fname $SAFE
         (set -x; ln -s .BUCKET/HOME/$fname ~/$fname)
     fi
 done
