@@ -239,8 +239,10 @@ git() {
 
             # Gather list of branches and their statii.
             while read name state; do
-                [[ "$state" == '*' ]] && this="$name"
-                branches+=("$name")
+                if [[ "$name" != master ]]; then
+                  [[ "$state" == '*' ]] && this="$name"
+                  branches+=("$name")
+                fi
             done
 
             # Assuming there's 2 branches...
