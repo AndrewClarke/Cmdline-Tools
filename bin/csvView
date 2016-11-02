@@ -1,11 +1,36 @@
 #!/usr/bin/env perl
 
+(my $myname = $0) =~ s:.*/::;
+
+
 use strict;
 use warnings;
 no warnings 'uninitialized';
 
 use Getopt::Long qw(:config bundling no_auto_abbrev no_permute no_ignore_case);
 use Text::CSV;
+
+
+sub usage {
+  print STDERR "@_\n" if @_;
+
+  print STDERR <<USAGE;
+usage: $myname [-h] [-0 | -1] [-u | -c] [-n] [-l | f=n,n,...] [file ...]
+
+where:
+    -h  this usage
+    -0  number fields starting from 0
+    -1  number fields starting from 1
+    -u  assume UNLOAD format file
+    -c  assume CSV format file
+    -n  assume no headings in the file (default for UNL)
+
+    -l  List field names from heading line
+    -f  names or numbers of fields to print
+USAGE
+
+  exit 1;
+}  # usage
 
 
 my ($listFields, $origin, $noheading, @fields, $oformat);
@@ -15,15 +40,16 @@ GetOptions(
     'u' => sub { $oformat = 'UNL' },    # assume UNLOAD format file
     'c' => sub { $oformat = 'CSV' },    # assume CSV format file
     'n' => \$noheading,                 # assume no headings in the file (default for UNL)
+    'h' => sub { usage },
 
     'l' => \$listFields,
     'f=s' => \@fields,
-) or die "Bad options";
+) or usage "Bad options";
 
-die "Cannot use -l with -u\n" if $listFields && $oformat eq 'UNL';
-die "Cannot use -l with -n\n" if $listFields && $noheading;
-die "Cannot use -l with -f\n" if $listFields && @fields;
-@ARGV or die "File name expected";
+usage "Cannot use -l with -u\n" if $listFields && $oformat eq 'UNL';
+usage "Cannot use -l with -n\n" if $listFields && $noheading;
+usage "Cannot use -l with -f\n" if $listFields && @fields;
+@ARGV or usage "File name expected";
 
 $noheading = 1 if $oformat eq 'UNL';
 $origin //= 1;
