@@ -35,12 +35,14 @@ SAFE=~/.BUCKET-VICTIMS
 mkdir -p $SAFE || fatal "Cannot create directory $SAFE"
 
 for dir in bin bin.f; do
-    [[ -d ~/$dir && ! -d $SAFE/$dir ]] && mv ~/$dir $SAFE
-    ln -s .BUCKET/$dir ~/$dir
+    if [[ -d ~/$dir && ! -L ~/$dir ]] && [[ ! -d $SAFE/$dir ]] && mv ~/$dir $SAFE; then
+        (set -x; ln -s .BUCKET/$dir ~/$dir)
+    fi
 done
 
 for fname in $(/bin/ls -A HOME); do
-    [[ -f ~/$fname && ! -f $SAFE/$fname ]] && mv ~/$fname $SAFE
-    ln -s .BUCKET/HOME/$fname ~/$fname
+    if [[ -f ~/$fname && ! -L ~/$fname ]] && [[ ! -f $SAFE/$fname ]] && mv ~/$fname $SAFE; then
+        (set -x; ln -s .BUCKET/HOME/$fname ~/$fname)
+    fi
 done
 
