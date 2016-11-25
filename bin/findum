@@ -19,7 +19,7 @@ where   -a include more \$RAILS_ROOT top-level directories
         -V  only \$RAILS_ROOT/app/views
         -C  only \$RAILS_ROOT/app/controllers
         -H  only \$RAILS_ROOT/app/helpers
-        -L  only \$RAILS_ROOT/app/lib
+        -L  only \$RAILS_ROOT/lib
         -P  only \$RAILS_ROOT/public
         -T  only \$RAILS_ROOT/test
 
