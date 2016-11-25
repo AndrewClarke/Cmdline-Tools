@@ -19,6 +19,7 @@ to refer to the files/directories from $HOME.
 
 SETTING UP CENTOS 7
 
+  sudo yum update
   sudo yum install epel-release
 
 Follow the instructions on https://dev.mysql.com/doc/mysql-repo-excerpt/5.6/en/linux-installation-yum-repo.html
@@ -35,4 +36,33 @@ NOTE: There is also a strong chance that you'll need to run
   sudo mysql_secure_installation
 
 but ensure you set root to no password and access from localhost only, to suit the default needs of Tickit development.
+
+
+SETTING UP UBUNTU
+
+For Ubuntu:
+$ sudo apt-get update
+$ sudo apt-get install mysql-server build-essential
+$ sudo apt-get install git git-gui gitk curl libmysqlclient-dev
+$ sudo apt-get install bison openssl libreadline6 libreadline6-dev zlib1g
+$ sudo apt-get install zlib1g-dev libssl-dev libyaml-dev libxml2-dev libxslt-dev
+$ sudo apt-get install autoconf libc6-dev ncurses-dev automake
+ 
+  
+  # For Ubuntu >= 12.10
+  $ sudo apt-get install libmagickwand-dev
+  # Otherwise
+  $ sudo apt-get install libmagick++9-dev
+  For Centos 7 or RHEL 7:
+  $ sudo yum install epel-release
+
+  Follow the instructions on https://dev.mysql.com/doc/mysql-repo-excerpt/5.6/en/linux-installation-yum-repo.html to add the appropriate MySQL community repository for your current version of Centos or RHEL
+  $ sudo yum install gvim vimduff git-gui libxml2-devel libxslt-devel ImageMagick ImageMagick-devel
+  $ sudo yum install ncurses-devel mysql-community-server mysql-workbench-community
+  $ sudo yum update
+
+  NOTE: There is also a strong chance that you'll need to run
+  sudo mysql_secure_installation
+
+  but ensure you set root to no password and access from localhost only, to suit the default needs of Tickit development.
 
