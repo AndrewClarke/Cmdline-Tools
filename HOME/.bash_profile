@@ -26,8 +26,6 @@ export PATH="/usr/sbin:/sbin:$PATH"
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
 
-[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
-
 unset LC_ADDRESS LC_IDENTIFICATION LC_MEASUREMENT LC_MONETARY
 unset LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE LC_TIME
 export LANG=C LANGUAGE=C

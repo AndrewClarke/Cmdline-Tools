@@ -71,6 +71,8 @@ function rebuildPS1 {
 rebuildPS1
 
 
+[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
+
 if [[ $- == *i* && -n "$TMUX" ]] && [[ "$DEPTH" == ' ' ]]; then
     eval $(ssh-agent -s)
 
