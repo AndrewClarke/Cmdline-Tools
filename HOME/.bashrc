@@ -18,12 +18,14 @@ export LESS='-M -e -F -i -Q -X -R'
 export XGREP='-Z'
 
 
-if [[ -z "$DEPTH" ]]; then
-    set -o ignoreeof
-    export DEPTH=' '
-else
-    set +o ignoreeof
-    export DEPTH="+$DEPTH"
+if [[ $- == *i* ]]; then
+    if [[ -z "$DEPTH" ]]; then
+        set -o ignoreeof
+        export DEPTH=' '
+    else
+        set +o ignoreeof
+        export DEPTH="+$DEPTH"
+    fi
 fi
 
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
@@ -67,4 +69,17 @@ function rebuildPS1 {
 }
 
 rebuildPS1
+
+
+[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
+
+if [[ $- == *i* && -n "$TMUX" ]] && [[ "$DEPTH" == ' ' ]]; then
+    eval $(ssh-agent -s)
+
+    exit() {
+      echo You cannot exit this TMUX shell this way. Try "'command exit' or detach with ^Ad"
+    }
+
+    trap '[[ -n "$SSH_AGENT_PID" ]] && kill $SSH_AGENT_PID' EXIT
+fi
 
