@@ -1,0 +1,67 @@
+
+function iserver {
+    typeset chat ch all base requested AVAIL
+    typeset n mark i=0
+
+    chat=echo
+    while getopts :aqcmnstx ch; do
+	case "$ch" in
+	  q) chat=: ;;
+	  a) all=1  ;;    # select from all available INFORMIXSERVERs
+	  ?) echo >&2 "usage: $0 [-aq] [INFORMIXSERVER]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    [[ -n "$all" ]] && set -- '*'
+
+    if [[ $# -gt 0 ]]; then
+	requested="$1"
+	shift
+	[[ -z "$requested" ]] && chat=echo
+
+	# determine base of all informix installs
+	base=${INFORMIXDIR%%/informix-*}
+
+	# track down all possible INFORMIXSERVERs 
+	set -- $(
+	    perl -ne '
+		if(/^\s*(DBSERVERNAME|DBSERVERALIASES)\s+(\w+(\s*,\s*\w+)*)/) {
+		    $srv{$_} = 1 foreach split /\s*,\s*/, $2;
+		}
+		END { print "$_\n" foreach sort keys %srv }
+	    ' $base/informix-*/etc/onconfig.!(std))
+
+	set -A AVAIL
+	for n; do
+	    [[ $n != $requested ]] || set -A AVAIL "${AVAIL[@]}" "$n"
+	done
+	set -- "${AVAIL[@]}"
+
+	if [[ $# -eq 0 ]]; then
+	    echo >&2 "INFORMIXSERVER $requested not found\n"
+	    return 1
+	fi
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    for n; do
+		mark=; [[ $n = $INFORMIXSERVER ]] && mark=' *'
+		print "$((++i))) $n$mark"
+	    done
+	    read n?'Select INFORMIXSERVER: ' || echo
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which INFORMIXSERVER? $*"
+	    return 1
+	fi
+
+	export INFORMIXSERVER="$1"
+    fi
+
+    $chat Current INFORMIXSERVER is $INFORMIXSERVER
+
+    return 0
+
+}   # iserver

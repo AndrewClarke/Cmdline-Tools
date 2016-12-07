@@ -1,0 +1,4 @@
+
+function l24 {
+    export LINES=24
+}

@@ -1,0 +1,8 @@
+
+function setenv {
+    until [ $# = 0 ]; do
+	eval $1='$2'
+	eval export $1
+	shift 2
+    done
+}   # setenv

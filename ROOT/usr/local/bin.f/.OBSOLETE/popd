@@ -1,0 +1,17 @@
+
+function popd {
+    typeset d args
+
+    if [[ ${#CDSTACK[*]} -eq 0 ]]; then
+	echo >&2 "popd: insufficient entries on directory stack"
+    else
+	set -A args "$@"
+	set -- "${CDSTACK[@]}"
+	d="$1"
+	shift
+	set -A CDSTACK "$@"
+	set -- "${args[@]}"
+
+	cwd "$d" "$@"
+    fi
+}   # popd

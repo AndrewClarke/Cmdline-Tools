@@ -1,0 +1,106 @@
+:
+# Copyright (C) 1992-1998 Sanderson Wacher Pty. Limited
+# Sccsid: %Z% %M%%Y% %Q%%I% %E%
+
+function cwd {
+    typeset opwd spwd qflag wflag
+    typeset __ch x y z result ARGS authp
+
+    while getopts :wq __ch; do
+	case "$__ch" in
+	  q) qflag=-q;;
+	  w) wflag=1;;
+
+	  +q) unset qflag;;
+	esac
+    done
+
+    shift $((OPTIND-1))
+    [[ -n "$__CDQ__" ]] && qflag=-q
+
+    if [[ $# -eq 0 ]]; then
+	cwd $qflag ${CDHOME-$HOME}
+	return $?
+    fi
+
+    if [[ -n "$wflag" ]]; then
+	whence "$@" | while read x; do [[ -n "$x" ]] && break; done
+	if [[ -z "$x" ]]; then
+	    if [[ $# -eq 1 ]]
+	      then echo >&2 cd -w: cannot find "$@"
+	      else echo >&2 cd -w: cannot find any of "$@"
+	    fi
+	    return 1
+	fi
+
+	x=${x%/*}
+	# get ready for the shift and set two blocks down
+	# any single garbage on the command line would do here
+	set -- "$x"
+    fi
+
+    # allow short-forms - jees you guys get it easy!
+    x="$1"
+    while [[ "$x" = ...* ]]; do
+        y="${x##*(.)}"
+        z="${x%$y}"
+        x="${z%.}/..$y"
+    done
+
+    if [[ "$x" != "$1" ]]; then
+	shift
+	set -- "$x" "$@"
+    fi
+
+    opwd="$OLDPWD"	# save OLDPWD
+    spwd="$PWD"		# save PWD
+
+    result=0
+    authp=
+
+    # is it a possible authority program directory?
+    # only valid on a machine with authority releases
+    [[ "$1" = [a-z]_[a-z][a-z][0-9]?([0-9]?([0-9]))?(.4gs) ]] && authp=1
+
+    cd "$@" 2>&-
+    result=$?
+
+    # is it an authority path?
+    if [[ $result -ne 0 && -n "$authp" ]]; then
+	# the cd may have been partially successful (multi-args)
+	cd "$spwd" 2>&-	# go back
+
+	set -A ARGS "$@"
+	x=${1%.4gs}.4gs
+	y=${1%%+([0-9])?(.4gs)}
+	### y=${1%[0-9][0-9][0-9]?(.4gs)}
+	y=${y#[a-z]_}
+	shift
+
+	[[ "$y" = al ]] && y=all
+
+	set -- "$app/$y.4gm/$x"
+	cd "$@" 2>&-
+	result=$?
+	set -- "${ARGS[@]}"
+    fi
+
+    if [[ $result -ne 0 ]]; then
+	# the cd may have been partially successful (multi-args)
+	cd "$spwd" 2>&-	# go back
+    fi
+
+    if [[ $result -ne 0 ]]; then
+	OLDPWD="$opwd"	# restore OLDPWD
+	echo >&2 cd: "$@": not found.
+	return $result
+    fi
+
+    # restore OLDPWD if we haven't actually changed PWD
+    [[ "$PWD" = "$spwd" ]] && OLDPWD="$opwd"
+    setprompt $qflag
+
+    ## [[ -z "$qflag" && -n "$x" ]] && pwd		# announce if used ...
+
+    return 0
+}   # cwd

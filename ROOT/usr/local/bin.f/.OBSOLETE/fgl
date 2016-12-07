@@ -1,0 +1,95 @@
+
+function fgl {
+    typeset ch all list base chat=echo now target
+
+    while getopts :alq ch; do
+        case "$ch" in
+	  a) all=1 ;;
+	  l) list=1 ;;
+	  q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-aq] [version]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    # determine base of all fgl installs
+    base=${FGLDIR%%/@(fgl-|4js.)*}
+
+    # fake an all-powerful pattern if -a given
+    [[ -n "$all$list" ]] && set -- ''
+
+    if [[ $# -eq 0 ]]; then
+        chat=echo
+    else
+	## if [[ -n "$all" ]]
+	##   then set -- $base/fgl-*
+	##   else set -- $base/fgl-$1*
+	## fi
+	# original code was portable
+	# but during the refactoring, need to cope with 2 possible homes
+	typeset pat="$1"
+	set -- /@(opt|usr)/@(fgl-|4js.)$pat
+
+        if [[ ! -d "$1/" ]]; then
+	    set -- /@(opt|usr)/@(fgl-|4js.)$pat*
+	fi
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    typeset n mark
+	    typeset -R2 i=0
+	    for n; do
+		mark=; [[ $n = $FGLDIR ]] && mark=' *'
+		let $((++i))
+		if [[ -n "$list" ]]
+		  then print -n "  "
+		  else print -n "$i) "
+		fi
+	        print "$n$mark"
+	    done
+
+	    [[ -n "$list" ]] && return 0
+	    read n?'Select FGLDIR: ' || echo
+	    [[ -z "$n" ]] && return 0
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which FGLDIR? $*"
+	    return 1
+	fi
+
+	target="$1"
+	if [[ ! -d "$target" ]]; then
+	    echo >&2 "FGLDIR $target does not exist"
+	    return 1
+	fi
+
+	[[ "$FGLDIR" = "$target" ]] && return 0
+
+	[[ -n "$FGLPROFILE" ]] && varSubs FGLPROFILE $FGLDIR "$target"
+
+	varSubs FGLDBPATH       $FGLDIR "$target"
+	varSubs FGLLDPATH       $FGLDIR "$target"
+	varSubs FGLSOURCEPATH   $FGLDIR "$target"
+	varSubs LD_LIBRARY_PATH $FGLDIR "$target"
+	varSubs PATH            $FGLDIR "$target"
+	varSubs SHLIB_PATH      $FGLDIR "$target"
+
+	export FGLDIR="$target"
+	FCODE=${FGLDIR##$base/@(fgl-|4js.)}
+	FCODE=${FGLDIR##/@(opt|usr)/@(fgl-|4js.)}	# LEGACY
+
+	## # clean up legacy fragments
+	## FCODE=${FCODE#rt.}
+	## FCODE=${FCODE%.@(4_7|5_0)}
+
+	export FCODE FGLDBPATH FGLDIR FGLLDPATH FGLPROFILE FGLSOURCEPATH LD_LIBRARY_PATH PATH SHLIB_PATH
+	now=now
+    fi
+
+    $chat "Current FGLDIR is $now $FGLDIR ($FCODE)"
+
+    return 0
+
+}   # fgl
+

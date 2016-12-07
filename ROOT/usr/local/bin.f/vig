@@ -1,0 +1,11 @@
+
+function vig {
+    typeset i
+
+    # go looking for first non-option - to skip possible flags to grep
+    for i in "$@"; do
+	[[ "$i" != -* ]] && break
+    done
+
+    vi "+?$i" $(grepp -l "$@")
+}   # vig

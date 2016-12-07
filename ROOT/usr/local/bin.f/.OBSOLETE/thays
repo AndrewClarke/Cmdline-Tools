@@ -1,0 +1,20 @@
+
+function thays {
+    if [[ -n "$1" && "X$1" != X@(lib?|?_*).4gs ]]; then
+        THAY_PROJ="$1"
+        shift
+    fi
+
+    chdir $(obj -p "${THAY_PROJ:=master}" "$@")
+}
+
+
+function his {
+    thays "$@"
+}
+
+
+function hers {
+    thays "$@"
+}
+

@@ -1,0 +1,130 @@
+#!/usr/bin/perl -073
+
+use Getopt::Long;
+Getopt::Long::Configure qw(bundling no_permute no_ignore_case no_auto_abbrev);
+
+GetOptions P => \$opt_P;
+
+{
+    my $serial = 0;
+    sub serial($) {
+        ++$serial;
+        return "_${serial}_$_[0]";
+    }
+}
+
+my $WS = qr/\s+/;
+my $WSO = qr/\s*/;
+my $LPAR = qr/\(/;
+my $RPAR = qr/\)/;
+my $IDENT = qr/[a-zA-Z_]\w*/;
+my $OWNER = qr/" $IDENT " $WSO \. $WSO/x;
+
+my $db;
+while(<>) {
+    ($db = $ARGV) =~ s/\.[^.]*$// if $. == 1;
+    s/\n/ /g;
+
+    if(/create $WS table $WS $OWNER ( $IDENT )/xi) {
+        $tabname = $1;
+
+        $table{$db}{$tabname}{keyed} = 'none';
+
+        if(/primary $WS key $WSO $LPAR ([^)]+) $RPAR /xi) {
+            my @columns = split /\s*,\s*/, $1;
+            $primary{$db}{$tabname} = [INLINE => @columns];
+            $table{$db}{$tabname}{keyed} = 'PRIMARY';
+        }
+        elsif(/( $IDENT ) $WS $IDENT (?: $WS not $WS null )? [^,]* \b primary $WS key \b/xi) {
+            $primary{$db}{$tabname} = [INLINE => $1];
+            $table{$db}{$tabname}{keyed} = 'PRIMARY';
+        }
+
+        while(/( $IDENT ) $WS $IDENT unique/gxi) {
+            $unique{$db}{$tabname}{serial $tabname} = [INLINE => $1];
+            unless($rable{$db}{$tabname}{keyed} eq 'PRIMARY') {
+                $table{$db}{$tabname}{keyed} = 'UNIQUE';
+            }
+        }
+
+        while(/unique $WSO $LPAR ([^)]+) $RPAR /gxi) {
+            my @columns = split /\s*,\s*/, $1;
+            $unique{$db}{$tabname}{serial $tabname} = [INLINE => @columns];
+            unless($table{$db}{$tabname}{keyed} eq 'PRIMARY') {
+                $table{$db}{$tabname}{keyed} = 'UNIQUE';
+            }
+        }
+    }
+    elsif(/alter $WS table $WSO $OWNER ( $IDENT ) $WS add $WS constraint $WS primary $WS key $WSO $LPAR ([^)]+) $RPAR /xi) {
+        my ($tabname, $columns) = ($1, $2);
+        my @columns = split /\s*,\s*/, $columns;
+        $primary{$db}{$tabname} = [OUTLINE => @columns];
+        $table{$db}{$tabname}{keyed} = 'PRIMARY';
+    }
+    elsif(/alter $WS table $WSO $OWNER ( $IDENT ) $WS add $WS constraint $WS unique $WSO $LPAR ([^)]+) $RPAR /xi) {
+        my ($tabname, $columns) = ($1, $2);
+        my @columns = split /\s*,\s*/, $columns;
+        $primary{$db}{$tabname} = [OUTLINE => @columns];
+        $table{$db}{$tabname}{keyed} = 'PRIMARY';
+    }
+    elsif(/create $WS unique $WS index $WSO $OWNER ( $IDENT ) $WS on $WSO $OWNER ( $IDENT ) $WSO $LPAR ([^)]+) $RPAR /xi) {
+        my ($idxname, $tabname, $columns) = ($1, $2, $3);
+        my @columns = split /\s*,\s*/, $columns;
+        $unique{$db}{$tabname}{$idxname} = [EXPLICIT => @columns];
+        unless($table{$db}{$tabname}{keyed} eq 'PRIMARY') {
+            $table{$db}{$tabname}{keyed} = 'UNIQUE'
+        }
+    }
+    elsif(/create $WS index $WSO $OWNER ( $IDENT ) $WS on $WSO $OWNER ( $IDENT ) $WSO $LPAR ([^)]+) $RPAR /xi) {
+        my ($idxname, $tabname, $columns) = ($1, $2, $3);
+        my @columns = split /\s*,\s*/, $columns;
+        $index{$db}{$tabname}{$idxname} = [EXPLICIT => @columns];
+        unless($table{$db}{$tabname}{keyed} eq 'PRIMARY' or $table{$db}{$tabname}{keyed} eq 'UNIQUE') {
+            $table{$db}{$tabname}{keyed} = 'INDEX';
+        }
+    }
+}
+continue {
+    close ARGV if eof;
+}
+
+foreach my $db (sort keys %table) {
+    foreach my $tabname (sort keys %{$table{$db}}) {
+     ## next if $tabname =~ /^app_user_(complaint|document)/;
+        next if $tabname =~ /^app_user_complaint(_text_search|_search|_role)?\d/;
+        next if $tabname =~ /^app_user_document\d/;
+        next if $db =~ /^cam/ && $tabname =~ /_log$/;
+
+        next if $tabname =~ /^sys(bld(errorlog|iprovided|irequired|objdepends|objects|objkinds|registered)|builtin(procauth|routines|types))$/;
+        next if defined $opt_P && $table{$db}{$tabname}{keyed} eq 'PRIMARY';
+
+        print "$db:$tabname:";
+
+        if($table{$db}{$tabname}{keyed} eq 'PRIMARY') {
+            print " PK (@{$primary{$db}{$tabname}})\n";
+            next;
+        }
+
+        print "\n";
+        if($table{$db}{$tabname}{keyed} eq 'UNIQUE') {
+            foreach my $unq (sort keys %{$unique{$db}{$tabname}}) {
+                my $cols = $unique{$db}{$tabname}{$unq};
+                print "    unique";
+                print " $unq" if $cols->[0] eq 'EXPLICIT';
+                print " (@$cols)\n";
+            }
+        }
+        elsif($table{$db}{$tabname}{keyed} eq 'INDEX') {
+            foreach my $idx (sort keys %{$index{$db}{$tabname}}) {
+                my $cols = $index{$db}{$tabname}{$idx};
+                print "    index";
+                print " $idx" if $cols->[0] eq 'EXPLICIT';
+                print " (@$cols)\n";
+            }
+        }
+        else {
+            print "    NOTHING\n";
+        }
+    }
+}
+

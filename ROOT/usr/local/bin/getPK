@@ -1,0 +1,54 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+TABNAME="${2:?Pass tabname as the 2nd parameter}"
+
+runSql -q $DBNAME <<SQL | sed 's/ *$//; s/.* //'
+    select rtrim(    rtrim(sc1.colname)
+                 nvl(rtrim(sc2.colname)  || ",", ",") ||
+                 nvl(rtrim(sc3.colname)  || ",", ",") ||
+                 nvl(rtrim(sc4.colname)  || ",", ",") ||
+                 nvl(rtrim(sc5.colname)  || ",", ",") ||
+                 nvl(rtrim(sc6.colname)  || ",", ",") ||
+                 nvl(rtrim(sc7.colname)  || ",", ",") ||
+                 nvl(rtrim(sc8.colname)  || ",", ",") ||
+                 nvl(rtrim(sc9.colname)  || ",", ",") ||
+                 nvl(rtrim(sc10.colname) || ",", ",") ||
+                 nvl(rtrim(sc11.colname) || ",", ",") ||
+                 nvl(rtrim(sc12.colname) || ",", ",") ||
+                 nvl(rtrim(sc13.colname) || ",", ",") ||
+                 nvl(rtrim(sc14.colname) || ",", ",") ||
+                 nvl(rtrim(sc15.colname) || ",", ",") ||
+                 nvl(rtrim(sc16.colname) || ",", ","),
+           ",")
+
+      from systables st
+
+     inner join sysconstraints sc
+        on st.tabid = sc.tabid
+
+     inner join sysindexes si
+        on si.tabid = st.tabid
+       and si.idxname = sc.idxname
+
+      left outer join syscolumns sc1  on sc1.tabid  = st.tabid and sc1.colno  = si.part1
+      left outer join syscolumns sc2  on sc2.tabid  = st.tabid and sc2.colno  = si.part2
+      left outer join syscolumns sc3  on sc3.tabid  = st.tabid and sc3.colno  = si.part3
+      left outer join syscolumns sc4  on sc4.tabid  = st.tabid and sc4.colno  = si.part4
+      left outer join syscolumns sc5  on sc5.tabid  = st.tabid and sc5.colno  = si.part5
+      left outer join syscolumns sc6  on sc6.tabid  = st.tabid and sc6.colno  = si.part6
+      left outer join syscolumns sc7  on sc7.tabid  = st.tabid and sc7.colno  = si.part7
+      left outer join syscolumns sc8  on sc8.tabid  = st.tabid and sc8.colno  = si.part8
+      left outer join syscolumns sc9  on sc9.tabid  = st.tabid and sc9.colno  = si.part9
+      left outer join syscolumns sc10 on sc10.tabid = st.tabid and sc10.colno = si.part10
+      left outer join syscolumns sc11 on sc11.tabid = st.tabid and sc11.colno = si.part11
+      left outer join syscolumns sc12 on sc12.tabid = st.tabid and sc12.colno = si.part12
+      left outer join syscolumns sc13 on sc13.tabid = st.tabid and sc13.colno = si.part13
+      left outer join syscolumns sc14 on sc14.tabid = st.tabid and sc14.colno = si.part14
+      left outer join syscolumns sc15 on sc15.tabid = st.tabid and sc15.colno = si.part15
+      left outer join syscolumns sc16 on sc16.tabid = st.tabid and sc16.colno = si.part16
+
+     where st.tabname = "$TABNAME"
+       and sc.constrtype = "P"
+SQL
+

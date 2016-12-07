@@ -1,0 +1,27 @@
+#!/bin/ksh
+
+runSql -q sysmaster <<SQL
+    select sysdbspaces.name[1, 10] dbspace,
+           trunc(sum(syschunks.nfree) / sum(syschunks.chksize) * 100, 2) as percentfree
+      from sysdbspaces, syschunks
+     where sysdbspaces.dbsnum = syschunks.dbsnum
+       and sysdbspaces.is_temp = 0
+       and sysdbspaces.is_blobspace = 0
+       and sysdbspaces.is_sbspace = 0
+       and sysdbspaces.name not matches 'root*'
+       and sysdbspaces.name not matches '?log*'
+     group by 1
+
+    union all
+
+    select sysdbspaces.name[1, 10] dbspace,
+           trunc(sum(syschunks.udfree) / sum(syschunks.udsize) * 100, 2) as percentfree
+      from sysdbspaces, syschunks
+     where sysdbspaces.dbsnum = syschunks.dbsnum
+       and sysdbspaces.is_temp = 0
+       and (sysdbspaces.is_blobspace = 1 or sysdbspaces.is_sbspace = 1)
+     group by 1
+
+     order by 1
+SQL
+

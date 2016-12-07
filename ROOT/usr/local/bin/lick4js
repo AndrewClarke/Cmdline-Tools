@@ -1,0 +1,129 @@
+#!/bin/ksh
+# Copyright (C) 1992-1998 Sanderson Wacher Pty. Limited
+# Sccsid: %Z% %M%%Y% %Q%%I% %E%
+
+function usage {
+    echo >&2 Which FCODE? Specify on the command line
+    echo >&2 usage: lick4js \$FCODE
+    exit 1
+}
+
+test $debugxv && set -xv
+unset ch aflag fflag
+while getopts :af ch; do
+    case "$ch" in
+      a) aflag=1 ;;
+      f) fflag=1 ;;
+      ?) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+[[ $# -eq 0 ]] && usage
+
+
+function stampIt {
+    ## yes | fglWrt -i
+    ## echo
+    test $debugxv && set -xv
+    if [[ -z "$LIC" || -z "$KEY" ]]; then
+        echo >&2 "Do not have a key or licence for $FCODE"
+        return
+    fi
+
+    ## rm -f etc/f4gl.sn etc/info.lic
+    mv -f etc/f4gl.sn etc/info.lic etc/f4gl.sn etc/info.lic--
+
+    fglWrt -l <<++
+
+$LIC
+$KEY
+N
+
+
+++
+
+    [[ -n "$MKEY" ]] && fglWrt -m "$MKEY"
+
+}   # stampIt
+
+
+for FCODE in "$@"; do
+(
+    export FCODE
+    export FGLDIR=/usr/4js${FCODE+.$FCODE}
+    [[ -d "$FGLDIR" ]] || export FGLDIR=/opt/fgl-$FCODE
+
+    cd $FGLDIR || exit
+    export LD_LIBRARY_PATH=$FGLDIR/lib:$FGLDIR/bin:/lib:/usr/lib:/usr/local/lib
+    export PATH=$FGLDIR/bin:$PATH
+
+    export FGLPROFILE=$FGLDIR/etc/fglprofile
+
+    unset LIC KEY MKEY
+    case "$FCODE" in
+      rt.1a*)
+	# Civica 50 Runtime
+	LIC='FAB#CBQ002CF D' KEY='H3VLZXH0QP0D W' ;;
+
+      1a*)
+	# Civica 6 Devel
+	LIC='FAB#AAG00043 0' KEY='VGLZQKHF5YPH F' ;;
+
+      rt.620201*)
+	# Ryde 100 Runtime
+	LIC='TAB#CC5001FQ D' KEY='5ABWRN07ET7N S' ;;
+
+      620201*)
+	# Civica 6 Devel
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' ;;
+
+      rt.2.10.*)
+	# Ryde 100 Runtime
+	LIC='TAB#CC5001FQ D' KEY='5ABWRN07ET7N S' ;;
+
+      2.10.*)
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' ;;
+	# Civica 6 Devel
+
+      rt.2.11.*)
+	# Ryde 100 Runtime
+	LIC='TAB#CC5001FQ D' KEY='5ABWRN07ET7N S' ;;
+
+      2.11.*)
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' ;;
+	# Civica 6 Devel
+
+      rt.2.20.*)
+	# Civica 23 runtime
+	LIC='TAB#CAY00B9S H' KEY='RBKSTAGNBTZK J' MKEY='FEKHXBHW1SLW'       ## 2009
+                                                  MKEY='23N1QBLYGFBE P'     ## 2010
+        ;;
+
+      2.20.*)
+	# Civica 6 Devel
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' MKEY='TGVQYDFSXWZ0'       ## 2009
+                                                  MKEY='S1V5WDEKFA5Q B'     ## 2010
+        ;;
+
+      2.30.*)
+	# Civica 6 Devel
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' MKEY='F6L9QDJU4HK8 S'     ## 2010 June+
+        ;;
+
+      2.40.*)
+	# Civica 6 Devel
+	LIC='TAB#AAG0001R 6' KEY='3QV0UCEJVXEP K' MKEY='F6L9QDJU4HK8 S'     ## 2010 June+
+        ;;
+
+      *)
+	echo >&2 "dud key $FCODE"
+	continue ;;
+
+	## # Civica 6 Devel
+	## LIC='UXW#P000G0JI T' KEY='BQMP97ICBP9C Y' ;;
+    esac
+
+    stampIt
+
+); done

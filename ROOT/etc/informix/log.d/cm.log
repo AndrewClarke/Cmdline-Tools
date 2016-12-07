@@ -1,0 +1,849 @@
+Tue May  8 16:17:33 2012
+16:17:33 IBM Informix Connection Manager
+16:17:33 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+16:17:33 Build Number:	N125
+16:17:33 Build Host:	hans
+16:17:33 Build OS:	Linux 2.6.18-128.el5
+16:17:33 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+16:17:33 GLS Version:	glslib-5.00.FC5
+16:17:33 
+16:17:33 SLA cm1_oltp listener mode REDIRECT
+16:17:33 SLA cm1_report listener mode REDIRECT
+16:17:33 Connection Manager name is cm_suzyq
+16:17:33 Starting Connection Manager...
+16:17:33 set the maximum number of file descriptors 32767 failed
+16:17:33 the current maximum number of file descriptors is 1024
+16:17:33 switch to daemon mode
+16:17:33 dbservername = suzyq_tcp
+16:17:33 nettype = onsoctcp
+16:17:33 hostname = suzyq-vbox
+16:17:33 servicename = online1_tcp
+16:17:33 options = g=g_suzyq
+16:17:33 dbservername = drive_tcp
+16:17:33 nettype = onsoctcp
+16:17:33 hostname = drive-vbox
+16:17:33 servicename = online1_tcp
+16:17:33 options = g=g_suzyq
+16:17:33 dbservername = devil_tcp
+16:17:33 nettype = onsoctcp
+16:17:33 hostname = devil-vbox
+16:17:33 servicename = online1_tcp
+16:17:33 options = g=g_suzyq
+16:17:33 listener cm1_report initializing
+16:17:33 listener cm1_oltp initializing
+16:17:33 Listener cm1_oltp DBSERVERS=PRI is active with 4 worker threads
+16:17:33 Listener cm1_report DBSERVERS=HDR,PRI,RSS is active with 4 worker threads
+16:17:33 Connection Manager successfully connected to devil_tcp
+16:17:33 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+16:17:33 FOC[0] = SDS
+16:17:33 FOC[1] = HDR
+16:17:33 FOC[2] = RSS
+16:17:33 FOC TIMEOUT = 10
+16:17:33 FOC RETRY = 1
+16:17:34 Connection Manager successfully connected to drive_tcp
+16:17:34 Connection Manager started successfully
+16:17:35 Connection Manager successfully connected to suzyq_tcp
+16:17:35 Arbitrator is active on CM = cm_suzyq
+16:18:31 SLA cm1_oltp redirect SQLI client from 192.168.137.2 to suzyq_tcp suzyq-vbox.online1_tcp
+16:19:14 SLA cm1_oltp redirect SQLI client from 192.168.137.2 to suzyq_tcp suzyq-vbox.online1_tcp
+16:22:34 SLA cm1_oltp redirect SQLI client from 192.168.137.2 to suzyq_tcp suzyq-vbox.online1_tcp
+16:23:03 SLA cm1_oltp redirect SQLI client from 192.168.137.2 to suzyq_tcp suzyq-vbox.online1_tcp
+16:41:44 Connection Manager disconnected from devil_tcp
+16:41:44 ALARM 5002 detected lost connection to Informix server devil_tcp
+16:41:48 Connection Manager disconnected from drive_tcp
+16:41:48 ALARM 5002 detected lost connection to Informix server drive_tcp
+16:41:52 Connection Manager disconnected from suzyq_tcp
+16:42:02 ALARM 2001 failover arbitrator automated failover in progress. 
+16:42:02 Arbitrator can not find any secondary nodes for failover.
+16:42:02 Arbitrator will retry failover again...
+16:42:02 Arbitrator can not find any secondary nodes for failover.
+16:42:02 Arbitrator aborting failover.
+16:42:02 ALARM 2004 failover arbitrator aborting automated failover 
+16:42:33 Connection Manager successfully connected to suzyq_tcp
+16:42:55 Connection Manager successfully connected to drive_tcp
+16:43:32 Connection Manager successfully connected to devil_tcp
+18:10:25 Arbitrator is active on CM = cm_suzyq
+18:10:45 Connection Manager disconnected from suzyq_tcp
+18:10:55 ALARM 2001 failover arbitrator automated failover in progress. 
+18:11:01 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:11:01 FOC[0] = SDS
+18:11:01 FOC[1] = HDR
+18:11:01 FOC[2] = RSS
+18:11:01 FOC TIMEOUT = 10
+18:11:01 FOC RETRY = 1
+18:12:43 Arbitrator can not find any secondary nodes for failover.
+18:12:43 Arbitrator will retry failover again...
+18:13:50 Connection Manager successfully connected to suzyq_tcp
+18:14:28 Connection Manager disconnected from drive_tcp
+18:14:34 Arbitrator set secondary on node = devil_tcp successful
+18:14:37 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:14:37 FOC[0] = SDS
+18:14:37 FOC[1] = HDR
+18:14:37 FOC[2] = RSS
+18:14:37 FOC TIMEOUT = 10
+18:14:37 FOC RETRY = 1
+18:14:39 Arbitrator make primary on node = devil_tcp successful
+18:14:39 Arbitrator detected existing HDR secondary = drive_tcp
+18:14:39 Arbitrator will resync with new primary (original RSS) = devil_tcp
+18:14:41 Arbitrator ha set primary on node = devil_tcp successful
+18:14:41 Arbitrator CONNECT to sysmaster@drive_tcp|onsoctcp|drive-vbox|online1_tcp failed, sqlcode = -908
+18:14:41 ALARM 2002 failover arbitrator automated failover completed 
+18:14:41 ALARM 2001 failover arbitrator automated failover in progress. 
+18:14:41 ALARM 5002 detected lost connection to Informix server suzyq_tcp
+18:14:42 Arbitrator can not find any secondary nodes for failover.
+18:14:42 Arbitrator will retry failover again...
+18:14:42 Arbitrator can not find any secondary nodes for failover.
+18:14:42 Arbitrator aborting failover.
+18:14:42 ALARM 2004 failover arbitrator aborting automated failover 
+18:14:42 ALARM 3002 detected lost connection to Informix server drive_tcp
+18:15:21 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:15:21 FOC[0] = SDS
+18:15:21 FOC[1] = HDR
+18:15:21 FOC[2] = RSS
+18:15:21 FOC TIMEOUT = 10
+18:15:21 FOC RETRY = 1
+18:15:43 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:15:43 FOC[0] = SDS
+18:15:43 FOC[1] = HDR
+18:15:43 FOC[2] = RSS
+18:15:43 FOC TIMEOUT = 10
+18:15:43 FOC RETRY = 1
+18:15:56 Connection Manager successfully connected to drive_tcp
+18:15:56 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:15:56 FOC[0] = SDS
+18:15:56 FOC[1] = HDR
+18:15:56 FOC[2] = RSS
+18:15:56 FOC TIMEOUT = 10
+18:15:56 FOC RETRY = 1
+18:16:17 Connection Manager disconnected from suzyq_tcp
+18:16:17 ALARM 5002 detected lost connection to Informix server suzyq_tcp
+18:21:38 Connection Manager successfully connected to suzyq_tcp
+18:57:33 Connection Manager disconnected from devil_tcp
+18:57:44 ALARM 2001 failover arbitrator automated failover in progress. 
+18:57:50 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+18:57:50 FOC[0] = SDS
+18:57:50 FOC[1] = HDR
+18:57:50 FOC[2] = RSS
+18:57:50 FOC TIMEOUT = 10
+18:57:50 FOC RETRY = 1
+18:57:52 Arbitrator make primary on node = suzyq_tcp successful
+18:57:52 ALARM 2002 failover arbitrator automated failover completed 
+18:57:52 ALARM 3002 detected lost connection to Informix server devil_tcp
+19:00:15 Connection Manager successfully connected to devil_tcp
+19:01:36 Connection Manager disconnected from suzyq_tcp
+19:01:37 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:01:37 FOC[0] = SDS
+19:01:37 FOC[1] = HDR
+19:01:37 FOC[2] = RSS
+19:01:37 FOC TIMEOUT = 10
+19:01:37 FOC RETRY = 1
+19:01:38 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+19:04:10 Connection Manager disconnected from devil_tcp
+19:04:10 ALARM 5002 detected lost connection to Informix server devil_tcp
+19:09:59 Connection Manager successfully connected to suzyq_tcp
+19:10:34 Connection Manager disconnected from drive_tcp
+19:10:44 ALARM 2001 failover arbitrator automated failover in progress. 
+19:10:51 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:10:51 FOC[0] = SDS
+19:10:51 FOC[1] = HDR
+19:10:51 FOC[2] = RSS
+19:10:51 FOC TIMEOUT = 10
+19:10:51 FOC RETRY = 1
+19:10:52 Arbitrator make primary on node = suzyq_tcp successful
+19:10:52 ALARM 2002 failover arbitrator automated failover completed 
+19:10:52 ALARM 3002 detected lost connection to Informix server drive_tcp
+19:15:32 Connection Manager successfully connected to drive_tcp
+19:17:12 Connection Manager successfully connected to devil_tcp
+19:35:06 Connection Manager disconnected from suzyq_tcp
+19:35:26 ALARM 2001 failover arbitrator automated failover in progress. 
+19:35:34 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:35:34 FOC[0] = SDS
+19:35:34 FOC[1] = HDR
+19:35:34 FOC[2] = RSS
+19:35:34 FOC TIMEOUT = 10
+19:35:34 FOC RETRY = 1
+19:36:48 Connection Manager successfully connected to suzyq_tcp
+19:37:17 Arbitrator can not find any secondary nodes for failover.
+19:37:17 Arbitrator will retry failover again...
+19:38:19 Please check IBM Informix Connection Manager log file: /etc/informix/log.d/cm.log
+Tue May  8 19:38:19 2012
+19:38:19 IBM Informix Connection Manager
+19:38:19 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+19:38:19 Build Number:	N125
+19:38:19 Build Host:	hans
+19:38:19 Build OS:	Linux 2.6.18-128.el5
+19:38:19 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+19:38:19 GLS Version:	glslib-5.00.FC5
+19:38:19 
+19:38:19 dbservername = suzyq_tcp
+19:38:19 nettype = onsoctcp
+19:38:19 hostname = suzyq-vbox
+19:38:19 servicename = online1_tcp
+19:38:19 options = g=g_suzyq
+19:38:19 dbservername = drive_tcp
+19:38:19 nettype = onsoctcp
+19:38:19 hostname = drive-vbox
+19:38:19 servicename = online1_tcp
+19:38:19 options = g=g_suzyq
+19:38:19 dbservername = devil_tcp
+19:38:19 nettype = onsoctcp
+19:38:19 hostname = devil-vbox
+19:38:19 servicename = online1_tcp
+19:38:19 options = g=g_suzyq
+19:39:19 Connection Manager disconnected from drive_tcp
+19:39:27 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:39:27 FOC[0] = SDS
+19:39:27 FOC[1] = HDR
+19:39:27 FOC[2] = RSS
+19:39:27 FOC TIMEOUT = 10
+19:39:27 FOC RETRY = 1
+19:39:29 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:39:29 FOC[0] = SDS
+19:39:29 FOC[1] = HDR
+19:39:29 FOC[2] = RSS
+19:39:29 FOC TIMEOUT = 10
+19:39:29 FOC RETRY = 1
+19:39:29 Arbitrator set secondary on node = devil_tcp successful
+19:39:33 Arbitrator reset RSS on node devil_tcp successful
+19:39:33 Arbitrator can not find any secondary nodes for failover.
+19:39:33 Arbitrator aborting failover.
+19:39:33 ALARM 2004 failover arbitrator aborting automated failover 
+19:39:33 ALARM 2001 failover arbitrator automated failover in progress. 
+19:39:33 ALARM 5002 detected lost connection to Informix server suzyq_tcp
+19:39:34 Arbitrator can not find any secondary nodes for failover.
+19:39:34 Arbitrator will retry failover again...
+19:39:34 Arbitrator can not find any secondary nodes for failover.
+19:39:34 Arbitrator aborting failover.
+19:39:34 ALARM 2004 failover arbitrator aborting automated failover 
+19:39:34 ALARM 3002 detected lost connection to Informix server drive_tcp
+19:40:10 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:40:10 FOC[0] = SDS
+19:40:10 FOC[1] = HDR
+19:40:10 FOC[2] = RSS
+19:40:10 FOC TIMEOUT = 10
+19:40:10 FOC RETRY = 1
+19:40:19 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:40:19 FOC[0] = SDS
+19:40:19 FOC[1] = HDR
+19:40:19 FOC[2] = RSS
+19:40:19 FOC TIMEOUT = 10
+19:40:19 FOC RETRY = 1
+19:40:57 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:40:57 FOC[0] = SDS
+19:40:57 FOC[1] = HDR
+19:40:57 FOC[2] = RSS
+19:40:57 FOC TIMEOUT = 10
+19:40:57 FOC RETRY = 1
+19:40:57 Connection Manager successfully connected to suzyq_tcp
+19:41:27 Connection Manager disconnected from devil_tcp
+19:41:37 ALARM 2001 failover arbitrator automated failover in progress. 
+19:41:42 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:41:42 FOC[0] = SDS
+19:41:42 FOC[1] = HDR
+19:41:42 FOC[2] = RSS
+19:41:42 FOC TIMEOUT = 10
+19:41:42 FOC RETRY = 1
+19:41:43 Arbitrator make primary on node = suzyq_tcp successful
+19:41:43 ALARM 2002 failover arbitrator automated failover completed 
+19:41:43 ALARM 3002 detected lost connection to Informix server devil_tcp
+19:42:54 Connection Manager successfully connected to devil_tcp
+19:43:41 Connection Manager successfully connected to drive_tcp
+19:52:13 Connection Manager disconnected from suzyq_tcp
+19:52:13 Connection Manager disconnected from suzyq_tcp
+19:52:32 ALARM 2001 failover arbitrator automated failover in progress. 
+19:52:40 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:52:40 FOC[0] = SDS
+19:52:40 FOC[1] = HDR
+19:52:40 FOC[2] = RSS
+19:52:40 FOC TIMEOUT = 10
+19:52:40 FOC RETRY = 1
+19:53:35 Arbitrator is active on CM = cm_suzyq
+19:53:46 Shut down Connection Manager cm_suzyq
+19:53:46 Shut down Connection Manager cm_suzyq
+19:53:46 Connection Manager disconnected from devil_tcp
+19:53:46 ALARM 5002 detected lost connection to Informix server devil_tcp
+19:53:47 Arbitrator can not find any secondary nodes for failover.
+19:53:47 Arbitrator will retry failover again...
+19:53:47 Shut down Connection Manager cm_suzyq
+19:53:48 Shut down Connection Manager cm_suzyq
+19:53:49 Shut down Connection Manager cm_suzyq
+19:53:50 Shut down Connection Manager cm_suzyq
+19:53:51 Connection Manager disconnected from drive_tcp
+19:53:51 ALARM 3002 detected lost connection to Informix server drive_tcp
+19:53:51 ALARM 1001 Connection Manager cm_suzyq shut down successfully 
+Tue May  8 19:53:53 2012
+19:53:53 IBM Informix Connection Manager
+19:53:53 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+19:53:53 Build Number:	N125
+19:53:53 Build Host:	hans
+19:53:53 Build OS:	Linux 2.6.18-128.el5
+19:53:53 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+19:53:53 GLS Version:	glslib-5.00.FC5
+19:53:53 
+19:53:53 SLA cm1_oltp listener mode REDIRECT
+19:53:53 SLA cm1_report listener mode REDIRECT
+19:53:53 Connection Manager name is cm_suzyq
+19:53:53 Starting Connection Manager...
+19:53:53 set the maximum number of file descriptors 32767 failed
+19:53:53 the current maximum number of file descriptors is 1024
+19:53:53 switch to daemon mode
+19:53:53 dbservername = suzyq_tcp
+19:53:53 nettype = onsoctcp
+19:53:53 hostname = suzyq-vbox
+19:53:53 servicename = online1_tcp
+19:53:53 options = g=g_suzyq
+19:53:53 dbservername = drive_tcp
+19:53:53 nettype = onsoctcp
+19:53:53 hostname = drive-vbox
+19:53:53 servicename = online1_tcp
+19:53:53 options = g=g_suzyq
+19:53:53 dbservername = devil_tcp
+19:53:53 nettype = onsoctcp
+19:53:53 hostname = devil-vbox
+19:53:53 servicename = online1_tcp
+19:53:53 options = g=g_suzyq
+19:53:53 listener cm1_report initializing
+19:53:53 listener cm1_oltp initializing
+19:53:53 Listener cm1_oltp DBSERVERS=PRI is active with 4 worker threads
+19:53:53 Listener cm1_report DBSERVERS=HDR,PRI,RSS is active with 4 worker threads
+19:53:53 Connection Manager successfully connected to devil_tcp
+19:53:53 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:53:53 FOC[0] = SDS
+19:53:53 FOC[1] = HDR
+19:53:53 FOC[2] = RSS
+19:53:53 FOC TIMEOUT = 10
+19:53:53 FOC RETRY = 1
+19:53:53 Connection Manager successfully connected to drive_tcp
+19:53:54 Connection Manager started successfully
+19:55:19 Connection Manager successfully connected to suzyq_tcp
+19:56:50 Connection Manager disconnected from drive_tcp
+19:57:15 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+19:57:15 FOC[0] = SDS
+19:57:15 FOC[1] = HDR
+19:57:15 FOC[2] = RSS
+19:57:15 FOC TIMEOUT = 10
+19:57:15 FOC RETRY = 1
+19:57:16 ALARM 3002 detected lost connection to Informix server drive_tcp
+20:01:04 Connection Manager successfully connected to drive_tcp
+20:04:00 Connection Manager disconnected from suzyq_tcp
+20:04:16 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+20:04:16 FOC[0] = SDS
+20:04:16 FOC[1] = HDR
+20:04:16 FOC[2] = RSS
+20:04:16 FOC TIMEOUT = 10
+20:04:16 FOC RETRY = 1
+20:04:17 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+20:08:58 Connection Manager successfully connected to suzyq_tcp
+20:10:11 Connection Manager disconnected from drive_tcp
+20:10:28 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+20:10:28 FOC[0] = SDS
+20:10:28 FOC[1] = HDR
+20:10:28 FOC[2] = RSS
+20:10:28 FOC TIMEOUT = 10
+20:10:28 FOC RETRY = 1
+20:10:29 ALARM 3002 detected lost connection to Informix server drive_tcp
+20:40:00 Connection Manager successfully connected to drive_tcp
+20:41:03 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+20:41:03 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+20:41:05 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+20:41:05 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+21:12:44 Arbitrator is active on CM = cm_suzyq
+21:13:32 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+21:13:34 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+21:13:44 Connection Manager disconnected from drive_tcp
+21:13:44 ALARM 5002 detected lost connection to Informix server drive_tcp
+21:14:00 Connection Manager successfully connected to drive_tcp
+21:14:08 Connection Manager disconnected from devil_tcp
+21:14:08 ALARM 5002 detected lost connection to Informix server devil_tcp
+21:14:09 Connection Manager successfully connected to devil_tcp
+09:20:07 Arbitrator is active on CM = cm_suzyq
+11:36:41 Please check IBM Informix Connection Manager log file: /etc/informix/log.d/cm.log
+Wed May  9 11:36:41 2012
+11:36:41 IBM Informix Connection Manager
+11:36:41 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+11:36:41 Build Number:	N125
+11:36:41 Build Host:	hans
+11:36:41 Build OS:	Linux 2.6.18-128.el5
+11:36:41 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+11:36:41 GLS Version:	glslib-5.00.FC5
+11:36:41 
+11:36:41 dbservername = suzyq_tcp
+11:36:41 nettype = onsoctcp
+11:36:41 hostname = suzyq-vbox
+11:36:41 servicename = online1_tcp
+11:36:41 options = g=g_suzyq
+11:36:41 dbservername = drive_tcp
+11:36:41 nettype = onsoctcp
+11:36:41 hostname = drive-vbox
+11:36:41 servicename = online1_tcp
+11:36:41 options = g=g_suzyq
+11:36:41 dbservername = devil_tcp
+11:36:41 nettype = onsoctcp
+11:36:41 hostname = devil-vbox
+11:36:41 servicename = online1_tcp
+11:36:41 options = g=g_suzyq
+11:40:15 Connection Manager disconnected from suzyq_tcp
+11:40:31 Cluster cm1_suzyq Arbitrator FOC string = ORDER=SDS,HDR,RSS TIMEOUT=10 RETRY=1
+11:40:31 FOC[0] = SDS
+11:40:31 FOC[1] = HDR
+11:40:31 FOC[2] = RSS
+11:40:31 FOC TIMEOUT = 10
+11:40:31 FOC RETRY = 1
+11:40:31 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+11:40:53 Connection Manager disconnected from devil_tcp
+11:40:53 ALARM 5002 detected lost connection to Informix server devil_tcp
+11:41:26 Connection Manager disconnected from drive_tcp
+11:41:36 ALARM 2001 failover arbitrator automated failover in progress. 
+11:41:36 Arbitrator can not find any secondary nodes for failover.
+11:41:36 Arbitrator will retry failover again...
+11:41:36 Arbitrator can not find any secondary nodes for failover.
+11:41:36 Arbitrator aborting failover.
+11:41:36 ALARM 2004 failover arbitrator aborting automated failover 
+11:42:13 Shut down Connection Manager cm_suzyq
+11:42:13 Shut down Connection Manager cm_suzyq
+11:42:14 ALARM 3002 detected lost connection to Informix server drive_tcp
+11:42:14 ALARM 1001 Connection Manager cm_suzyq shut down successfully 
+Wed May  9 11:46:40 2012
+11:46:40 IBM Informix Connection Manager
+11:46:40 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+11:46:40 Build Number:	N125
+11:46:40 Build Host:	hans
+11:46:40 Build OS:	Linux 2.6.18-128.el5
+11:46:40 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+11:46:40 GLS Version:	glslib-5.00.FC5
+11:46:40 
+11:46:40 SLA cm1_oltp listener mode REDIRECT
+11:46:40 SLA cm1_report listener mode REDIRECT
+11:46:40 Connection Manager name is cm_suzyq
+11:46:40 Starting Connection Manager...
+11:46:41 set the maximum number of file descriptors 32767 failed
+11:46:41 the current maximum number of file descriptors is 1024
+11:46:41 switch to daemon mode
+11:46:41 dbservername = suzyq_tcp
+11:46:41 nettype = onsoctcp
+11:46:41 hostname = suzyq-vbox
+11:46:41 servicename = online1_tcp
+11:46:41 options = g=g_suzyq
+11:46:41 dbservername = drive_tcp
+11:46:41 nettype = onsoctcp
+11:46:41 hostname = drive-vbox
+11:46:41 servicename = online1_tcp
+11:46:41 options = g=g_suzyq
+11:46:41 dbservername = devil_tcp
+11:46:41 nettype = onsoctcp
+11:46:41 hostname = devil-vbox
+11:46:41 servicename = online1_tcp
+11:46:41 options = g=g_suzyq
+11:46:41 listener cm1_report initializing
+11:46:41 listener cm1_oltp initializing
+11:46:41 Listener cm1_report DBSERVERS=HDR,PRI,RSS is active with 4 worker threads
+11:46:41 Listener cm1_oltp DBSERVERS=PRI is active with 4 worker threads
+11:46:42 Connection Manager started successfully
+11:47:36 Connection Manager successfully connected to devil_tcp
+11:47:36 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+11:47:36 FOC: Failover Arbitrator DISABLED
+11:47:36 FOC TIMEOUT = 0
+11:47:36 FOC RETRY = 1
+11:47:36 Connection Manager successfully connected to drive_tcp
+11:50:46 Connection Manager successfully connected to suzyq_tcp
+11:57:58 Connection Manager disconnected from drive_tcp
+11:58:00 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+11:58:00 FOC: Failover Arbitrator DISABLED
+11:58:00 FOC TIMEOUT = 0
+11:58:00 FOC RETRY = 1
+11:58:00 ALARM 3002 detected lost connection to Informix server drive_tcp
+11:59:55 Connection Manager successfully connected to drive_tcp
+12:00:42 Connection Manager disconnected from suzyq_tcp
+12:01:27 Connection Manager successfully connected to suzyq_tcp
+12:02:15 Connection Manager disconnected from suzyq_tcp
+12:02:47 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+12:02:47 FOC: Failover Arbitrator DISABLED
+12:02:47 FOC TIMEOUT = 0
+12:02:47 FOC RETRY = 1
+12:02:48 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+12:02:57 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+12:04:07 Connection Manager disconnected from drive_tcp
+12:04:07 ALARM 5002 detected lost connection to Informix server drive_tcp
+12:04:21 Connection Manager successfully connected to drive_tcp
+12:08:29 Connection Manager disconnected from devil_tcp
+12:08:47 Connection Manager successfully connected to devil_tcp
+12:08:50 Connection Manager successfully connected to suzyq_tcp
+12:30:21 Arbitrator is active on CM = cm_suzyq
+12:55:46 Connection Manager disconnected from devil_tcp
+12:55:46 Arbitrator failover processing is DISABLED.
+12:55:46 ALARM 2003 failover arbitrator automated failover is disabled 
+12:55:46 ALARM 3002 detected lost connection to Informix server devil_tcp
+12:57:06 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+12:57:06 FOC: Failover Arbitrator DISABLED
+12:57:06 FOC TIMEOUT = 0
+12:57:06 FOC RETRY = 1
+12:58:37 Connection Manager successfully connected to devil_tcp
+13:00:10 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:00:10 FOC: Failover Arbitrator DISABLED
+13:00:10 FOC TIMEOUT = 0
+13:00:10 FOC RETRY = 1
+13:00:12 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:00:12 FOC: Failover Arbitrator DISABLED
+13:00:12 FOC TIMEOUT = 0
+13:00:12 FOC RETRY = 1
+13:11:20 Connection Manager disconnected from suzyq_tcp
+13:11:20 Arbitrator failover processing is DISABLED.
+13:11:20 ALARM 2003 failover arbitrator automated failover is disabled 
+13:11:20 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+13:11:36 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:11:36 FOC: Failover Arbitrator DISABLED
+13:11:36 FOC TIMEOUT = 0
+13:11:36 FOC RETRY = 1
+13:11:36 Warning: The primary server named cm1_suzyq in cluster drive_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+13:25:37 Connection Manager successfully connected to suzyq_tcp
+13:28:39 Connection Manager disconnected from drive_tcp
+13:28:39 Arbitrator failover processing is DISABLED.
+13:28:39 ALARM 2003 failover arbitrator automated failover is disabled 
+13:28:39 ALARM 3002 detected lost connection to Informix server drive_tcp
+13:28:39 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:28:39 FOC: Failover Arbitrator DISABLED
+13:28:39 FOC TIMEOUT = 0
+13:28:39 FOC RETRY = 1
+13:35:30 Connection Manager successfully connected to drive_tcp
+13:36:57 Connection Manager disconnected from suzyq_tcp
+13:36:57 Arbitrator failover processing is DISABLED.
+13:36:57 ALARM 2003 failover arbitrator automated failover is disabled 
+13:36:57 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+13:37:24 Connection Manager successfully connected to suzyq_tcp
+13:38:29 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:38:29 FOC: Failover Arbitrator DISABLED
+13:38:29 FOC TIMEOUT = 0
+13:38:29 FOC RETRY = 1
+13:38:32 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+13:38:32 FOC: Failover Arbitrator DISABLED
+13:38:32 FOC TIMEOUT = 0
+13:38:32 FOC RETRY = 1
+16:10:18 Connection Manager disconnected from drive_tcp
+16:10:18 ALARM 5002 detected lost connection to Informix server drive_tcp
+16:10:54 Connection Manager disconnected from suzyq_tcp
+16:36:22 Connection Manager successfully connected to suzyq_tcp
+16:37:50 Connection Manager disconnected from suzyq_tcp
+16:38:09 Connection Manager successfully connected to suzyq_tcp
+16:38:09 Arbitrator is active on CM = cm_suzyq
+16:38:12 Connection Manager successfully connected to drive_tcp
+17:12:31 Connection Manager disconnected from devil_tcp
+17:12:31 ALARM 5002 detected lost connection to Informix server devil_tcp
+17:12:37 Connection Manager disconnected from drive_tcp
+17:12:37 ALARM 5002 detected lost connection to Informix server drive_tcp
+17:12:48 Connection Manager disconnected from suzyq_tcp
+17:12:48 Arbitrator failover processing is DISABLED.
+17:12:48 ALARM 2003 failover arbitrator automated failover is disabled 
+17:12:48 Arbitrator failover processing is DISABLED.
+17:12:48 ALARM 2003 failover arbitrator automated failover is disabled 
+17:12:53 Arbitrator failover processing is DISABLED.
+17:12:53 ALARM 2003 failover arbitrator automated failover is disabled 
+17:12:58 Arbitrator failover processing is DISABLED.
+17:12:58 ALARM 2003 failover arbitrator automated failover is disabled 
+17:13:04 Arbitrator failover processing is DISABLED.
+17:13:04 ALARM 2003 failover arbitrator automated failover is disabled 
+17:13:09 Arbitrator failover processing is DISABLED.
+17:13:09 ALARM 2003 failover arbitrator automated failover is disabled 
+17:13:14 Arbitrator failover processing is DISABLED.
+17:13:14 ALARM 2003 failover arbitrator automated failover is disabled 
+17:13:44 Arbitrator failover processing is DISABLED.
+17:13:44 ALARM 2003 failover arbitrator automated failover is disabled 
+17:14:11 Shut down Connection Manager cm_suzyq
+17:14:14 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+17:14:14 ALARM 1001 Connection Manager cm_suzyq shut down successfully 
+Thu May 10 15:57:37 2012
+15:57:37 IBM Informix Connection Manager
+15:57:37 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+15:57:37 Build Number:	N125
+15:57:37 Build Host:	hans
+15:57:37 Build OS:	Linux 2.6.18-128.el5
+15:57:37 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+15:57:37 GLS Version:	glslib-5.00.FC5
+15:57:37 
+15:57:37 SLA cm1_oltp listener mode REDIRECT
+15:57:37 SLA cm1_report listener mode REDIRECT
+15:57:37 Connection Manager name is cm_suzyq
+15:57:37 Starting Connection Manager...
+15:57:38 set the maximum number of file descriptors 32767 failed
+15:57:38 the current maximum number of file descriptors is 1024
+15:57:38 switch to daemon mode
+15:57:38 dbservername = suzyq_tcp
+15:57:38 nettype = onsoctcp
+15:57:38 hostname = suzyq-vbox
+15:57:38 servicename = online1_tcp
+15:57:38 options = g=g_suzyq
+15:57:38 dbservername = drive_tcp
+15:57:38 nettype = onsoctcp
+15:57:38 hostname = drive-vbox
+15:57:38 servicename = online1_tcp
+15:57:38 options = g=g_suzyq
+15:57:38 dbservername = devil_tcp
+15:57:38 nettype = onsoctcp
+15:57:38 hostname = devil-vbox
+15:57:38 servicename = online1_tcp
+15:57:38 options = g=g_suzyq
+15:57:38 listener cm1_report initializing
+15:57:38 listener cm1_oltp initializing
+15:57:38 Listener cm1_oltp DBSERVERS=PRI is active with 4 worker threads
+15:57:38 Listener cm1_report DBSERVERS=HDR,PRI,RSS is active with 4 worker threads
+15:57:39 Connection Manager started successfully
+15:57:44 Connection Manager successfully connected to suzyq_tcp
+15:57:44 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+15:57:44 FOC: Failover Arbitrator DISABLED
+15:57:44 FOC TIMEOUT = 0
+15:57:44 FOC RETRY = 1
+15:57:45 Arbitrator is active on CM = cm_suzyq
+16:00:39 Connection Manager disconnected from suzyq_tcp
+16:00:39 Arbitrator failover processing is DISABLED.
+16:00:39 ALARM 2003 failover arbitrator automated failover is disabled 
+16:00:39 Arbitrator failover processing is DISABLED.
+16:00:39 ALARM 2003 failover arbitrator automated failover is disabled 
+16:00:44 Arbitrator failover processing is DISABLED.
+16:00:44 ALARM 2003 failover arbitrator automated failover is disabled 
+16:00:49 Arbitrator failover processing is DISABLED.
+16:00:49 ALARM 2003 failover arbitrator automated failover is disabled 
+16:00:54 Arbitrator failover processing is DISABLED.
+16:00:54 ALARM 2003 failover arbitrator automated failover is disabled 
+16:00:59 Arbitrator failover processing is DISABLED.
+16:00:59 ALARM 2003 failover arbitrator automated failover is disabled 
+16:01:04 Arbitrator failover processing is DISABLED.
+16:01:04 ALARM 2003 failover arbitrator automated failover is disabled 
+16:01:05 Shut down Connection Manager cm_suzyq
+16:01:06 ALARM 4001 unable to connect to Informix server drive_tcp
+16:01:06 ALARM 1001 Connection Manager cm_suzyq shut down successfully 
+Thu May 10 16:10:03 2012
+16:10:03 IBM Informix Connection Manager
+16:10:03 IBM Informix CSDK Version 3.70, IBM Informix-ESQL Version 3.70.FC4  
+16:10:03 Build Number:	N125
+16:10:03 Build Host:	hans
+16:10:03 Build OS:	Linux 2.6.18-128.el5
+16:10:03 Build Date:	Wed Oct 5 12:48:15 CDT 2011
+16:10:03 GLS Version:	glslib-5.00.FC5
+16:10:03 
+16:10:03 SLA cm1_oltp listener mode REDIRECT
+16:10:03 SLA cm1_report listener mode REDIRECT
+16:10:03 Connection Manager name is cm_suzyq
+16:10:03 Starting Connection Manager...
+16:10:04 set the maximum number of file descriptors 32767 failed
+16:10:04 the current maximum number of file descriptors is 1024
+16:10:04 switch to daemon mode
+16:10:04 dbservername = suzyq_tcp
+16:10:04 nettype = onsoctcp
+16:10:04 hostname = suzyq-vbox
+16:10:04 servicename = online1_tcp
+16:10:04 options = g=g_suzyq
+16:10:04 dbservername = drive_tcp
+16:10:04 nettype = onsoctcp
+16:10:04 hostname = drive-vbox
+16:10:04 servicename = online1_tcp
+16:10:04 options = g=g_suzyq
+16:10:04 dbservername = devil_tcp
+16:10:04 nettype = onsoctcp
+16:10:04 hostname = devil-vbox
+16:10:04 servicename = online1_tcp
+16:10:04 options = g=g_suzyq
+16:10:04 listener cm1_report initializing
+16:10:04 listener cm1_oltp initializing
+16:10:04 Listener cm1_report DBSERVERS=HDR,PRI,RSS is active with 4 worker threads
+16:10:04 Listener cm1_oltp DBSERVERS=PRI is active with 4 worker threads
+16:10:05 Connection Manager started successfully
+16:10:07 Connection Manager successfully connected to suzyq_tcp
+16:10:07 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:10:07 FOC: Failover Arbitrator DISABLED
+16:10:07 FOC TIMEOUT = 0
+16:10:07 FOC RETRY = 1
+16:10:07 Arbitrator is active on CM = cm_suzyq
+16:12:58 Connection Manager successfully connected to drive_tcp
+16:13:49 Connection Manager successfully connected to devil_tcp
+16:21:06 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+16:21:06 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+16:21:06 Warning: The primary server named cm1_suzyq in cluster suzyq_tcp is currently active. You
+cannot change the primary server to devil_tcp
+16:25:19 Connection Manager disconnected from suzyq_tcp
+16:25:19 Arbitrator failover processing is DISABLED.
+16:25:19 ALARM 2003 failover arbitrator automated failover is disabled 
+16:25:19 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+16:25:20 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:25:20 FOC: Failover Arbitrator DISABLED
+16:25:20 FOC TIMEOUT = 0
+16:25:20 FOC RETRY = 1
+16:29:55 Connection Manager disconnected from drive_tcp
+16:29:55 Arbitrator failover processing is DISABLED.
+16:29:55 ALARM 2003 failover arbitrator automated failover is disabled 
+16:29:55 ALARM 3002 detected lost connection to Informix server drive_tcp
+16:30:13 Connection Manager successfully connected to drive_tcp
+16:30:14 Connection Manager successfully connected to suzyq_tcp
+16:30:50 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:30:50 FOC: Failover Arbitrator DISABLED
+16:30:50 FOC TIMEOUT = 0
+16:30:50 FOC RETRY = 1
+16:30:56 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:30:56 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:30:56 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:30:56 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:16 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:16 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:16 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:16 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:34 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:34 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:34 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to drive_tcp
+16:31:39 Connection Manager disconnected from drive_tcp
+16:31:39 ALARM 3002 detected lost connection to Informix server drive_tcp
+16:31:40 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:31:40 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:31:40 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:31:40 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:21 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:21 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:21 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:21 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:21 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:32:27 Connection Manager disconnected from suzyq_tcp
+16:32:27 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+16:32:40 Server devil_tcp no response over EVENT_TIMEOUT 60 seconds
+16:32:40 monitor timeout detected for server devil_tcp
+16:32:40 Connection Manager disconnected from devil_tcp
+16:37:30 Connection Manager successfully connected to devil_tcp
+16:37:30 Warning: The primary server named cm1_suzyq in cluster devil_tcp is currently active. You
+cannot change the primary server to suzyq_tcp
+16:37:30 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:37:30 FOC: Failover Arbitrator DISABLED
+16:37:30 FOC TIMEOUT = 0
+16:37:30 FOC RETRY = 1
+16:37:31 Connection Manager successfully connected to suzyq_tcp
+16:37:31 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:37:31 FOC: Failover Arbitrator DISABLED
+16:37:31 FOC TIMEOUT = 0
+16:37:31 FOC RETRY = 1
+16:37:31 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:37:31 FOC: Failover Arbitrator DISABLED
+16:37:31 FOC TIMEOUT = 0
+16:37:31 FOC RETRY = 1
+16:37:32 Connection Manager successfully connected to drive_tcp
+16:40:07 Connection Manager disconnected from suzyq_tcp
+16:40:07 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:40:07 FOC: Failover Arbitrator DISABLED
+16:40:07 FOC TIMEOUT = 0
+16:40:07 FOC RETRY = 1
+16:40:08 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+16:40:19 Connection Manager disconnected from drive_tcp
+16:40:33 Connection Manager successfully connected to drive_tcp
+16:41:29 Connection Manager disconnected from drive_tcp
+16:41:46 Connection Manager successfully connected to drive_tcp
+16:41:49 Connection Manager successfully connected to suzyq_tcp
+16:44:06 Connection Manager disconnected from drive_tcp
+16:44:07 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:44:07 FOC: Failover Arbitrator DISABLED
+16:44:07 FOC TIMEOUT = 0
+16:44:07 FOC RETRY = 1
+16:44:08 ALARM 3002 detected lost connection to Informix server drive_tcp
+16:44:57 Connection Manager disconnected from suzyq_tcp
+16:45:15 Connection Manager successfully connected to suzyq_tcp
+16:45:15 Arbitrator is active on CM = cm_suzyq
+16:45:16 Connection Manager successfully connected to drive_tcp
+16:51:54 Connection Manager disconnected from suzyq_tcp
+16:51:54 Arbitrator failover processing is DISABLED.
+16:51:54 ALARM 2003 failover arbitrator automated failover is disabled 
+16:51:54 ALARM 3002 detected lost connection to Informix server suzyq_tcp
+16:52:14 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:52:14 FOC: Failover Arbitrator DISABLED
+16:52:14 FOC TIMEOUT = 0
+16:52:14 FOC RETRY = 1
+16:52:14 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:52:14 FOC: Failover Arbitrator DISABLED
+16:52:14 FOC TIMEOUT = 0
+16:52:14 FOC RETRY = 1
+16:52:15 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:52:15 FOC: Failover Arbitrator DISABLED
+16:52:15 FOC TIMEOUT = 0
+16:52:15 FOC RETRY = 1
+16:55:01 Connection Manager successfully connected to suzyq_tcp
+16:56:40 Connection Manager disconnected from suzyq_tcp
+16:56:40 ALARM 5002 detected lost connection to Informix server suzyq_tcp
+16:56:44 Connection Manager disconnected from drive_tcp
+16:56:44 Arbitrator failover processing is DISABLED.
+16:56:44 ALARM 2003 failover arbitrator automated failover is disabled 
+16:56:44 ALARM 3002 detected lost connection to Informix server drive_tcp
+16:57:04 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+16:57:04 FOC: Failover Arbitrator DISABLED
+16:57:04 FOC TIMEOUT = 0
+16:57:04 FOC RETRY = 1
+16:58:11 Connection Manager successfully connected to suzyq_tcp
+16:59:36 Connection Manager successfully connected to drive_tcp
+17:00:47 Connection Manager disconnected from devil_tcp
+17:00:47 Arbitrator failover processing is DISABLED.
+17:00:47 ALARM 2003 failover arbitrator automated failover is disabled 
+17:00:47 ALARM 3002 detected lost connection to Informix server devil_tcp
+17:01:06 Cluster cm1_suzyq Arbitrator FOC string = ORDER=DISABLED
+17:01:06 FOC: Failover Arbitrator DISABLED
+17:01:06 FOC TIMEOUT = 0
+17:01:06 FOC RETRY = 1
+17:02:56 Connection Manager successfully connected to devil_tcp
+20:54:11 Arbitrator is active on CM = cm_suzyq
+20:54:18 Connection Manager disconnected from devil_tcp
+20:54:18 ALARM 5002 detected lost connection to Informix server devil_tcp
+20:54:24 Connection Manager successfully connected to devil_tcp
+13:20:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:20:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:21:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:21:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:22:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:22:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:23:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:23:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:24:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:24:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:25:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:25:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:26:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:26:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:27:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:27:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:28:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:28:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:29:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:29:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:30:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:30:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:31:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:31:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:32:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:32:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:33:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:33:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:34:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:34:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:35:53 Server drive_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:35:56 Server devil_tcp no response over SECONDARY_EVENT_TIMEOUT 60 seconds
+13:36:20 Connection Manager disconnected from drive_tcp
+13:36:20 ALARM 5002 detected lost connection to Informix server drive_tcp
+13:36:27 Connection Manager disconnected from devil_tcp
+13:36:27 ALARM 5002 detected lost connection to Informix server devil_tcp

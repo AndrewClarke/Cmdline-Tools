@@ -1,0 +1,23 @@
+
+## suzyq_shm       onipcshm    suzyq-vbox  online_shm
+## drive_shm       onipcshm    drive-vbox  online_shm
+## devil_shm       onipcshm    devil-vbox  online_shm
+
+g_suzyq         group       -           -               i=10
+suzyq_tcp       onsoctcp    suzyq-vbox  online1_tcp     g=g_suzyq
+suzyq_drda      drsoctcp    suzyq-vbox  online1_drda    g=g_suzyq
+drive_tcp       onsoctcp    drive-vbox  online1_tcp     g=g_suzyq
+drive_drda      drsoctcp    drive-vbox  online1_drda    g=g_suzyq
+devil_tcp       onsoctcp    devil-vbox  online1_tcp     g=g_suzyq
+devil_drda      drsoctcp    devil-vbox  online1_drda    g=g_suzyq
+
+oltp            group       -           -               i=1010,c=1
+cm1_oltp        onsoctcp    suzyq-vbox  cmsm_oltp       g=oltp
+cm2_oltp        onsoctcp    drive-vbox  cmsm_oltp       g=oltp
+cm3_oltp        onsoctcp    devil-vbox  cmsm_oltp       g=oltp
+
+report          group       -           -               i=1010,c=1
+cm1_report      onsoctcp    suzyq-vbox  cmsm_report     g=report
+cm2_report      onsoctcp    drive-vbox  cmsm_report     g=report
+cm3_report      onsoctcp    devil-vbox  cmsm_report     g=report
+

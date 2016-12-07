@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+
+runSql -q "$DBNAME" <<SQL | sed 's/ *$//; /^$/d; s/(expression) *|//'
+    select "|" || st.tabname || "|" || si.idxname || "|"
+      from systables st, sysindexes si
+     where st.tabid = si.tabid
+       and tabtype = "T"
+       and st.tabid >= 100
+SQL

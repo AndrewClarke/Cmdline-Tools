@@ -1,0 +1,234 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+{
+    no warnings;
+    $[ = 1;     # arrays start at one. Suffer bee-atches
+}
+
+my $meta;
+my $max_factor = 'G';   # highest unit to print - T(b) G(b) M(b) K(b)
+my $scaler = 10;        # T/G/M count to start using the next factor
+my $byname = 0;
+my $commas = 0;
+while($ARGV[0] =~ /^-(.*)/) {
+    my $flag = $1;
+    shift;
+
+    last if $flag eq '-';
+
+    $meta = 1,           next  if $flag eq 'meta';
+    $max_factor = $flag, next  if $flag =~ /^[TGMK]/;
+    $scaler = int($1),   next  if $flag =~ /^(\d+)$/ && $1 > 0;
+    $byname = 1,         next  if $flag =~ /byname/;
+    $commas = 1,         next  if $flag =~ /commas/;
+}
+
+
+sub nameSort($$) {
+    my ($l, $r) = @_;
+    return  0 if $l eq $r;
+    return -1 if $l eq 'rootdbs';
+    return  1 if $r eq 'rootdbs';
+
+    # this is begging for a smart loop
+    return $l cmp $r if $l =~ /^plog/ && $r =~ /^plog/;
+    return $l cmp $r if $l =~ /^llog/ && $r =~ /^llog/;
+    return $l cmp $r if $l =~ /^ltmp/ && $r =~ /^ltmp/;
+    return $l cmp $r if $l =~ /^ttmp/ && $r =~ /^ttmp/;
+    return $l cmp $r if $l =~ /^stmp/ && $r =~ /^stmp/;
+    return $l cmp $r if $l =~ /^temp/ && $r =~ /^temp/;
+    return $l cmp $r if $l =~ /^data/ && $r =~ /^data/;
+    return $l cmp $r if $l =~ /^inde/ && $r =~ /^inde/;
+    return $l cmp $r if $l =~ /^blob/ && $r =~ /^blob/;
+
+    return -1 if $l =~ /^plog/;
+    return  1 if $r =~ /^plog/;
+    return -1 if $l =~ /^llog/;
+    return  1 if $r =~ /^llog/;
+    return -1 if $l =~ /^ltmp/;
+    return  1 if $r =~ /^ltmp/;
+    return -1 if $l =~ /^ttmp/;
+    return  1 if $r =~ /^ttmp/;
+    return -1 if $l =~ /^stmp/;
+    return  1 if $r =~ /^stmp/;
+    return -1 if $l =~ /^temp/;
+    return  1 if $r =~ /^temp/;
+    return -1 if $l =~ /^data/;
+    return  1 if $r =~ /^data/;
+    return -1 if $l =~ /^inde/;
+    return  1 if $r =~ /^inde/;
+    return -1 if $l =~ /^blob/;
+    return  1 if $r =~ /^blob/;
+
+    return $l cmp $r;
+}
+
+
+open(IFD, "onstat -d |") || die "$0: Cannot open pipe from onstat: $!";
+
+
+my @dbspaces = ();
+
+sub commify {
+    local $_ = $_[0];
+    if($commas) {
+        1 while s/(.*\d)(\d\d\d)/$1,$2/;
+    }
+    return $_;
+}
+
+sub MbRound {
+    my $x = $_[0] / 1024;
+
+    return int(($x + 1000000000 - 1) / 1000000000) . " Tb" if $x >= $scaler * 1000000000 and $max_factor =~ /[T]/;
+    return int(($x + 1000000 - 1) / 1000000) . " Gb"       if $x >= $scaler * 1000000    and $max_factor =~ /[TG]/;
+    return int(($x + 1000 - 1) / 1000) . " Mb"             if $x >= $scaler * 1000       and $max_factor =~ /[TGM]/;
+    return $x . " Kb";
+}
+
+my $state = 0;
+my $vers;
+my ($address, $number, $xflags, $fchunk, $nchunks, $pgsize, $flags, $owner, $name);
+my ($chnkno, $dbs, $offset, $size, $free, $bpages, $pathname);
+my ($dbspace, $chunk);
+
+while(<IFD>) {
+    chomp;
+    s/\s+$//;
+
+    $vers = int $1 if $state == 0 && /IBM Informix Dynamic Server Version (\d+)/i;
+
+    if($state == 0 && /^address/) {
+        $state = 1;
+        next;
+    }
+
+    if($state == 1 && /\d+ active, \d+ maximum/i) {
+        $state = 10;
+        next;
+    }
+
+    if($state == 1) {
+        if($vers < 10) {
+            $pgsize = 2048;
+            ($address, $number, $xflags, $fchunk, $nchunks, $flags, $owner, $name) = unpack "A9A9A11A9A9A9A9A*", $_;
+        }
+        else {
+            ($address, $number, $xflags, $fchunk, $nchunks, $pgsize, $flags, $owner, $name) = unpack "A17A9A11A9A9A9A9A9A*", $_;
+        }
+
+        $dbspace = { address => $address, number => $number, xflags => $xflags, fchunk => $fchunk, nchunk => $nchunks,
+                     pgsize => $pgsize, flags => $flags, owner => $owner, name => $name,
+                     tsize => 0, tfree => 0, tused => 0, tbpages => 0, tmsize => 0, tmfree => 0, tmused => 0, tmbpages => 0,
+                     chunks => [] };
+        $dbspaces[$dbspace->{number}] = $dbspace;
+        next;
+    }
+
+    if($state == 10 && /^address/) {
+        $state = 11;
+        next;
+    }
+
+    if($state == 11 && /\d+ active, \d+ maximum/i) {
+        $state = 20;
+        next;
+    }
+
+    if($state == 11 && /^\s+Metadata\s+(\d+)\s+(\d+)\s+(\d+)/) {
+        my ($msize, $mfree, $mbpages) = ($1, $2, $3);
+        my $mused = $msize - $mfree;
+
+        $dbspace->{tmsize} += $msize;
+        $dbspace->{tmfree} += $mfree;
+        $dbspace->{tmused} += $mused;
+        $dbspace->{tmbpages} += $mbpages;
+
+        $chunk->{msize} = $msize;
+        $chunk->{mfree} = $mfree;
+        $chunk->{mused} = $mused;
+        $chunk->{mbpages} = $mbpages;
+        next;
+    }
+
+    if($state == 11) {
+        if($vers < 10) {
+            ($address, $chnkno, $dbs, $offset, $size, $free, $bpages, $flags, $pathname) = unpack "A9A6A5A11A11A11A11A6A*", $_;
+        }
+        else {
+            ($address, $chnkno, $dbs, $offset, $size, $free, $bpages, $flags, $pathname) = unpack "A17A6A5A11A11A11A11A6A*", $_;
+        }
+        my $used = $size - $free;
+
+        $dbspace = $dbspaces[$dbs];
+        $dbspace->{tsize} += $size;
+        $dbspace->{tfree} += $free;
+        $dbspace->{tused} += $used;
+        $dbspace->{tbpages} += $bpages if $bpages;
+
+        $chunk = { address => $address, chunk => $chnkno, dbs => $dbs, offset => $offset, size => $size,
+                   free => $free, used => $used, bpages => $bpages, flags => $flags, pathname => $pathname };
+        push @{$dbspace->{chunks}}, $chunk;
+        next;
+    }
+}
+
+if($byname) {
+    @dbspaces = sort { nameSort $a->{name}, $b->{name} } @dbspaces;
+}
+
+printf "dbs    Flags         Total Size      Total Free      Total Used    Total BPages   DBspace Name\n";
+printf "---    -----         ----------      ----------      ----------    ------------   ------------\n";
+
+my ($tot_tsize, $tot_tfree, $tot_tused, $tot_tbpages, $tot_tmsize, $tot_tmfree, $tot_tmused, $tot_tmbpages);
+for(my $i = 1; $i <= $#dbspaces; ++$i) {
+    next unless $dbspace = $dbspaces[$i];
+
+    $tot_tsize    += $dbspace->{pgsize} * $dbspace->{tsize};
+    $tot_tfree    += $dbspace->{pgsize} * $dbspace->{tfree};
+    $tot_tused    += $dbspace->{pgsize} * $dbspace->{tused};
+    $tot_tbpages  += $dbspace->{pgsize} * $dbspace->{tbpages};
+
+    $tot_tmsize   += $dbspace->{pgsize} * $dbspace->{tmsize};
+    $tot_tmfree   += $dbspace->{pgsize} * $dbspace->{tmfree};
+    $tot_tmused   += $dbspace->{pgsize} * $dbspace->{tmused};
+    $tot_tmbpages += $dbspace->{pgsize} * $dbspace->{tmbpages};
+
+    my $tsize   = MbRound($dbspace->{pgsize} * $dbspace->{tsize});
+    my $tfree   = MbRound($dbspace->{pgsize} * $dbspace->{tfree});
+    my $tused   = MbRound($dbspace->{pgsize} * $dbspace->{tused});
+    my $tbpages = MbRound($dbspace->{pgsize} * $dbspace->{tbpages});
+
+    my $tmsize   = MbRound($dbspace->{pgsize} * $dbspace->{tmsize});
+    my $tmfree   = MbRound($dbspace->{pgsize} * $dbspace->{tmfree});
+    my $tmused   = MbRound($dbspace->{pgsize} * $dbspace->{tmused});
+    my $tmbpages = MbRound($dbspace->{pgsize} * $dbspace->{tmbpages});
+
+    printf "%-6d %-8s %15s %15s %15s %15s   %s\n", $dbspace->{number}, $dbspace->{flags},
+            commify($tsize), commify($tfree), commify($tused),
+            ($tbpages =~ /^0 / ? commify($tbpages) : ""), $dbspace->{name};
+
+    if($meta and $tmsize > 0) {
+        printf "       Metadata:%15s %15s %15s %15s\n", commify($tmsize), commify($tmfree), commify($tmused), commify($tmbpages);
+    }
+}
+
+print "-" x 81, "\n";
+printf "%s %15s %15s %15s %15s\n", (" " x 15),
+    commify(MbRound($tot_tsize)),
+    commify(MbRound($tot_tfree)),
+    commify(MbRound($tot_tused)),
+    ($tot_tbpages > 0 ? commify(MbRound($tot_tbpages)) : "");
+
+if($meta and $tot_tmsize > 0) {
+    printf "       Metadata:%15s %15s %15s %15s\n",
+        commify(MbRound($tot_tmsize)),
+        commify(MbRound($tot_tmfree)),
+        commify(MbRound($tot_tmused)),
+        commify(MbRound($tot_tmbpages));
+}
+

@@ -1,0 +1,26 @@
+#!/bin/ksh
+
+{
+    runSql -q sysmaster <<SQL
+        set isolation to dirty read;
+        select name[1,20] dbname,
+               dbinfo('dbspace', partnum) dbspace,
+               case
+                 when is_logging  == 0 then 'unlogged'
+                 when is_ansi     != 0 then 'ANSI'
+                 when is_buff_log != 0 then 'buffered'
+                                       else 'unbuffered'
+               end as logging
+          from sysdatabases
+         where name not in ('sysmaster', 'sysutils', 'sysuser', 'sysadmin', 'syscdr', 'sysha')
+SQL
+} | {
+    typeset -L12 dbname dbspace
+
+    while read tag value; do
+        [[ -z "$tag" ]] && continue
+        typeset $tag="$value"
+        [[ "$tag" == logging ]] && print "$dbname $dbspace $logging"
+    done
+}
+

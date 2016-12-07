@@ -1,0 +1,5 @@
+#!/bin/ksh
+
+export _GWC_REFRESH_=GWC
+echo $wacgen/bin.local/wacrun "$@" trm_num 1 >> /tmp/thingy
+exec $wacgen/bin.local/wacrun "$@" trm_num 1

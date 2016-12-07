@@ -1,0 +1,43 @@
+
+function gui {
+    typeset state
+
+    case "$1" in
+      '')
+	# take an opportunity to correct an anomaly
+	[[ -n "$FGLSERVER" ]] || FGLGUI=0
+
+	case "$FGLGUI" in
+	  0|'') state=off;;
+	  *)    state=on;;
+	esac
+
+	echo "FGLSERVER=$FGLSERVER ($state)"
+	;;
+
+      -on|on)  
+	if [[ -n "$FGLSERVER" ]] ||
+	   { read FGLSERVER?"FGLSERVER: " || echo; } &&
+	   [[ -n "$FGLSERVER" ]]
+	then
+	    export FGLSERVER FGLGUI=1
+	fi
+	;;
+
+      -off|off)
+	export FGLGUI=0
+	;;
+
+      -*)
+	echo usage: "$0 [ on | off | pc-name[:offset] | :offset ]"
+	;;
+
+      :*)
+	export FGLSERVER="${FGLSERVER%:*}$1"
+        ;;
+
+      *)
+	export FGLSERVER="$1" FGLGUI=1
+	;;
+    esac
+}   # gui

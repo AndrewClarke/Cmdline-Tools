@@ -1,0 +1,29 @@
+
+function li {
+    typeset -A flags
+    typeset lscmd=l
+
+    while [[ "X$1" == X-* ]]; do
+        if [[ "X$1" == X-q ]]
+          then lscmd=ls
+          else set -A flags -- "${flags[@]}" "$1"
+        fi
+        shift
+    done
+
+    if [[ $# -eq 0 ]]; then
+        set -- *.@(dsp|src|ext|trg|set|icn|ctl|4gh|inc|in|pl|pm)
+    else
+        typeset -A files
+        typeset f
+        for f in "$@"; do
+            if [[ "$f" == *.@(dsp|src|ext|trg|set|icn|ctl|4gh|inc|in|pl|pm) ]]; then
+                set -A files "${files[@]}" "$f"
+            fi
+        done
+
+        set -- "${files[@]}"
+    fi
+
+    $lscmd "${flags[@]}" "$@"
+}

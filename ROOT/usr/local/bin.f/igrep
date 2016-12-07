@@ -1,0 +1,4 @@
+
+igrep() {
+    xgrep "$@" *.@(dsp|src|set|ext|trg|pl|pm|4gh)
+}

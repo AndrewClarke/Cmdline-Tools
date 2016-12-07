@@ -1,0 +1,69 @@
+#!/usr/bin/env perl
+
+use strict;
+## use warnings;
+## no warnings 'uninitialized';
+
+my $commas;
+if($ARGV[0] eq '-commas') {
+    shift;
+    $commas = 1;
+}
+
+if($^O =~ /linux/) {
+    open(DFD, "df -vkP -x rpc_pipefs -x autofs -x nfsd @ARGV |") or die "Cannot open pipe from df: $!";
+}
+else {
+    open(DFD, "df -vk @ARGV |") or die "Cannot open pipe from df: $!";
+}
+
+
+sub fixup($$) {
+    my ($l, $r) = @_;
+    $l =~ s/ ( \d+)$/$1/;
+    return "$l,$r";
+}
+
+sub commas($) {
+    local $_ = $_[0];
+
+    if($commas && /^\d+$/) {
+        1 while s/(.*\d)(\d\d\d)/fixup $1, $2/e;
+    }
+
+    return $_;
+}
+
+
+my @row = map {
+    chomp;
+    my $x = s/Mounted on/Mounted-on/ ? 1 : 0;    # fix a column header that annoys the split
+
+    my $cols = [ map { commas $_ } split ];
+    if($x && $^O !~ /linux/) {
+	$x = pop @$cols;
+	splice @$cols, 1, 0, $x;
+    }
+
+    $cols
+} <DFD>;
+
+# calculate max width of each column of each row
+my @widths;
+map {
+    for(my $i = 0; $i < @$_; ++$i) {
+        my $l = length $_->[$i];
+        $widths[$i] = $l if $widths[$i] < $l;
+    }
+} @row;
+
+$widths[0] *= -1;
+$widths[4] *= -1;
+$widths[5] *= -1;
+
+# generate the format string
+my $format = join('  ', map { "%${_}s" } @widths) . "\n";
+printf $format, @$_ foreach @row;
+
+exit 0;
+

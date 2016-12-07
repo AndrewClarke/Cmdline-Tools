@@ -1,0 +1,48 @@
+
+function svnStuff {
+    unset SVNROOT SVNURL SVNPATH SVNPROJ SVNBRANCH SVNTAG SVNDIR
+
+    unset vflag qflag
+    while [[ "X$1" == X-* ]]; do
+        case "$1" in
+          -q) qflag=1;;
+          -v) vflag=1;;
+        esac
+        shift
+    done
+
+    unset line field
+    svn info 2>&1 | while read line; do
+        field="${line%%:*}"
+        line="${line#$field: }"
+        
+        case "$field" in
+          'Repository Root') SVNROOT=$line ;;
+          'URL') SVNURL=$line ;;
+        esac
+    done
+
+    SVNPATH="${SVNURL#$SVNROOT}"
+    SVNPROJ="${SVNPATH#/}"
+    SVNPROJ="${SVNPROJ%%/*}"
+    SVNDIR="${SVNPATH#/$SVNPROJ/}"
+
+    case "$SVNDIR" in
+      branches/*)  SVNDIR="${SVNDIR#branches/}"; SVNBRANCH="${SVNDIR%%/*}"; SVNDIR="${SVNDIR#$SVNBRANCH}" ;;
+      tags/*)      SVNDIR="${SVNDIR#tags/}"; SVNTAG="${SVNDIR%%/*}"; SVNDIR="${SVNDIR#$SVNTAG}" ;;
+      trunk?(/*))  SVNDIR="${SVNDIR#trunk}" ;;
+      master?(/*)) SVNDIR="${SVNDIR#master}" ;;
+
+      *)
+        [[ -z "$qflag" ]] && echo >&2 current directory is not in a recognisable Subversion trunk, branch or tag
+        return 1
+        ;;
+    esac
+
+    export SVNROOT SVNURL SVNPATH SVNPROJ SVNBRANCH SVNTAG SVNDIR
+
+    if [[ -n "$vflag" ]]; then
+        env | grep '^SVN'
+    fi
+}
+

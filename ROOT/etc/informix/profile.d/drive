@@ -1,0 +1,21 @@
+: setup shell variables to directly access drive engine
+
+set -a
+
+# remove old informix bin
+[[ -n "$INFORMIXDIR" ]] && PATH="${PATH/"$INFORMIXDIR/bin:"}"
+INFORMIXDIR=/opt/informix-11.70.FC4
+INFORMIXSERVER=drive_tcp
+ONCONFIG=onconfig.drive
+INFORMIXSQLHOSTS=/etc/informix/config.d/sqlhosts
+PATH=$INFORMIXDIR/bin:$PATH
+
+DB_LOCALE=en_us.8859-1
+CLIENT_LOCALE=en_us.8859-1
+SERVER_LOCALE=en_us.8859-1
+
+DBDATE=dmy4/
+DBCENTURY=C
+
+set +a
+

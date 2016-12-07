@@ -1,0 +1,4 @@
+
+function viw {
+    vim $(whence "$@")
+}   # viw

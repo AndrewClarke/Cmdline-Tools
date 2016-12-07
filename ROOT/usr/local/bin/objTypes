@@ -1,0 +1,19 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+
+runSql -q "$DBNAME" <<SQL
+    select tabtype as objType, count(*) count
+      from systables
+     where tabid >= 100
+     group by tabtype
+
+    union
+
+    select case idxname[1] when ' ' then 'i' else 'I' end case, count(*)
+      from sysindexes
+     where tabid >= 100
+     group by 1
+
+     order by 1
+SQL

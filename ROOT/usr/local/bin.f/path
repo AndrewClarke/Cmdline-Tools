@@ -1,0 +1,78 @@
+
+function path {
+    typeset result=0 chat=echo vname=PATH
+    typeset ch i x l r bits top dir
+    typeset -R3 n
+
+    while getopts :p: ch; do
+        case "$ch" in
+	  p) vname="$OPTARG" ;;
+	  q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-p VARNAME] [version]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+    typeset -n var=$vname
+    typeset p=$var
+
+    set -A bits
+    while [[ -n "$p" ]]; do
+	if [[ "$p" = :* ]]; then
+	    x=.
+	    p="${p#:}"
+	elif [[ "$p" != *:* ]]; then
+	    x="$p"
+	    p=
+	else
+	    x="${p%%:*}"
+	    p="${p#$x:}"
+	fi
+
+	set -A bits "${bits[@]}" "$x"
+    done
+
+    if [[ $# -eq 0 ]]; then
+	i=0
+	while [[ $i -lt "${#bits[*]}" ]]; do
+	    x="${bits[$i]}"
+            for top in HOME INFORMIXDIR ORACLE_HOME ORACLE_BASE ICON WACPERL ANT_HOME JAVA_HOME \
+                       wacgenlib wacgen APPL master auth50 FGLDIR FGLASDIR AUBITDIR
+            do
+                eval dir=\"\$"$top"\"
+                [[ -z "$dir" ]] && continue
+                dir="${dir%/}"/
+                if [[ "$x" != "${x#$dir}" ]]; then
+                    x="\$$top/${x#$dir}"
+                    break
+                fi
+            done
+
+            n="$((i=i+1)):"
+	    echo "$n $x"
+	done
+
+	return 0
+    fi
+
+    while [[ $# -gt 0 ]]; do
+	x="$1"
+	shift
+
+	if [[ "$x" = *=* ]]; then
+	    l="${x%=*}"
+	    r="${x#*=}"
+
+	    if [[ "$var" = *:$l:* ]]; then
+		export var="${var%%:$l:*}:$r:${var#*:$l:}"
+	    else
+		echo >&2 "path: cannot find "$l" in $vname"
+		result=1
+	    fi
+	fi
+    done
+
+    return $result
+
+}   # path
+
+

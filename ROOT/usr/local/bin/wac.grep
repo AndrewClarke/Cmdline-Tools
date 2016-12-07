@@ -1,0 +1,63 @@
+#!/bin/ksh
+# Copyright (C) 1992-2005 Civica Pty. Limited
+# Sccsid: %Z% %M%%Y% %Q%%I% %E%
+# @(#) $Id$ Civica
+myname=${0##*/}		# a useful identifying variable
+dn=/dev/null
+
+cmd=${myname#wac.}
+
+function usage {
+    echo >&2 "usage: $myname [-jrl] [ $cmd-opts ] pattern
+
+-j force use of filelist.4JS
+-r force use of filelist.RDS
+-l list files that would be searched
+
+TODO: pass other flags through to the greps
+in the meantime, use -- before the grep options
+"
+    exit 1
+}   # usage
+
+typeset EXT lflag
+while getopts :jrl ch; do
+    case "$ch" in
+      j) EXT=4JS ;;
+      r) EXT=RDS ;;
+      l) lflag=1 ;;
+      *) usage ;;
+    esac
+done
+shift $((OPTIND-1))
+
+[[ -f filelist.4JS ]] && : ${EXT:=4JS}
+[[ -f filelist.RDS ]] && : ${EXT:=RDS}
+
+[[ $# -eq 0 ]] && usage
+
+{
+    ls *.4gl
+    sed < filelist.$EXT '
+	s:$(APPL)/:'$APPL'/:;
+	s:$(wasp)/:'$wasp'/:;
+	s:$(WH)/:'$WH'/:;
+	s:$(fg)/:'$wacgen'/:;
+	s:$(ff)/:'$ff'/:;
+	s:$(wacgen)/:'$wacgen'/:;
+	s:$(wacgenlib)/:'$wacgenlib'/:;
+
+	s:$APPL/:'$APPL'/:;
+	s:$wasp/:'$wasp'/:;
+	s:$WH/:'$WH'/:;
+	s:$fg/:'$wacgen'/:;
+	s:$ff/:'$ff'/:;
+	s:$wacgen/:'$wacgen'/:;
+	s:$wacgenlib/:'$wacgenlib'/:;
+
+	s:(:/:;
+	s:)::;
+	s:\.4go$:.4gl:;
+	s:\.42m$:.4gl:;
+    '
+} 2>$dn | if [[ -n "$lflag" ]]; then cat; else xargs -n100 $cmd -i "$@"; fi

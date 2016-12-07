@@ -1,0 +1,5 @@
+# don't get spaces in the data lines
+suzyq:/opt/informix-11.70.FC4:Y:      # comments allowed
+drive:/opt/informix-11.70.FC4:Y:
+# this is garbage
+

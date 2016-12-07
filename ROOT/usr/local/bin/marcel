@@ -1,0 +1,367 @@
+#!/usr/bin/env perl
+# Copyright (C) 1992-2012 Andrew Clarke
+# All rights reserved.
+# Use, modification, duplication, and/or distribution of this
+# software is limited by the software license agreement.
+
+use strict;
+use warnings;
+
+use Getopt::Long qw(:config bundling permute no_ignore_case);
+use Config::IniFiles;
+use Pod::Usage;
+use MIME::Lite;
+
+my $VERSION = 0.800;
+
+my (@to, @cc, @bcc, $from, $reply, $subject);
+my ($print, $scrub);
+
+# create message object
+my $msg = MIME::Lite->new(Type => 'multipart/mixed');
+my $nfiles = 0;
+
+my ($type, $filename, $id);
+$type = 'TEXT';
+
+my %typeLookup = (
+    GZIP        => 'application/gzip',
+    JPEG        => 'image/jpeg',
+    GIF         => 'image/gif',
+    HTML        => 'text/html',
+    MPEG        => 'video/mpeg',
+);
+
+
+######################################################################
+sub process ($;$) {
+######################################################################
+#
+    my $fname = shift;
+    my $part;
+    ++$nfiles;
+
+    if($fname eq "-") {
+        $part = MIME::Lite->build(
+                    Type => $type,
+                    FH => \*STDIN,
+                    Disposition => 'attachment');
+    }
+    else {
+        $part = MIME::Lite->build(
+                    Type => $type,
+                    Path => $fname,
+                    Disposition => 'attachment');
+    }
+
+    if(defined $filename) {
+        $part->filename($filename);
+        $filename = undef;
+    }
+
+    if(defined $id) {
+        $part->add(Id => $id);
+        $id = undef;
+    }
+
+    $msg->attach($part);
+}   # process
+
+
+# in case you were wondering, the "main loop" for the script
+# is right here. All options including filenames are processed
+# here, exploiting the "permute" config of Getopts::Long
+#
+GetOptions(
+    'help|?'            => sub { pod2usage -exitval => 1, -verbose => 1 },
+    'man'               => sub { pod2usage -exitval => 1, -verbose => 2 },
+
+    # optional .ini file for address options
+    'C|config=s'        => sub {
+        # using an INI file for a fixed config is VERY inflexible,
+        # but at least it allows you to store sets of addresses
+        # an improvement might be to add an 'address-set' concept
+        # so that a specific INI section can be brought in. TODO :=)
+        #
+        my $config = $_[1];
+        my $cfg = new Config::IniFiles(-file => $config);
+
+        unless(defined $cfg) {
+            warn "cannot open config file $config: $!\n";
+            warn "  $_\n" foreach @Config::IniFiles::errors;
+            die "";
+        }
+
+        # It's also dubious that all of these things should be
+        # stored in an ini file, especially the subject etc
+        # furthermore, the message and maybe even a list of
+        # files to attach should be storable, however that
+        # begs the question about how to make it variable to
+        # a useful degree.
+        # Gimme a break! This INI stuff is just dabbling with an idea:-))
+
+        # collect FROM and REPLY from INI file
+        $from  = $cfg->val(outgoing => 'from')   unless defined $from;
+        $reply = $cfg->val(outgoing => 'reply')  unless defined $reply;
+
+        # collect destinations
+        push @to,  $cfg->val(outgoing => 'to')   unless @to;
+        push @cc,  $cfg->val(outgoing => 'cc')   unless @cc;
+        push @bcc, $cfg->val(outgoing => 'bcc')  unless @bcc;
+
+        # and of course, the subject
+        $subject = $cfg->val(outgoing => 'subject') unless defined $subject;
+    },
+
+    'f|from=s'          => \$from,
+    'r|replyto=s'       => \$reply,
+    't|to=s'            => \@to,
+    'c|cc=s'            => \@cc,
+    'b|bcc=s'           => \@bcc,
+    's|subject=s'       => \$subject,
+
+    'm|message=s'       => sub {
+        my $part0 = $_[1];
+
+        if($part0 =~ s/^@//) {
+            local *IFD;
+            open IFD, "< $part0" or die "Cannot open $part0: $!\n";
+
+            $part0 = join '', <IFD>;
+            close IFD;
+        }
+
+        $msg->attach(Type => 'TEXT',
+                     Data => $part0,
+                     Disposition => 'inline');
+        },
+
+    'P|print'           => \$print,     # print to STDOUT instead of send
+    'S|scrub'           => \$scrub,
+
+    'T|type=s'          => sub { $type = $typeLookup{$_[1]} || $_[1] },
+    'F|filename=s'      => \$filename,
+    'I|id=s'            => \$id,
+
+    # dammit - Getopt passes the PRIMARY option name
+    # so canna combine this as 'TEXT|BINARY|GZIP|JPEG|GIF.....'
+    #
+    'TEXT'              => sub { $type = 'TEXT'                 },
+    'BINARY'            => sub { $type = 'BINARY'               },
+    'GZIP'              => sub { $type = $typeLookup{$_[0]}     },
+    'JPEG'              => sub { $type = $typeLookup{$_[0]}     },
+    'GIF'               => sub { $type = $typeLookup{$_[0]}     },
+    'HTML'              => sub { $type = $typeLookup{$_[0]}     },
+    'MPEG'              => sub { $type = $typeLookup{$_[0]}     },
+
+    ''                  => sub { process "-" },
+    '<>'                => \&process,
+) or pod2usage(1);
+
+# That's all, folks! The command line is now fully processed.
+# Time to think about delivery...
+
+defined $from    or pod2usage(-exitval => 1, -verbose => 0, -msg => "must specify --from\n");
+@to              or pod2usage(-exitval => 1, -verbose => 0, -msg => "must specify --to\n");
+defined $subject or pod2usage(-exitval => 1, -verbose => 0, -msg => "must specify --subject\n");
+
+{
+    no warnings;
+
+    $msg->add('From'     => $from);
+    $msg->add('To'       => join(',', @to));
+    $msg->add('Subject'  => $subject);
+
+    $msg->add('Reply-To' => $reply)          if defined $reply;
+    $msg->add('Cc'       => join(',', @cc))  if @cc;
+    $msg->add('Bcc'      => join(',', @bcc)) if @bcc;
+}
+
+$msg->scrub if $scrub;
+
+if($print)
+    { $msg->print(\*STDOUT) }
+else
+    { $msg->send }
+
+__END__
+
+=head1 NAME
+
+B<marcel> - construct multipart MIME messages
+
+=head1 SYNOPSIS
+
+B<marcel> [--help | --man | options] [files ...]
+
+=head1 OPTIONS
+
+ Options (short or long):
+    --help -?           brief help message
+    --man               full documentation
+
+    --from addr         set the sender's address (mandatory)
+    --replyto addr      optional reply-to address
+    --to addrlist       set the receiver address(es) (mandatory)
+    --cc addrlist       set the cc address(es)
+    --bcc addrlist      set the bcc address(es)
+
+    --subject string    set the subject (mandatory)
+
+    --message string    inline text to put ahead of the attachments
+
+    --print             print to STDOUT instead of sending
+    --scrub             apply scrub operation of MIME::Lite (see it's pod)
+
+    --filename name     set the save-as filename
+    --id                attach ID - used for HTML messages
+
+    --type type         nominate the type of the attachment
+    --TEXT              explicit TEXT type of MIME::Lite
+    --BINARY            explicit BINARY type of MIME::Lite
+
+=head1 OPTION DESCRIPTIONS
+
+Options may be interspersed with files to deliver.
+This is important for nominating all the required
+options for each file you will be delivering.
+For example, the --TEXT option may be given at any time,
+and will apply to all following files until the type is
+changed again.
+
+Some options such as the addresses apply to the entire message.
+Other options such as the type specifiers apply until changed again,
+and others such as the --filename apply only for the next file.
+See the description of individual options.
+
+=over 8
+
+=item B<-?> or B<--help>
+
+Print a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=item B<--from addr>
+
+set the sender's address (mandatory)
+
+=item B<--replyto addr>
+
+optional reply-to address
+
+=item B<--to addrlist>
+
+set the receiver address(es) (mandatory)
+
+=item B<--cc addrlist>
+
+set the cc address(es)
+
+=item B<--bcc addrlist>
+
+set the bcc address(es)
+
+=item B<--subject string>
+
+set the subject (mandatory)
+
+=item B<--message string>
+
+inline text to put ahead of the attachments
+
+=item B<--print>
+
+print to STDOUT instead of sending
+
+=item B<--scrub>
+
+apply scrub operation of MIME::Lite (see it's pod)
+
+=item B<--filename name>
+
+set the save-as filename
+
+=item B<--id>
+
+attach ID - used for HTML messages
+
+=item B<--type type>
+
+nominate the type of the attachment
+
+=item B<--TEXT>
+
+explicit TEXT type of MIME::Lite
+
+=item B<--BINARY>
+
+explicit BINARY type of MIME::Lite
+
+=back
+
+Remaining arguments are joined to form the message,
+or standard input is read in the absence of any message arguments.
+
+Since it's a nuisance putting the entire inline comment (part0) on a command line,
+the --message option will detect a leading '@' and treat the remainder
+of the option as a filename. The usual - filename can be used to read
+the message from STDIN, which leads to the following convenient approach:
+
+  marcel --from foo@bar --to bar@baz --message @- <<MESSAGE --TEXT file.txt
+  Here's the file you wanted.
+  And here is a multi-line message typed in to show how it
+  can be conveniently supplied from the shell command line.
+  MESSAGE
+
+=head1 CONTROLLING MIME TYPES
+
+Two levels of configuration file are supported,
+so that a site administrator may set up
+global server and persons descriptions,
+and users may setup personal entries for the same.
+
+NOTE: the use of INI files is extremely experimental
+so the promise in the previous paragraph can only be realised
+if ideas for improvement are suggested.
+
+=head1 EXIT VALUES
+
+=over 4
+
+B<0>  success
+
+B<1>  error event
+
+=back
+
+=head1 PREREQUISITES
+
+This script requires the Perl modules
+C<MIME::Lite>,
+C<Getopt::Long>,
+C<Pod::Usage> and
+C<Config::IniFiles>
+to be loaded.
+
+Since the C<MIME::Lite> Pod
+suggests benefits from having the Perl modules
+C<MIME::Types>,
+C<Mail::Address>,
+C<MIME::Base64> and
+C<MIME::QuotedPrint> available,
+B<marcel> will probably benefit too :-)
+
+=cut
+
+=pod OSNAMES
+
+Unix
+
+=pod SCRIPT CATEGORIES
+
+Mail
+
+=cut

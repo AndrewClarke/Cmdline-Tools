@@ -1,0 +1,288 @@
+#!/usr/bin/perl
+# Copyright (C) 1992-2009 Civica Pty. Limited
+
+($mydir = "$0") =~ s:[^/]*$::;  # where this script is
+$0 =~ s:.*/::;			# tidy up the program name
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+my $FAIL = ": FAIL\n";
+my $debug = 1 if $ENV{CDSPELL} eq "debug";
+
+
+######################################################################
+sub match ($$) {
+# compares a single (basenamed) filename with the target
+######################################################################
+# spelling corrections tried:
+# 1 upper/lower case error
+# 1 missing/extra character
+# 1 transposed character
+#
+    my ($str1, $str2) = @_;
+    my $l1 = length $str1;
+    my $l2 = length $str2;
+
+    # at most, a difference in length of 1 (comes from the rules above)
+    return undef unless $l2 - 1 <= $l1 && $l1 <= $l2 + 1;
+
+    $debug && print STDERR "  $str2\n";
+    $DB::single = 1;
+    $DB::single = $DB::single;		# silence the warnings - how easily it is fooled
+
+    my $tp = -1;	# address of first possible transposition
+    my ($cs, $sp, $tr, $m1, $m2);	# mistake types detected
+    my ($i1, $i2) = (0, 0);
+
+    CHAR: while($i1 < $l1 || $i2 < $l2) {
+	my $ch1 = substr $str1, $i1, 1;
+	my $ch2 = substr $str2, $i2, 1;
+
+	if($ch1 eq $ch2) {
+	    ++$i1, ++$i2;
+	    $debug && print STDERR "*	'$ch1' eq '$ch2'\n";
+	    next CHAR;
+	}
+
+        # check for simple case error
+	if(lc($ch1) eq lc($ch2)) {
+	    $debug && print STDERR "*	'$ch1' eqi '$ch2'";     # case problem
+	    if($cs++ || $sp || $tr || $m1 || $m2) {             # if already had a defect, reject
+		$debug && print STDERR $FAIL;
+		return undef;
+	    }
+
+	    ++$i1, ++$i2;
+	    $debug && print STDERR "\n";
+	    next CHAR;
+	}
+
+	# if left string is shorter than the right string,
+	# it's allowed to have a missing character
+	# $m1 = missing on the left
+	if($l1 < $l2 && $ch1 eq substr $str2, $i2 + 1, 1) {
+	    $debug && print STDERR "*  >'$ch2'";                # we have a missing left char
+	    if($cs || $sp || $tr || $m1++ || $m2) {             # if already had a defect, reject
+		$debug && print STDERR $FAIL;
+		return undef;
+	    }
+
+	    ++$i2;
+	    $debug && print STDERR "\n";
+	    next CHAR;
+	}
+
+	# if right string is shorter than the left string,
+	# it's allowed to have a missing character
+	# $m2 = missing on the right
+	if($l2 < $l1 && $ch2 eq substr $str1, $i1 + 1, 1) {
+	    $debug && print STDERR "*	<'$ch1'";               # we have a missing right char
+	    if($cs || $sp || $tr || $m1 || $m2++) {             # if already had a defect, reject
+		$debug && print $FAIL;
+		return undef;
+	    }
+
+	    ++$i1;
+	    $debug && print STDERR "\n";
+	    next CHAR;
+	}
+
+	# if strings are equal length, then there is allowed
+	# to be one spelling mistake. Note: the address of the
+	# mistake is recorded so that the next mistake can be
+	# checked to see if it is actually a transposition.
+	#
+	$debug && print STDERR "*   '$ch1' ne '$ch2'";
+	if($l1 != $l2 || $cs || $tr || $m1 || $m2) {            # if already have a defect, reject
+	    $debug && print $FAIL;                              # note: unequal length is implicit defect
+	    return undef;
+	}
+
+	# $tp = pointer to first spelling mistake
+	# $sp = spelling mistake
+	if($tp == -1) {                                         # $tp == -1 implies no spelling mistake so far
+	    $debug && print STDERR ": that's OK!\n";
+
+	    # record for possible transposition error - this is otherwise a spelling mistake
+	    $tp = $i1; ++$i1, ++$i2, ++$sp;                     # bump spelling mistake indicator too
+	    next CHAR;
+	}
+
+	# ASSERT: $tp >= 0, so there has been a previous spelling mistake
+	# check for a transposition of letters; which lets us count one transposition
+	# and no spelling mistake
+	# $tr = transposition
+	if($ch1 eq substr($str2, $tp, 1) and $ch2 eq substr($str1, $tp, 1)) {
+	    $debug && print STDERR ": $tp <-> $i1\n";
+	    $tr = 1, $sp = 0;
+	    ++$i1, ++$i2;
+	    next CHAR;
+	}
+
+	$debug && print STDERR $FAIL;
+	return undef;
+    }
+
+    $debug && print STDERR "*** Hit!\n";
+
+    # will return zero for perfect match, or 1 for single error
+    # multiple errors are not allowed to escape the loop above
+    return $cs || $sp || $tr || $m1 || $m2;
+
+}   # match
+
+
+sub cleanPath ($) {
+    local $_ = shift;
+
+    # clean up slashes and dots
+    $debug && print STDERR "becomes(rule 1): $_\n" if s: /{2,} :/:xg;		# multiple slashes
+    $debug && print STDERR "becomes(rule 2): $_\n" if s: ([^/]) /+ $:$1:x;	# trailing slashes - phhhh!
+
+    $debug && print STDERR "becomes(rule 3): $_\n" if s:  (/\.)+ /:/:xg;	# embedded /./
+    $debug && print STDERR "becomes(rule 4): $_\n" if s:^  \./    ::x;		# leading ./
+    $debug && print STDERR "becomes(rule 5): $_\n" if s:(.)/\.   $:$1:x;	# trailing /.
+    $debug && print STDERR "becomes(rule 6): $_\n" if s:^/\.$:/:;		# special case /.
+
+    $debug && print STDERR "becomes(rule 7): $_\n" if s:\.\.(\.+):".." . ("/.." x length $1):e;  # .... => ../../.. (eg)
+
+    # embedded .. and the directory before it
+    my @bits = split m:/:;
+    my $n;
+    my $i = 1;
+    while($i < @bits) {
+	if($bits[$i] eq ".." && $bits[$i - 1] ne "..") {
+	    $n = 1;
+	    splice @bits, $i - 1, 2;
+	}
+	else {
+	    ++$i;
+	}
+    }
+
+    if($n) {
+	$_ = join "/", @bits;
+	$debug && print STDERR "becomes(rule 8): $_\n"
+    }
+
+    return $_;
+}   # cleanPath
+
+
+# our local development top-trees. we do special case short-names with this.
+# for other development projects, you'll need to adapt but this gives clues
+#
+my $APPL = $ENV{APPL};
+my $ff3 = $ENV{ff3};
+my $WH = $ENV{WH};
+
+die "usage: $0 name\n" unless @ARGV == 1;
+my $name = cleanPath shift;
+die "usage: $0 name\n" unless $name;
+
+
+# root and dot is a nuisance, so get them out of the way
+if($name eq "/" or $name eq ".") {
+    print "$name\n";
+    exit 0;
+}
+
+# if the user gives a path containing a slash, implies don't follow CDPATH
+# if the user gives a path starting with slash, peel it off and replace CDPATH with /
+my $CDPATH;
+my $slashed = $name =~ m:^/:;
+$CDPATH = $slashed ? "." : ":$ENV{CDPATH}";
+$CDPATH = "/" if $name =~ s:^/::;
+my (@CDPATH, %CDPATH);
+
+foreach my $dir (split /:/, $CDPATH, -1) {
+    $dir = cleanPath $dir;
+    $dir = '.' unless $dir;
+
+    # skip the dirs in the application trees - ummmmm, WHY?
+    # ANSWER - because some people load up alllll the modules into CDPATH, and it's horribly excessive
+    next if $APPL && $dir =~ m:^$APPL/[^/]*\.4gm:;
+    next if $ff3  && $dir =~ m:^$ff3/[^/]*\.4gm:;
+    next if $WH   && $dir =~ m:^$WH/[^/]*\.4gm:;
+
+    unless($CDPATH{$dir}++ || ! -d $dir) {
+	$dir = "" if $dir eq "/";
+	push @CDPATH, $dir;
+    }
+}
+
+my @bits = split '/', $name;
+PIECE: foreach (@CDPATH) {
+    my $dir = $_;
+    $debug && print STDERR "CDPATH directory $dir/\n";
+
+    my $tail;
+    my $n = 0;
+    my $fudged = 0;
+
+    BIT: foreach (@bits) {
+	++$n;
+	$tail = "$_";
+	$debug && print STDERR "trying $dir/$tail\n";
+	if(-d "$dir/$tail") {
+	    $debug && print STDERR "good dir $dir/$tail\n";
+	    next BIT;
+	}
+
+	unless(opendir DIR, "$dir/") {
+	    $debug && print STDERR "cannot open $dir/\n";
+	    next PIECE;
+	}
+
+	$debug && print STDERR "opendir $dir/\n";
+	my @hits;
+	my $slot;
+	SLOT: while($slot = readdir DIR) {
+	    next SLOT if $slot eq "." || $slot eq "..";
+
+	    my $file = "$dir/$slot";
+	    $file =~ s:^\./::;
+	    next SLOT unless -d $file;
+	    my $result = match $tail, $slot;
+	    next SLOT unless defined $result;
+
+	    push @hits, $slot;
+	    $fudged = 1 if $tail ne $slot;
+	}
+	closedir DIR;
+
+	if(@hits == 1) {
+	    $tail = $hits[0];
+	    $debug && print STDERR "good dir $dir/$tail\n";
+	    next BIT;
+	}
+
+	if($n == @bits && -t STDIN && -t STDERR && @hits > 1) {
+	    my $i = 0;
+	    @hits = sort @hits;
+	    foreach (@hits) {
+		++$i;
+		print STDERR "$i) $dir/$_\n";
+	    }
+
+	    print STDERR "Select directory? ";
+	    chomp(my $n = scalar <>);
+	    exit 1 if $n !~ /^\d+$/ or $n < 1 or $n > @hits;
+	    print "$dir/$hits[$n-1]\n";
+	    exit 0;
+	}
+
+	$debug && print STDERR "cannot match $tail\n";
+	next PIECE;
+    }
+    continue { $dir .= "/$tail" }
+
+    print STDERR "$dir\n" if $fudged;
+    print "$dir\n";
+    exit 0;
+}
+
+exit 1;
+

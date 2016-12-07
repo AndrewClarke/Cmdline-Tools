@@ -1,0 +1,4 @@
+
+function c132 {
+    export COLUMNS=132
+}

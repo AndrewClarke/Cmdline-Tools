@@ -1,0 +1,32 @@
+
+function lte {
+    typeset mod prg ext path
+
+    mod=${PWD#/}
+    prg=${mod##*/}
+    mod=${mod%/$prg}
+    mod=${mod##*/}
+
+    ext=${prg##*.}
+    prg=${prg%.$ext}
+    [[ "$prg" = "$ext" ]] && ext=
+
+    if [[ "$prg" = lib || "$mod" = lib.4gm ]]; then
+	# library
+	if [[ "$ext" != @(4gs|4js|wac) ]]; then
+	    echo >&2 lte: what kind of library is a $prg${ext:+.$ext}???
+	    return
+	fi
+
+	path="../$prg.wac/"
+    else
+	# program
+	case "$ext" in
+	  4gs) path=../$prg.4gs/ ;;
+	  4gc) path=../$prg.@(4gc|4gs)/ ;;
+	  *)   path=../$prg.@(4gc|4gs|$ext)/ ;;
+	esac
+    fi
+
+    eval ls 2>&- '"$@"' $path*.@(set|trg|ext)
+}   # lte

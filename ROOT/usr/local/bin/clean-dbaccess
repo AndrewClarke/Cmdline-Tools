@@ -1,0 +1,24 @@
+#!/usr/bin/env perl
+
+# filters a lot of junk from the output of dbaccess
+# very specific - probably should rename it
+# because it's really aimed at cleaning the output from running dbschema script
+# also - runSql contains similar filtering, so they all probably need rationalising
+
+while(<>) {
+    chomp;
+    s/\s+$//;
+    next if /^$/;
+
+    next if /^Database (selected|closed|created|dropped)/;
+    next if /^Near character position/;
+
+    next if /^(Index|Role|Routine|Cast|(Row|Opaque)\s+type|Table|Trigger|View)\s+(altered|created)/i;
+    next if /^Permission\s+(granted|revoked)/;
+
+    next if /^Warning:Privilege not revoked/;
+    next if /^Mode set/;
+
+    print "$_\n";
+}
+

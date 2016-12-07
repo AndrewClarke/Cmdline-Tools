@@ -1,0 +1,4 @@
+
+function viO {
+    vi -O "$@"
+}   # viO

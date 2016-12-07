@@ -1,0 +1,4 @@
+
+function fvi {
+    vi "+/$1" $(find . \( -name '*.org' -o -name '*.trg' -o -name '*.ext' \) -print | xargs grep -ils "$1")
+}   # fvi

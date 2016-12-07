@@ -1,0 +1,68 @@
+
+function setprompt {
+    integer n
+    typeset __sp __se __so tail i qflag
+    typeset -u x
+
+    if [[ "$1" = -q ]]; then
+	qflag=1
+	shift
+    fi
+
+    CWD="$PWD"
+    let n=0
+
+    [[ "$CWD" != / ]] && mapPrompt
+    # strip off excess directories leading to current directory
+    while [[ "$CWD" = /*/*/* ]]; do
+	let n=n+1
+	CWD=/"${CWD#/*/}"
+    done
+
+    [[ $n -gt 0 ]] && CWD='['$n']'"$CWD"
+    CWD="$CWD_FRAG$CWD "
+    unset CWD_FRAG
+
+    [[ -s /etc/ksh_patch ]] && . /etc/ksh_patch
+
+    # check for change of release area.
+    for __sp in $releases; do
+	eval __se='"$'"$__sp"'"'
+	[[ "$PWD" = "$__se"?(/*) ]] || continue	# not in there...
+	[[ "$stage" = "$__sp" ]] && break		# still in there!
+	# a new stage has been reached
+
+	stage_enter $__sp
+	[[ -n "$cust_key" ]] && customer $cust_key
+	break
+    done
+
+    if [[ -z "$qflag" ]]; then
+	[[ "$LOGNAME" != root && -x ./.cdrc ]] && . ./.cdrc
+	set -- [Rr][Ee][Aa][Dd]?(.)[Mm][Ee]*?(.*)
+	[[ -a $1 ]] && echo $(tput smso) This directory contains a "$@" file $(tput rmso)
+    fi
+
+    if [[ "$PWD" = */*.4gm/*.??? ]]; then
+	# if a change into a fresh program directory,
+	# clean out all directory shortforms, and set new ones
+	tail=${PWD##*/}
+	tail=${tail%.???}
+
+	if [[ "$tail" != "$DIR_TAIL" ]]; then
+	     eval unset $DIR_LIST DIR_LIST DIR_TAIL
+
+	     export DIR_TAIL="$tail"
+	     for i in ../$tail.???; do
+		 i=${i#../}
+		 x=${i##*.}
+		 export f$x=${PWD%/*}/$i
+		 export DIR_LIST="$DIR_LIST f$x"
+	     done
+	fi
+    fi
+
+    [[ "$CWD" = "\$$stage " ]] && CWD=
+
+    return 0
+}   # setprompt

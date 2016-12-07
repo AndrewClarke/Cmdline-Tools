@@ -1,0 +1,93 @@
+
+function sc {
+    typeset -A files
+    typeset lflag vflag Tflag pflag sflag Xflag Dflag dflag eflag
+
+    vflag=0
+    while getopts :eplsTvD:d:X: ch; do
+        case "$ch" in
+          p) pflag=1 ;;
+          e) eflag=eval ;;
+          l) lflag=l ;;
+          s) sflag=l ;;
+          T) Tflag=1 ;;
+          v) let vflag++ ;;
+          X) Xflag="$OPTARG" ;;
+          D) Dflag="$OPTARG" ;;
+          d) dflag="$OPTARG" ;;
+
+          *)
+            echo >&1 "usage: sc [-p] | [-e] [-[l|s][v][T] [-d directory] [-X pattern] [command args ...]
+where   -p  print filenames, don't run any command
+        -e  eval command not just execute it
+        -l  loop over the filenames (for commands wot can't take more than one)
+        -s  substitute {} for current filename (implicit loop effect)
+        -T  tie stderr to stdout for easier pagination etc on -l or -s
+        -v  list the filenames before each command invocation on -l or -s
+        -X  test for existence of file named; allows {} so you can do clever things
+
+    default command is vi"
+
+            return 1 ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    set -A files "${dflag:+$dflag/}"*.@(icn|src|trg|ext|dsp|4gh|pl|pm|in|ctl|set)
+
+    if [[ "${#files[@]}" -eq 1 && ! -e "${files[0]}" ]]; then
+        echo &>2 "error: no source files in this directory"
+        return 1
+    fi
+
+    if [[ -n "$pflag" ]]; then
+        echo "${files[@]}"
+        return 0
+    fi
+
+    if [[ -n "$Dflag" ]]; then
+        for i in "${files[@]}"; do
+            vid $i "$Dflag/$i"
+        done
+        return
+    fi
+
+    [[ $# -eq 0 ]] && set -- vim
+    if [[ "$1" == ?([fxe])grep ]]; then
+        cmd="$1"
+        shift
+        set -- "$cmd" -n "$@"
+    fi
+
+    if [[ -z "$lflag$sflag" ]]; then
+        $eflag "$@" "${files[@]}"
+    else
+        for i in "${files[@]}"; do
+            if [[ -n "$Xflag" ]]; then
+                [[ -e "${Xflag//\{\}/"$i"}" ]] || continue
+            fi
+
+            case "$vflag" in
+              0) : ;;
+              1) echo "$@" "$i" ;;
+              *) echo "******************************"
+                 echo "*" "$@" "$i"
+                 echo "******************************" ;;
+            esac
+
+            if [[ -n "$sflag" ]]; then
+                if [[ -n "$Tflag" ]]
+                  then $eflag "${@//\{\}/"$i"}" 2>&1
+                  else $eflag "${@//\{\}/"$i"}"
+                fi
+            else
+                if [[ -n "$Tflag" ]]
+                  then $eflag "$@" "$i" 2>&1
+                  else $eflag "$@" "$i"
+                fi
+            fi
+        done
+    fi
+
+}   # sc
+

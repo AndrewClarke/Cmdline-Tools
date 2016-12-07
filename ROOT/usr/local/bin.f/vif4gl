@@ -1,0 +1,4 @@
+
+function vif4gl {
+    vi "+/$1" $(grep -ils "$1" *.4gl)
+}   # vif4gl

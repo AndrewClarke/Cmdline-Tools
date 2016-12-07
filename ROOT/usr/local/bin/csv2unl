@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+use Text::CSV_XS;
+use Getopt::Std;
+
+getopts('i');
+$^I = '' if $opt_i;
+
+my $csv = Text::CSV_XS->new();
+while(<>) {
+    chomp;
+    s/\r//;
+    my $status = $csv->parse($_);
+    my @columns = $csv->fields();
+    s/([|"'\\])/\\$1/g foreach @columns;
+    print join "|", @columns, "\n";
+}
+

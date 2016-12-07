@@ -1,0 +1,20 @@
+#!/bin/ksh
+
+# dump internal facts about $1=dbname $2=tabname
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+TABNAME="${2:?Pass tabname as the 2nd parameter}"
+
+runSql -qC "$DBNAME" <<SQL
+    select mod(sc.coltype, 256)::smallint AS Type,
+           case when sc.coltype > 255 then 'N' else 'Y' end AS null,
+           trim(st.tabname[1,20]) || "." || trim(sc.colname[1,20]) AS column
+      from syscolumns sc
+
+      join systables st
+        on st.tabid = sc.tabid
+
+     where st.tabname = '$TABNAME'
+     order by st.tabid, sc.colno
+SQL
+

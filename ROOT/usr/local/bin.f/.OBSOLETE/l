@@ -1,0 +1,15 @@
+
+function l {
+    ls -pbla$LS_SYM_FLAG "$@" \
+      | if [[ -n "$__LATE_LS_4GM__" && "$app" = $PWD ]]; then
+	    perl -ne '
+		if(m:\.(4gm|wccs|delv)/$:)
+		    { push @dirs, $_ }
+		else
+		    { print }
+		END { print foreach @dirs }
+	    '
+        else
+	    cat
+        fi
+}

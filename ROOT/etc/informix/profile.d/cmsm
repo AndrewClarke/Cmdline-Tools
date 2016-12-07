@@ -1,0 +1,16 @@
+: setup shell variables to manage the connection manager
+
+# NOTE: oncmsm needs INFORMIXSERVER set to the primary server
+# of the group, which is not necessarily a local machine
+
+set -a
+
+# remove old informix bin
+[[ -n "$INFORMIXDIR" ]] && PATH="${PATH/"$INFORMIXDIR/bin:"}"
+INFORMIXDIR=/opt/informix-11.70.FC4
+INFORMIXSERVER=suzyq_tcp
+ONCONFIG=onconfig.suzyq
+INFORMIXSQLHOSTS=/etc/informix/config.d/sqlhosts
+PATH=$INFORMIXDIR/bin:$PATH
+set +a
+

@@ -1,0 +1,28 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+
+runSql -q "$DBNAME" <<SQL
+    select fragtype as T, tabid AS id, indexname[1,18], strategy AS s, dbspace[1,12], npused AS np, partition[1,12]
+      from sysfragments
+  -- where tabid >= 100
+    -- and nvl(tabtype, ' ') <> 'T'
+SQL
+
+
+## fragtype    I
+## tabid       114
+## indexname   fppt
+## strategy    T
+## dbspace     datadbs015
+## npused      347
+## partition   datadbs015
+
+## fragtype    T
+## tabid       119
+## indexname
+## strategy    R
+## dbspace     datadbs011
+## npused      11918
+## partition   datadbs011
+

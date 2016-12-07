@@ -1,0 +1,26 @@
+
+set -a
+: ${ORIGIN_USER:=$LOGNAME}
+FPATH=/usr/local/bin.f
+[[ -d ~/bin.f ]] && FPATH=~/bin.f:$FPATH
+FCEDIT=vim
+DBEDIT=vim
+EDITOR=vim
+VISUAL=vim
+DBDATE=dmy4/
+DBEDIT=vim
+set +a
+
+test -r $HOME/.vars && . $HOME/.vars
+test -n "$TRACESH" && echo "content /etc/profile \$SHELL=$SHELL \$0=$0 is:$is"
+
+## all the original /etc/profile stuff went here
+## test -n "$TRACESH" && echo leaving /etc/profile
+
+
+## profileDir=/usr/local/share/etc
+## confirmSetup=y
+## if [[ -z "$NO_CIVICA" && -d $profileDir ]]; then	# set $NO_CIVICA in your $HOME/.vars
+##     . $profileDir/sand.profile
+## fi
+
