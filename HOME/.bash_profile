@@ -17,6 +17,7 @@ export ICON=/opt/unicon-12.1
 export IPATH=$wacgen/source/iconlib
 
 export PATH="/usr/sbin:/sbin:$PATH"
+[[ -n "$ADK" && -d "$ADK/" ]] && export PATH="$ADK/bin:$PATH"
 [[ -d "$ICON/" ]] && export PATH="$ICON/bin:$PATH"
 [[ -d ~/bin/ ]] && export PATH="$HOME/bin:$PATH"
 [[ -d ~/bin.local/ ]] && export PATH="$HOME/bin.local:$PATH"
@@ -24,8 +25,6 @@ export PATH="/usr/sbin:/sbin:$PATH"
 [[ -d $HOME/.rvm/bin ]] && export PATH=$PATH:$HOME/.rvm/bin
 
 [[ -f ~/.bashrc ]] && . ~/.bashrc
-
-[[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
 
 unset LC_ADDRESS LC_IDENTIFICATION LC_MEASUREMENT LC_MONETARY
 unset LC_NAME LC_NUMERIC LC_PAPER LC_TELEPHONE LC_TIME

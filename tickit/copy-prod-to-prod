@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [[ $# -ne 5 ]]; then
+    cat >&2 <<++
+Usage: `basename $0` SRC_DB DEST_DB EMAIL_OFF PASSWORD_RESET SET_EMAIL_TO_EXAMPLE_COM
+
+Copy a database from Sydney production server to OVERWRITE another one in
+the Sydney production server and optionally turn off email reminder,
+reset admin password and set email addresses to @example.com.
+
+Note: valid values for the options are 'yes' and 'no'.
+++
+
+    exit 1
+fi
+
+SRC_DB="$1"
+DEST_DB="$2"
+EMAIL_OFF="$3"
+PASSWORD_RESET="$4"
+EXAMPLE_COM="$5"
+SRC_HOST=web1.aws.tod.net.au
+DEST_HOST=
+
+backup_sydprod "$DEST_DB"
+ssh -A "ubuntu@$SRC_HOST" /home/ubuntu/bin/copy_db_locally "$SRC_DB" "$DEST_DB" "$EMAIL_OFF" "$PASSWORD_RESET" "$EXAMPLE_COM"
+

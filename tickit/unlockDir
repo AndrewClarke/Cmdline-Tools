@@ -1,0 +1,9 @@
+
+# requires: $LockFile $MYPID
+
+function unlockDir {
+    if [[ ( -n "$LockFile" && -f $LockFile ) && $(<$LockFile) -eq $MYPID ]]; then
+	rm -f $LockFile >/dev/null 2>&1
+    fi
+
+}   # unlockDir

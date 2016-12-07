@@ -1,0 +1,95 @@
+#!/bin/bash
+
+myname="${0##*/}"
+target="${myname##*[-_]}"
+shopt -s extglob
+
+case "$target" in
+  prod)
+    SRC_HOST=custuatweb1.aws.tod.net.au
+    DEST_HOST=web1-internal
+    DESCRIPTOR='PRODUCTION'
+    COPY_CMD=/home/ubuntu/bin/copy_db_to
+    ;;
+
+  cust)
+    SRC_HOST=custuatweb1.aws.tod.net.au
+    DEST_HOST=
+    DESCRIPTOR='Customer UAT'
+    COPY_CMD=/home/ubuntu/bin/copy_db_locally
+    ;;
+
+  tickit)
+    SRC_HOST=custuatweb1.aws.tod.net.au
+    DEST_HOST=tickituat-internal
+    DESCRIPTOR='Internal UAT'
+    COPY_CMD=/home/ubuntu/bin/copy_db_to
+    ;;
+esac
+
+
+usage() {
+    exec >&2
+    [[ $# -gt 0 ]] && echo "$@"
+
+    echo "\
+Usage: $myname [-n] [-E] [-P] [-X] src-dbname dest-dbname
+
+Obsolete usage: $myname SRC_DB DEST_DB EMAIL_OFF PASSWORD_RESET SET_EMAIL_TO_EXAMPLE_COM
+
+Where   -n  no-execute. Only show commands to run.
+        -E  Email Off
+        -P  Password Reset
+        -X  Set email accounts to @example.com
+
+Copy a database from Sydney Customer UAT server to OVERWRITE another one in
+the Sydney $DESCRIPTOR server and optionally turn off email reminder,
+reset admin password and set emails to @example.com.
+
+Note: valid values for the options are 'yes' and 'no'.
+"
+
+    exit 1
+}
+
+
+OPTIND=1
+nflag= Eflag=no Pflag=no Xflag=no
+while getopts :nEPX ch; do
+    case "$ch" in
+      n) nflag=echo ;;
+      E) Eflag=yes ;;
+      P) Pflag=yes ;;
+      X) Xflag=yes ;;
+
+      ?)
+        [[ "X$OPTARG" == 'X?' ]] && usage
+        usage "invalid flag: $OPTARG"
+    esac
+done
+shift $((OPTIND-1))
+
+# support the obsolete case only if no flags given (except the happy -n)
+case "$nflag$OPTIND-$#" in
+  1-5|echo2-5)
+    SRC_DB="$1" DEST_DB="$2"
+    Eflag="$3" Pflag="$4" Xflag="$5"
+    ;;
+
+  *-2)
+    SRC_DB="$1" DEST_DB="$2"
+    ;;
+
+  *)
+    usage
+esac
+
+case "$target" in
+  prod) ./backup_prod "$DEST_DB" ;;
+  cust) ./backup_cust "$DEST_DB" ;;
+esac
+
+read -p "Press the ANY key to continue: "
+
+$nflag ssh -A ubuntu@$SRC_HOST $COPY_CMD $SRC_DB $DEST_HOST $DEST_DB $Eflag $Pflag $Xflag
+

@@ -13,8 +13,8 @@ git() {
     if [[ -n "$APPL_TOP" ]]; then
         if [[ "$PWD" == "$APPL_TOP" ]]; then
             at_top=1
-            tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app))
-        elif [[ "$PWD" == "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
+            tops=(@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|master|@(tod|ts)-+([0-9])*([a-z])|*_app))
+        elif [[ "$PWD" == "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|master|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
             in_proj=1
         fi
     fi
@@ -32,7 +32,7 @@ git() {
             if [[ "X$1" == X-L ]]; then
                 shift
                 tops=()
-                while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) ]]; do
+                while [[ "$1" == @(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|master|@(tod|ts)-+([0-9])*([a-z])|*_app) ]]; do
                     tops+=("$1")
                     shift
                 done
@@ -239,8 +239,10 @@ git() {
 
             # Gather list of branches and their statii.
             while read name state; do
-                [[ "$state" == '*' ]] && this="$name"
-                branches+=("$name")
+                if [[ "$name" != master ]]; then
+                  [[ "$state" == '*' ]] && this="$name"
+                  branches+=("$name")
+                fi
             done
 
             # Assuming there's 2 branches...
@@ -367,7 +369,7 @@ app() {
             app_usage "Cannot use -l with -n, -N or a named project"; return
         fi
 
-        ls 2>&- -d "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app) | sed 's:.*/::' |
+        ls 2>&- -d "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|master|@(tod|ts)-+([0-9])*([a-z])|*_app) | sed 's:.*/::' |
         {
           first=yo
           while read app; do
@@ -393,7 +395,7 @@ app() {
             app_usage "Cannot use -N with -n or a named project"; return
         fi
 
-        if [[ "$PWD" != "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
+        if [[ "$PWD" != "$APPL_TOP"/@(@(rel-|v)+([0-9])+(.+([0-9]))*([a-z])|master|@(tod|ts)-+([0-9])*([a-z])|*_app)?(/*) ]]; then
             app_usage "'app -N' only works if you are in a Tickit project"; return
         fi
 
@@ -423,13 +425,14 @@ app() {
           +([0-9])+(.+([0-9]))*([a-z])) vers="rel-$vers" ;;
           +([0-9])*([a-z]))             vers="tod-$vers" ;;
           ts-+([0-9])*([a-z]))          vers="$vers" ;;
+          master)                       vers="$vers" ;;
           *)                            vers="$vers"_app ;;
         esac
 
         export APPL="$APPL_TOP/$vers"
     fi
 
-    [[ -n "$target" ]] && clear
+    clear
     [[ -z "$nflag" ]]  && cd "$APPL$target" && know_branch >/dev/null 2>/dev/null
     [[ -n "$vflag" ]]  && echo "APPL = $APPL"
 
@@ -438,22 +441,39 @@ app() {
 
 
 _raily_magic_cd() {
-    local top="$1"
+    local EXPWD="$PWD" top="$1"
     shift
-    [[ -z "$APPL" ]]          && { echo >&2 "\$APPL is not defined"; return 1; }
-    [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project"; return 1; }
-    [[ -d "$APPL/app/$top" ]] || { echo >&2 "\$APPL does not have an app/$top directory";   return 1; }
 
-    cd "$APPL/app/$top"
+    [[ -n "$APPL" ]]          || { echo >&2 "\$APPL is not defined.";                        return 1; }
+    [[ -d "$APPL" ]]          || { echo >&2 "\$APPL directory does not exist.";              return 1; }
+    [[ -d "$APPL/app" ]]      || { echo >&2 "\$APPL does not appear to be a Rails project."; return 1; }
+
+      if [[ -z "$top"              ]]; then cd "$APPL"
+    elif [[ -d "$APPL/app/$top"    ]]; then cd "$APPL/app/$top"
+    elif [[ -d "$APPL/public/$top" ]]; then cd "$APPL/public/$top"
+    elif [[ -d "$APPL/$top"        ]]; then cd "$APPL/$top"
+    else
+        echo >&2 "\$APPL does not have an app/$top, public/$top or a $top directory."
+        return 1
+    fi
+
+    [[ "$EXPWD" = $APPL?(/*) ]] || clear
+
 }   # _raily_magic_cd
 
 
-M() { _raily_magic_cd models      "$@"; clear; }
-V() { _raily_magic_cd views       "$@"; clear; }
-C() { _raily_magic_cd controllers "$@"; clear; }
-H() { _raily_magic_cd helpers     "$@"; clear; }
-# dang - L is already taken
-P() { _raily_magic_cd public      "$@"; clear; }
+A() { _raily_magic_cd app             "$@"; }
+C() { _raily_magic_cd app/controllers "$@"; }
+H() { _raily_magic_cd app/helpers     "$@"; }
+T() { _raily_magic_cd app/metal       "$@"; }
+M() { _raily_magic_cd app/models      "$@"; }
+R() { _raily_magic_cd app/presenters  "$@"; }
+W() { _raily_magic_cd app/sweepers    "$@"; }
+V() { _raily_magic_cd app/views       "$@"; }
+B() { _raily_magic_cd lib             "$@"; }
+P() { _raily_magic_cd public          "$@"; }
+J() { _raily_magic_cd javascripts     "$@"; }
+S() { _raily_magic_cd stylesheets     "$@"; }
 
 
 know_branch

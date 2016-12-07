@@ -1,0 +1,196 @@
+#!/bin/bash
+
+unset GETOPT_COMPATIBLE POSIXLY_CORRECT
+myname="${0##*/}"
+
+shopt -s extglob
+umask 022
+
+LOCAL_DB_STORAGE=~/db
+
+
+function usage {
+    exec >&2
+    [[ $# -gt 0 ]] && echo "$@"
+
+    echo "
+Usage: $myname [options] --<SITE> src-dbname --<SITE> dst-dbname
+
+Options are:
+  -h | --help       this help info
+  --backup          backup the destination database
+  --no-backup       do not backup the destination database
+  --email-off       turn off email reminders
+  --passwd-reset    reset admin password
+  --example-com     set all emails to <user>@example.com
+
+<SITE> is one of --custuat, --production or --tickituat,
+
+Long options may be abbreviated (eg --cust, --prod, --tickit, --email).
+
+Copy a database between Tickit UAT, Customer UAT or Production servers,
+and optionally turn off email reminders, reset admin password and set
+emails to @example.com.
+
+Default backup option depends on the target:
+  yes for Customer UAT or Production
+  no  for Tickit UAT
+
+NOTE: Tickit UAT environments cannot be copied to Customer UAT or Production.
+"
+
+    exit 1
+}  # usage
+
+
+function fatal {
+  exec >&2
+  echo "FATAL ERROR: $@"
+  exit 1
+}  # fatal
+
+
+function remotely {
+    local host="$1"
+    shift
+    ssh -A deploy@$host "$@"
+}
+
+params="$(getopt -n "$myname" -o h -l help,backup,no-backup,email-off,passwd-reset,password-reset,example-com,custuat:,production:,tickituat: -- "$@")" || usage
+eval set -- "$params"
+unset params
+
+
+let ndb=0
+src_db= dst_db= src= dst=
+Eflag=no Pflag=no Xflag=no backup=
+
+while [[ $# -gt 0 ]]; do
+    arg="$1"
+    shift
+
+    case "$arg" in
+      --) break ;;
+      -h|--help) usage ;;
+
+      --backup)    backup=yes ;;
+      --no-backup) backup=no ;;
+
+      --email-off)         Eflag=yes ;;
+      --passw?(or)d-reset) Pflag=yes ;;
+      --example-com)       Xflag=yes ;;
+
+      --@(custuat|production|tickit))
+        arg="${arg#--}"
+        case "$ndb" in
+          0) src_db="$1"; src="${arg%@(uat|uction)}" ;;
+          1) dst_db="$1"; dst="${arg%@(uat|uction)}" ;;
+          *) usage "Too many DB names given" ;;
+        esac
+
+        let ndb+=1
+        shift
+        ;;
+
+      *) usage "Invalid parameter: $arg" ;;
+    esac
+done
+
+# set default backup option
+if [[ "$dst" == tickit ]]
+  then : ${backup:=no}
+  else : ${backup:=yes}
+fi
+
+# sanity checks
+[[ $ndb -eq 2 ]] || usage "DB names expected"
+[[ "$src-$dst" == tickit-@(prod|cust) ]] && fatal "cannot copy a Tickit UAT to Customer UAT or Production"
+[[ "$src" == "$dst" && "$src_db" == "$dst_db" ]] && fatal "cannot copy a database on top of itself"
+
+case "$dst-$backup" in
+  tickit-yes) fatal "Will not back up a tickituat instance" ;;
+  prod-no)    fatal "EEEEK! You must back up production!" ;;
+esac
+
+
+case "$src" in
+  prod)   src_dump=/opt/tmp src_host=web1.aws.tod.net.au ;;
+  cust)   src_dump=/opt/tmp src_host=custuatweb1.aws.tod.net.au ;;
+  tickit) src_dump=/opt/tmp src_host=tickituat.aws.tod.net.au ;;
+esac
+
+case "$dst" in
+  prod)   NAS_dir=sydprod dst_dump=/opt/tmp dst_host=web1-internal ;;
+  cust)   NAS_dir=sydcust dst_dump=/opt/tmp dst_host=custuatweb1-internal ;;
+  tickit) NAS_dir=        dst_dump=/opt/tmp dst_host=tickituat-internal ;;
+esac
+
+
+# ensure the relevant SSH key is loaded into your ssh-agent
+ssh_key=~/.ssh/tickit-sydprod.pem
+[[ -n "$(ssh-add -l | while read _ _ fname _; do [[ "$fname" == "$ssh_key" ]] && echo 1; done)" ]] || ssh-add "$ssh_key"
+
+
+WHO="$(logname)"
+NOW="$(date +"%Y-%m-%d_%H-%M-%S")"
+SAVE_FILE="$dst-$NOW-$WHO-$dst_db.sql.gz"
+COPY_FILE="$src-$NOW-$WHO-$src_db.sql.gz"
+
+SAMBAUSER=`cat ~/.ssh/sambauser 2>&-`
+SAMBAPASS=`cat ~/.ssh/sambapass 2>&-`
+
+
+# initiate backup on destination server - dump that database asynchronously
+BPID=
+if [[ -n "$backup" ]]; then
+    ( remotely $dst_host "mysqldump --extended-insert --single-transaction $dst_db | gzip > $dst_dump/$SAVE_FILE" ) &
+    BPID=$!
+fi
+
+# initiate dump of source database, and transfer to destination
+( remotely $src_host "
+    mysqldump --extended-insert --single-transaction $src_db | gzip > $src_dump/$COPY_FILE;
+    if gunzip < $src_dump/$COPY_FILE | tail -1 | grep 'Dump completed on'; then
+        rsync -e ssh --inplace --remove-source-files $src_dump/$COPY_FILE deploy@$dst_host:$dst_dump/$COPY_FILE;
+    fi
+" ) &
+CPID=$!
+
+if [[ -n "$backup" ]]; then
+    echo "Waiting for backup of $dst:$dst_db"
+    wait $BPID || fatal "cannot wait for backup process - something went wrong dumping the target database"
+
+    remotely $dst_host "gunzip < $dst_dump/$SAVE_FILE | tail -1 | grep 'Dump completed on'" || fatal "backup of $dst:$dst_db is incomplete"
+
+    # initiate fetch of dst_db to local pc for further storage
+    (
+        rsync -e ssh --inplace --remove-source-files deploy@$dst_host:$dst_dump/$SAVE_FILE $LOCAL_DB_STORAGE/$SAVE_FILE || fatal "error occurred during rsync of $dst:$dst_db to local machine"
+
+        smbclient //192.168.250.12/backups $SAMBAPASS ${SAMBAUSER:+-U "$SAMBAUSER"} <<EOC
+            cd customer_backups
+            cd $NAS_dir
+            mkdir $dst_db
+            cd $dst_db
+            lcd $LOCAL_DB_STORAGE
+            put $SAVE_FILE
+            ls $SAVE_FILE
+EOC
+    ) &
+
+    BPID=$!
+fi
+
+echo "Waiting for transfer of $src:$src_db to $dst_host"
+wait $CPID || fatal "cannot wait for transfer process - something went wrong"
+
+remotely $dst_host "unzip < $dst_dump/$SAVE_FILE | tail -1 | grep 'Dump completed on'" || fatal "backup of $dst:$dst_db is incomplete"
+remotely $dst_host "unzip < $dtd_dump/$SAVE_FILE | mysql $dst_db" || fatal "Cannot import $dst:$dst_db - database is now probably broken"
+
+#   dst_host: upload new database
+#   dst_host: delete dump file
+#
+
+if [[ -n "$backup" ]]; then
+    wait $BPID || fatal "cannot wait for backup process - something went wrong fetching and storing the dumped target database"
+fi
+

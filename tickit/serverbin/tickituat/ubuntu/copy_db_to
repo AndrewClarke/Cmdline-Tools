@@ -1,0 +1,49 @@
+#!/bin/bash
+
+EXPECTED_ARGS=6
+E_BADARGS=65
+
+if [[ $# -ne $EXPECTED_ARGS ]]; then
+  echo "Usage: `basename $0` SRC_DB DEST_HOST DEST_DB EMAIL_OFF PASSWORD_RESET EXAMPLE_COM"
+  echo "Copy a database to OVERWRITE another database in the remote host and optionally turn off email reminder, reset admin password and set emails to @example.com."
+  exit $E_BADARGS
+fi
+
+SRC_DB=$1
+DEST_HOST=$2
+DEST_DB=$3
+EMAIL_OFF=$4
+PASSWORD_RESET=$5
+EXAMPLE_COM=$6
+
+MY_KEY=~/.ssh/tickit_web1_key
+DUMP_PATH=/tmp
+
+NOW=$(date +"%Y-%m-%d_%H-%M-%S")
+DUMP_FILE=dumpdb-$SRC_DB-$NOW.gz
+DUMP_PATH_FILE=$DUMP_PATH/$DUMP_FILE
+
+sudo -u deploy -i /home/deploy/bin/dumpdb $SRC_DB $DUMP_PATH $DUMP_FILE
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to backup database to file $DUMP_PATH_FILE"
+  exit $rc 
+fi
+
+scp -i $MY_KEY $DUMP_PATH_FILE ubuntu@$DEST_HOST:$DUMP_PATH
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to copy dump file $DUMP_PATH_FILE to host ubuntu@$DEST_HOST:$DUMP_PATH"
+  exit $rc
+fi
+
+ssh -A -i $MY_KEY ubuntu@$DEST_HOST /home/ubuntu/bin/restore_db_from $DUMP_PATH $DUMP_FILE $DEST_DB $EMAIL_OFF $PASSWORD_RESET $EXAMPLE_COM
+
+sudo rm $DUMP_PATH_FILE
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to clean up dump file $DUMP_PATH_FILE"
+  exit $rc
+fi
+
+exit 0

@@ -10,9 +10,11 @@ for i in "$@"; do
 done
 
 if [[ -z "$hasuser" ]]; then
+    stty=$(stty -g)
     echo -n "Username ($LOGNAME): "
     read -e -t 4 username
     res=$?
+    stty $stty
     [[ $res -ne 0 ]] && echo
     [[ $res -gt 0 && $res -lt 128 ]] && exit
     set -- -l "${username:-$LOGNAME}" "$@"

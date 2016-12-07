@@ -1,0 +1,170 @@
+#!/bin/bash
+
+unset GETOPT_COMPATIBLE POSIXLY_CORRECT
+myname="${0##*/}"
+
+shopt -s extglob
+umask 022
+
+
+function usage {
+    exec >&2
+    [[ $# -gt 0 ]] && echo "$@"
+
+    echo "
+Usage: $myname [options] --<SITE> src-dbname --<SITE> dst-dbname
+
+Options are:
+  -h | --help       this help info
+  -n                no-execute. Only show commands to be run
+  --backup          backup the destination database
+  --no-backup       do not backup the destination database
+  --email-off       turn off email reminders
+  --passwd-reset    reset admin password
+  --example-com     set all emails to <user>@example.com
+
+<SITE> is one of --production, --custuat or --tickituat,
+but may be abbreviated (eg --prod, --cust, --tickit)
+or given as -P, -C or -T.
+
+Copy a database between Production, Customer UAT or Tickit UAT servers,
+and optionally turn off email reminders, reset admin password and set
+emails to @example.com.
+
+Default backup option depends on the target:
+  yes for Customer UAT or Production
+  no  for Tickit UAT
+
+NOTE: Tickit UAT environments cannot be copied to Customer UAT or Production.
+"
+
+    exit 1
+}  # usage
+
+
+function fatal {
+  exec >&2
+  echo "FATAL ERROR: $@"
+  exit 1
+}  # fatal
+
+
+function doit {
+    ( PS4=; set -x; exec "$@" )
+}
+
+
+function show {
+    echo "$@"
+}
+
+params="$(getopt -n "$myname" -o hnP:C:T: -l help,backup,no-backup,email-off,passwd-reset,password-reset,example-com,production:,custuat:,tickituat: -- "$@")" || usage
+eval set -- "$params"
+unset params
+
+
+let ndb=0
+src_db= dst_db= src= dst=
+action=doit Eflag=no Pflag=no Xflag=no backup=
+
+while [[ $# -gt 0 ]]; do
+    arg="$1"
+    shift
+
+    case "$arg" in
+      --) break ;;
+      -n) action=show ;;
+      -h|--help) usage ;;
+
+      --backup)    backup=yes ;;
+      --no-backup) backup=no ;;
+
+      --email-off)         Eflag=yes ;;
+      --passw?(or)d-reset) Pflag=yes ;;
+      --example-com)       Xflag=yes ;;
+
+      -[PCT]*)
+        case "$arg" in
+          -P) box=prod ;;
+          -C) box=cust ;;
+          -T) box=tickit ;;
+        esac
+
+        case "$ndb" in
+          0) src_db="$1"; src="$box" ;;
+          1) dst_db="$1"; dst="$box" ;;
+          *) usage "Too many DB names given" ;;
+        esac
+
+        let ndb+=1
+        shift
+        ;;
+
+      --@(production|custuat|tickituat))
+        arg="${arg#--}"
+        case "$ndb" in
+          0) src_db="$1"; src="${arg%@(uction|uat)}" ;;
+          1) dst_db="$1"; dst="${arg%@(uction|uat)}" ;;
+          *) usage "Too many DB names given" ;;
+        esac
+
+        let ndb+=1
+        shift
+        ;;
+
+      *) usage "Invalid parameter: $arg" ;;
+    esac
+done
+
+[[ $ndb -eq 2 ]] || usage "DB names expected"
+
+# REFUSE to copy tickituat to anywhere else.
+[[ "$src-$dst" == tickit-@(prod|cust) ]] && fatal "cannot copy a Tickit UAT to Production or Customer UAT"
+
+
+case "$src" in
+  prod)   src_host=web1.aws.tod.net.au ;;
+  cust)   src_host=custuatweb1.aws.tod.net.au ;;
+  tickit) src_host=tickituat.aws.tod.net.au ;;
+esac
+
+case "$dst" in
+  prod)   dst_host=web1-internal ;;
+  cust)   dst_host=custuatweb1-internal ;;
+  tickit) dst_host=tickituat-internal ;;
+esac
+
+locally=
+if [[ "$src" != "$dst" ]]; then
+    copy_cmd=/home/ubuntu/bin/copy_db_to
+elif [[ "$src_db" != "$dst_db" ]]; then
+    locally=1
+    copy_cmd=/home/ubuntu/bin/copy_db_locally
+else
+    fatal "cannot copy a database on top of itself"
+fi
+
+# set default backup option
+if [[ "$dst" == tickit ]]
+  then : ${backup:=no}
+  else : ${backup:=yes}
+fi
+
+
+case "$dst-$backup" in
+  prod-yes)   $action backup_prod "$dst_db" ;;
+  cust-yes)   $action backup_cust "$dst_db" ;;
+  tickit-yes) fatal "Will not back up a tickituat instance" ;;
+  # prod-no)    fatal "EEEEK! You must back up production!" ;;
+esac
+
+if [[ -n "$locally" ]]; then
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_db $Eflag $Pflag $Xflag
+    set +x
+else
+    set -x
+    $action ssh -A ubuntu@$src_host $copy_cmd $src_db $dst_host $dst_db $Eflag $Pflag $Xflag
+    set +x
+fi
+

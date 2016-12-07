@@ -1,0 +1,29 @@
+#!/bin/bash
+
+EXPECTED_ARGS=1
+E_BADARGS=65
+
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` INSTANCE"
+  echo "move log files from /tmp director to the instance directory."
+  exit $E_BADARGS
+fi
+
+
+INSTANCE=$1
+
+LOG_PATH=/opt/tickit/cluster/$INSTANCE.sydprod.tod.net.au/shared/migrated_logs
+sudo mkdir $LOG_PATH
+sudo mv /tmp/production.log $LOG_PATH 
+rc=$?
+if [[ $rc != 0 ]] ; then
+  echo "Unable to move log files"
+  exit $rc 
+fi
+sudo chown -R deploy.deploy $LOG_PATH
+
+echo "all Log files for $INSTANCE in `hostname` restored."
+
+exit 0
+

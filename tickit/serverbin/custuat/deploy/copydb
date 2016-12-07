@@ -1,0 +1,38 @@
+#!/bin/bash
+
+
+EXPECTED_ARGS=5
+E_BADARGS=65
+
+if [ $# -ne $EXPECTED_ARGS ]
+then
+  echo "Usage: `basename $0` SRC_DB DEST_DB EMAIL_OFF PASSWORD_RESET SET_EMAILS_TO_EXAMPLE_COM"
+  echo "Copy a database to OVERWRITE another database locally and optionally turn off email reminder and reset admin password and set emails to @example.com."
+  exit $E_BADARGS
+fi
+
+SRC_DB=$1
+DEST_DB=$2
+EMAIL_OFF=$3
+PASSWORD_RESET=$4
+EXAMPLE_COM=$5
+
+mysqldump $SRC_DB | mysql $DEST_DB
+rcs=(${PIPESTATUS[*]})
+rc_dump=${rcs[0]}
+rc_mysql=${rcs[1]}
+if [[ $rc_dump != 0 ]]; then
+  echo "Unable to do mysqldump for $SRC_DB."
+  exit $rc_dump
+fi
+if [[ $rc_mysql != 0 ]]; then
+  echo "Unable to do mysql for $DEST_DB."
+  exit $rc_mysql
+fi
+
+echo "Database $SRC_DB copied to $DEST_DB."
+
+~/bin/config_instance $DEST_DB $EMAIL_OFF $PASSWORD_RESET $EXAMPLE_COM
+
+exit 0
+
