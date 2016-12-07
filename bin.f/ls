@@ -12,5 +12,5 @@ lm() { l "$@" | less;    }
 L()  { l -d "$@";        }
 LM() { L "$@" | less;    }
 
-li() { { l 2>&- "$@" *.@(rb|sh|ksh|py|pl|pm|html|rhtml|erb|css|js|rcss|scss|haml|c|h|cpp|hpp|b4cpp) || echo No interesting files.; } | less; }
+li() { { l 2>&- "$@" *.@(rb|sh|ksh|icn|a68|amm|py|pl|pm|html|rhtml|erb|css|js|rcss|scss|haml|c|h|cpp|hpp|b4cpp) || echo No interesting files.; } | less; }
 
