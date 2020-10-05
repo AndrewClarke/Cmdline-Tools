@@ -1,0 +1,27 @@
+
+function next {
+    typeset name var cmd arg
+
+    [[ $# -lt 1 ]] && {
+	echo >&2 usage: next var
+	return 1
+    }
+
+    name=$1
+    shift
+
+    eval var=FOREACH_$name
+    cmd=_FOREACH_$name
+
+    if eval [[ \${#$var\[\*\]} -eq 0 ]]; then
+	echo >&2 "foreach ${var#FOREACH_} is exhausted (let me sleep)"
+    else
+	eval arg=\"\$$var\"
+
+	eval set -- \${$var\[\@\]}
+	shift
+	eval set -A $var \"\$\@\"
+
+	$cmd "$arg"
+    fi
+}   # next

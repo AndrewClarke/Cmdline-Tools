@@ -1,0 +1,31 @@
+
+function GetModules {
+    typeset i sep
+
+    if [[ -n "$modules" ]]; then
+        for i in in $modules; do
+            unset $i
+        done
+        unset modules
+    fi
+
+    if [[ "X$1" != X-d ]]; then
+        modules= sep=
+        for i in $1/*.4gm/; do
+            [[ -d $i ]] || continue
+            i=${i%.4gm/}
+            i=${i##*/}
+
+            modules="$modules$sep$i"
+            sep=" "
+	    eval export $i=$1/$i.4gm
+        done
+        export modules
+
+        ## export modules="$(unalias cd; cd $1 && /bin/ls -d *.4gm 2>&- | tr ' ' '\012' | cut -d. -f1)"
+        ## for i in junk $modules; do
+	    ## [[ -d "$1/$i.4gm" ]] && eval export $i=$1/$i.4gm
+        ## done
+    fi
+
+}   # GetModules

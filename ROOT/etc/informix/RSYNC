@@ -1,0 +1,3 @@
+:
+
+rsync -av --rsh=ssh "$@" --exclude cm.log /etc/informix/ drive:/etc/informix

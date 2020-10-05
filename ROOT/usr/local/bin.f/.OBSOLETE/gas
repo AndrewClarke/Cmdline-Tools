@@ -1,0 +1,82 @@
+
+function gas {
+    typeset ch all list base chat=echo now target
+
+    while getopts :alq ch; do
+	case "$ch" in
+	  a) all=1 ;;
+	  l) list=1 ;;
+	  q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-aq] [version]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    # determine base of all gas installs
+    base=${FGLASDIR%%/@(gas|gwc)-*}
+
+    # fake an all-powerful pattern if -a given
+    [[ -n "$all$list" ]] && set -- ''
+
+    if [[ $# -eq 0 ]]; then
+	chat=echo
+    else
+	if [[ -n "$all" ]]
+	  then set -- $base/@(gas|gwc)-*
+	  else set -- $base/@(gas|gwc)-$1*
+	fi
+
+
+
+
+
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    typeset n mark
+	    typeset -R2 i=0
+	    for n; do
+		mark=; [[ $n = $FGLASDIR ]] && mark=' *'
+		let $((++i))
+		if [[ -n "$list" ]]
+		  then print -n "  "
+		  else print -n "$i) "
+		fi
+		print "$n$mark"
+	    done
+
+	    [[ -n "$list" ]] && return 0
+	    read n?'Select FGLASDIR: ' || echo
+	    [[ -z "$n" ]] && return 0
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which FGLASDIR? $*"
+	    return 1
+	fi
+
+	target="$1"
+	if [[ ! -d "$target" ]]; then
+	    echo >&2 "FGLASDIR $target does not exist"
+	    return 1
+	fi
+
+	[[ "$FGLASDIR" = "$target" ]] && return 0
+
+	varSubs PATH $FGLASDIR "$target"
+	varSubs FGLDBPATH $FGLASDIR "$target"
+	varSubs FGLPROFILE $FGLASDIR "$target"
+	varSubs LD_LIBRARY_PATH $FGLASDIR "$target"
+
+	export FGLASDIR="$target"
+	ACODE=${FGLASDIR##$base/@(gas|gwc)-}
+	export ACODE FGLASDIR PATH LD_LIBRARY_PATH FGLDBPATH
+	now=now
+    fi
+
+    $chat Current FGLASDIR is $now $FGLASDIR
+
+    return 0
+
+}   # gas
+

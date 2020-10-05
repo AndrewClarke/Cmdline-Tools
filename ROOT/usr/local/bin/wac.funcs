@@ -1,0 +1,128 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+no warnings 'uninitialized';
+
+use FindBin;
+use Getopt::Long qw(:config bundling no_auto_abbrev no_permute no_ignore_case);
+use Pod::Usage;
+
+my %Options;
+GetOptions(\%Options, qw(help|? man r s)) or pod2usage(2);
+defined $Options{help} and pod2usage(1);
+defined $Options{man} and pod2usage(-exitval => 0, -verbose => 2);
+
+sub usage {
+    die "usage: $FindBin::Script [ -s ] [ -r ] [ file ... ]\n";
+}   # usage
+
+
+my $detail = $Options{s} ? "" : "\n";
+my $report = $Options{r} ? "\t" : "";
+
+my $inflag = 0;
+my $ofname = "";
+
+my $prev;
+sub emit {
+    local $_ = shift;
+    s/\s+$//; 
+    print "$_\n" if $_ or $_ ne $prev;
+    $prev = $_;
+}
+
+
+while(<>) {
+    chomp;
+
+    if($ofname ne $ARGV) {
+	$ofname = $ARGV;
+	if($report) {
+	    print "$ARGV:\n";
+	}
+	else {
+	    print "::::::::::::::::\n";
+	    print "::: $ARGV\n";
+	    print "::::::::::::::::\n";
+	}
+	$prev = "";
+    }
+
+    if($detail && $inflag && s/^(#+)/' ' x length $1/e) {
+	## s/#/ /g;
+	emit "$report$_";
+    }
+    else {
+	$inflag = 0;
+    }
+
+    if(s/^function\s+//) {
+	$inflag = 1;
+	my $d = $detail;
+	for(;;) {
+	    s/\s*#.*//;
+	    emit "$d$report$_";
+	    $d = '';
+	    last if eof() || /\)/;
+	    $_ = <>;
+	    chomp;
+	}
+    }
+}
+
+__END__
+
+=head1 NAME
+
+wac.funcs - dump commentary attached to function definitions in 4GL
+
+=head1 SYNOPSIS
+
+wac.funcs [-s | -r] [file.4gl ...]
+
+ Options (short or long):
+   -?  --help    brief help message
+       --man     full documentation
+   -r            print with more restricted headers
+   -s            print summaries only
+
+=head1 OPTION DESCRIPTIONS
+
+=over 8
+
+=item B<-?> or B<--help>
+
+Print a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=item B<-r>
+
+Normally prints with a baroque header enveloping the file and function names.
+This option simplifies the headings.
+
+=item B<-s>
+
+Print summary consisting of function name and arguments only.
+
+=head1 DESCRIPTION
+
+B<wac.funcs> helps you do get doco from the WacGen libraries and other source code.
+Note that the commentary around the functions must be in a predictable format.
+See the WacGen libraries for examples.
+
+=head1 EXIT VALUES
+
+=over 4
+
+B<0>  success
+
+B<1>  error event
+
+=back
+
+=cut
+

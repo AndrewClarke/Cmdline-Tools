@@ -1,0 +1,60 @@
+#!/bin/ksh
+# Copyright (C) 1992-1998 Sanderson Wacher Pty. Limited
+# Sccsid: %Z% %M%%Y% %Q%%I% %E%
+
+unset force type
+while :; do
+    if [[ "X$1" = X-f ]]; then
+	force=1
+	shift
+    elif [[ "X$1" = X-bdl ]]; then
+	key1='SC0#P0ZXG4EL F'
+	key2='MF9A4I87KGEJ 2'
+	type=bdl
+	shift
+    elif [[ "X$1" = X-gen* ]]; then
+	key1='TAB#AAG0002M'
+	key2='3QV0UCEJA4BB'
+	type=genero
+	shift
+    else
+        break
+    fi
+done
+
+if [[ -z "$type" ]]; then
+    echo >&2 'Which type?'
+    exit 1
+fi
+
+if [[ -n "$1" ]]; then
+    fourjays -q $1
+    ## export FGLDIR=/opt/fgl-$1
+    ## export FGLDIR
+    ## export PATH=$FGLDIR/bin:$PATH
+fi
+
+cd $FGLDIR || exit 1
+
+
+
+function enlicence {
+    rm -f etc/f4gl.sn etc/info.lic
+
+    fglWrt -l <<++
+
+$key1
+$key2
+N
+
+
+++
+}   # enlicence
+
+
+if [[ -n "$force" ]] ||
+   [[ ! -r etc/f4gl.sn || ! -r etc/info.lic ]] ||
+   find . -name 'info.lic' -ctime +0 | read line
+then
+    enlicence
+fi

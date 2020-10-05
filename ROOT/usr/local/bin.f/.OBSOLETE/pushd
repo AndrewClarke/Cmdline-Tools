@@ -1,0 +1,5 @@
+
+function pushd {
+    set -A CDSTACK "$PWD" "${CDSTACK[@]}"
+    cwd "$@"
+}   # pushd

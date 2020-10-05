@@ -1,0 +1,46 @@
+
+
+function auloc {
+    typeset ch clear chat=echo now target
+
+    while getopts :cq ch; do
+        case "$ch" in
+	  c) clear=1 ;;
+	  q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-cq] [version]
+-c clears the forced locale"
+             return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    if [[ -n "$clear" ]]; then
+        unset __AUTH_LOCALE__
+        now=' now'
+    elif [[ $# -eq 0 ]]; then
+        chat=echo
+    else
+        typeset -u x="$1"
+        export __AUTH_LOCALE__="$x"
+        now=' now'
+    fi
+
+    if [[ -n "$now" ]]; then
+        # changes were made
+        typeset fjr="$APPL/FourJs/resources"
+        if [[ -z "$__AUTH_LOCALE__" ]]; then
+            DBPATH="${DBPATH//$fjr?(\/*)*(:$fjr?(\/*))/$fjr}"
+        else
+            typeset -l lc="$__AUTH_LOCALE__"
+            DBPATH="${DBPATH//$fjr?(\/*)*(:$fjr?(\/*))/$fjr/$lc:$fjr}"
+        fi
+    fi
+
+    $chat Authority locale is $now "${__AUTH_LOCALE__:-set by the database}"
+    $chat DBPATH is now
+    [[ "$chat" != : ]] && { path -p DBPATH | sed 's/^/  /'; }
+
+    return 0
+
+}   # auloc
+

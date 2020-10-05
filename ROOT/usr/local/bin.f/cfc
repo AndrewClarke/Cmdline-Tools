@@ -1,0 +1,27 @@
+
+cfc() {
+    export CFC=/H/Documents/Datasync/CFC
+    export ARTLOCAL=$CFC/Artemis/ACLARKE
+
+    export DBDATE=DMY4
+    export DBCENTURY=C
+    ##port CLIENT_LOCALE=EN_US.CP1252
+    ##port DB_LOCALE=EN_US.8859-1
+    ##port SERVER_LOCALE=EN_US.CP1252
+    ##port DBLANG=EN_US.CP1252
+
+    export FGLSOURCEPATH=$ARTLOCAL/Code:$CFC
+    export FGLRESOURCEPATH=$ARTLOCAL/Code:$CFC:$FGLDIR/lib
+    export FGLLDPATH=$ARTLOCAL/Code:$CFC
+    export FGLIMAGEPATH=$ARTLOCAL/Pics
+    export FGLPROFILE=$CFC/fglprofile
+    export FGLDBPATH=$CFC/Artemis
+
+    export PATH="$CFC/Adminscripts:$PATH"
+
+
+    gui localhost
+    export USERNAME=aclarke
+    export LOGNAME=peter
+}
+

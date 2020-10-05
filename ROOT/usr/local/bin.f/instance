@@ -1,0 +1,115 @@
+
+function instance {
+    typeset ch all base chat now type thetype target onconfig AVAIL
+    typeset n mark i=0
+
+    # if you supply a .ext style arg, it is assumed to be an extension to an
+    # onconfig file. This will set $ONCONFIG and $INFORMIXSERVER.
+    # if -s option is given, then attempt is made to find a shared memory
+    # connection (default), -p for pipe, -n network connection is sought out.
+    # Multiple possible net connections are not distinguished
+
+    chat=echo
+    while getopts :aqcmnstx ch; do
+	case "$ch" in
+	  q) chat=: ;;
+	  a) all=1  ;;    # select from all available .ext
+	  [cmnstx])
+	    type=$ch
+	    case "$ch" in
+	      c) thetype=imc ;;
+	      m) thetype=shm ;;
+	      n) thetype=nmp ;;
+	      s) thetype=str ;;
+	      t) thetype=tcp ;;
+	      x) thetype=spx ;;
+	    esac
+	    ;;
+	  ?) echo >&2 "usage: $0 [-aq] [-cmnstx] [.config]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    [[ -n "$all" ]] && set -- '.*'
+
+    # determine base of all informix installs
+    base=${INFORMIXDIR%%/informix-*}
+
+    if [[ -z "$type$1" ]]; then
+	chat=echo
+    fi
+
+    if [[ -n "$1" ]]; then
+        # track down the config file and set $INFORMIX* and ONCONFIG
+	set -- $base/informix-*/etc/onconfig$1
+
+	# eliminate all .std from available list
+	set -A AVAIL
+	for n; do
+	    [[ $n != *.std ]] && set -A AVAIL "${AVAIL[@]}" $n
+	done
+	set -- "${AVAIL[@]}"
+	if [[ "${#AVAIL[@]}" -eq 0 ]]; then
+	    echo >&2 "cannot use ONCONFIG=onconfig.std"
+	    return 1
+	fi
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    for n; do
+		mark=; [[ $n = $ONCONFIG ]] && mark=' *'
+	        print "$((++i))) ${n##*/}$mark"
+	    done
+	    read n?'Select ONCONFIG: ' || echo
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 -n "which ONCONFIG? "
+	    for n; do echo >&2 -n " ${n##*/}"; done
+	    echo >&2
+	    return 1
+	fi
+
+	onconfig="$1"
+	if [[ ! -f "$onconfig" ]]; then
+	    echo >&2 "ONCONFIG ${onconfig##*/} does not exist"
+	    return 1
+	fi
+	ONCONFIG=${onconfig##*/}
+
+	# check if $INFORMIXDIR needs to change
+	target="$1"
+	target=${target%%/etc/*}
+	[[ "$INFORMIXDIR" != "$target" ]] && informix ${target##$base/informix-}
+    fi
+
+    if [[ -n "$type$1" ]]; then
+	# extract INFORMIXSERVER from config file
+	eval $(perl -ne '
+	    if($i == 0) {
+		push @server, split(/\s*,\s*/, $2) if /^\s*(DBSERVERNAME|DBSERVERALIASES)\s+(\w+(\s*,\s*\w+)*)/
+	    }
+	    elsif(($srv, $typ) = /^\s*(\w+)\s+(?:on|ol|dr)\w\w\w(\w+)/) {
+		$_ eq $srv and $server{$typ} = $srv foreach @server
+	    }
+
+	    ++$i if eof;
+	    END {
+		foreach (qw('"$thetype"' shm tcp str nmp imc spx)) {
+		    if(exists $server{$_}) {
+			print "export INFORMIXSERVER=$server{$_};\n";
+			if('"$thetype"' ne $_) {
+			    print "echo >\&2 \"warning: INFORMIXSERVER type '"$thetype"' not found, using $_\"\n"
+			}
+			last;
+		    }
+		}
+	    }
+	' $IDIR/etc/$ONCONFIG $INFORMIXSQLHOSTS)
+    fi
+
+    $chat Current instance is ${INFORMIXSERVER-not assigned} $ONCONFIG
+
+    return 0
+
+}   # instance

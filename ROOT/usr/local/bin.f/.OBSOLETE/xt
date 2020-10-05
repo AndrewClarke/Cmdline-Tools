@@ -1,0 +1,13 @@
+#!/bin/ksh
+
+xt() {
+    typeset hold
+
+    case "X$1" in
+      -h|--hold|-hold) hold="-hold"; shift;;
+    esac
+
+    set +o monitor
+    ( ( exec xterm $hold -e "$@" ) & )
+}   # xt
+

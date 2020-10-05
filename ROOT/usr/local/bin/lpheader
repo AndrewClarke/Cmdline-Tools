@@ -1,0 +1,20 @@
+#!/usr/bin/perl
+
+use Getopt::Std;
+
+getopts 'f';
+
+if($opt_f) {
+     exit 0 unless $_ = <STDIN>;
+}
+
+print "****************\n";
+print "* @ARGV\n";
+print "****************\n";
+
+if($opt_f) {
+    print $_;
+    print while <STDIN>;
+}
+
+exit 0;

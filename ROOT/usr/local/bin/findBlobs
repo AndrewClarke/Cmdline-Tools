@@ -1,0 +1,23 @@
+#!/usr/bin/perl
+
+# scan a schema file, looking for tables with blob columns
+
+while(<>) {
+    if($x = /^create table "\w+".(\w+)/ .. /;/) {
+        if($x == 1) {
+            $tabname = $1;
+            @lines = ();
+            $printim = 0;
+        }
+        elsif(/\b(blob|text|byte)\b/) {
+            $printim = 1;
+        }
+
+        push @lines, $_;
+
+        if($x =~ /E/ && $printim) {
+            print "@lines\n";
+        }
+    }
+}
+

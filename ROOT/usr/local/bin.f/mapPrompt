@@ -1,0 +1,19 @@
+
+function mapPrompt {
+    # give a quoted list of variables, for which an attempt is made
+    # to match the leading part of the CWD. First match wins...
+    typeset i j
+
+    unset CWD_FRAG
+    for i in $modules $releases_patterns '$fg' '$HOME' $usrhom; do
+	[[ -n "$i" ]] || continue
+	eval j="$i"
+	if [[ "$CWD" = "$j"?(/*) ]]; then
+	    CWD_FRAG="$i"
+	    CWD="${CWD#$j}"
+	    return 0
+	fi
+    done
+
+    return 1
+}   # mapPrompt

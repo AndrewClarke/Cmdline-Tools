@@ -1,0 +1,203 @@
+#!/bin/ksh
+# Copyright (C) 1992-2003 Civica Pty. Limited
+# Sccsid: %Z% %M%%Y% %Q%%I% %E%
+# @(#) $Id$ Civica
+
+myname=${0##*/}     # a useful identifying variable
+
+
+set -a
+## : ${wacgen?:}
+## : ${wactooldir:=$wacgen/tools}
+SHELL=/bin/ksh
+set +a
+
+fname=/etc/wacgen/Copyright
+if [[ ! -r $fname ]]; then
+    echo >&2 Cannot find /etc/wacgen/Copyright header file
+    exit 1
+fi
+
+hash='#' hash2='#' hash_sed='#'
+long='####################################################################'
+
+function usage {
+    echo >&2 "usage: one day ....."
+    exit 1
+}
+
+function line {
+    typeset line
+    if read line; then
+	echo "$line"
+	return 0
+    fi
+
+    echo
+    return 1
+}
+
+unset lflag fflag cflag tflag Cflag which
+while getopts :abBckCjprslt ch; do
+    case "$ch" in
+      a)  which=awk  lflag=$(whence awk) fflag=' -f';;
+      B)  which=bash lflag=$(whence bash);;
+      b)  which=sh   lflag=$(whence sh);;
+      k)  which=ksh  lflag=$(whence ksh);;
+      l)  which=perl lflag=$(whence perl);;
+      r)  which=ruby lflag=$(whence ruby);;
+      s)  which=sed  lflag=$(whence sed) fflag=' -f';;
+      j)  which=js;;
+
+      C)  Cflag=1;;
+      c)  cflag=1;;
+      p)  pflag=1;;
+      t)  tflag=1;;
+      ?)  usage;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+# detect extensions from passed fname to determine types
+[[ "$1" = *.dsp  ]] && pflag=1
+[[ "$1" = *.sql  ]] && pflag=1
+
+[[ "$1" = *.awk  ]] && which=awk    lflag=$(whence awk)  fflag=' -f'
+[[ "$1" = *.bash ]] && which=bash   lflag=$(whence bash)
+[[ "$1" = *.sh   ]] && which=sh     lflag=$(whence sh)
+[[ "$1" = *.ksh  ]] && which=ksh    lflag=$(whence ksh)
+[[ "$1" = *.pl   ]] && which=perl   lflag=$(whence perl)
+[[ "$1" = *.pm   ]] && which=perl   lflag=$(whence perl)
+[[ "$1" = *.rb   ]] && which=ruby   lflag=$(whence ruby)
+[[ "$1" = *.sed  ]] && which=sed    lflag=$(whence sed)  fflag=' -f'
+[[ "$1" = *.js   ]] && which=js
+
+case "$which" in
+  js)
+    hash='//'
+    hash2=''
+    hash_sed='\/\/'
+    long="${long//#//}"
+    ;;
+esac
+
+NSF=
+version=
+brace=0
+
+if [[ -n "$tflag" ]]; then
+    # capture source lines
+    set --
+
+    if [[ -z "$lflag" ]]; then
+	while buf="$(line)"; do
+	    [[ $brace = 0 && "$buf" = *{* ]] && brace=1
+	    [[ $brace = 1 && "$buf" = *}* ]] && brace=0
+
+	    tick=
+	    [[ "$buf" = *non_source_form* ]] && tick=1 NSF=non_source_form
+
+	    if [[ "$buf" = *'Screen Generator version: '* ]]; then
+		buf="${buf#*: }"
+		version="${buf% *}"
+		tick=1
+	    fi
+
+	    if [[ -z "$tick" ]]; then
+		set -- "$@" "$buf"
+		[[ "$buf" = @(screen|SCREEN)* ]] && break
+	    fi
+	done
+    fi
+
+    # collect stray lines
+    while buf="$(line)"; do
+	set -- "$@" "$buf"
+    done
+fi
+
+if [[ -n "$tflag" ]]; then
+    [[ -n "$lflag" ]] && echo "#!$lflag$fflag"
+
+    # put out the first line of a header
+    if [[ -n "$pflag" ]]
+      then echo "\{$long$hash2"
+      else echo "$hash$long$hash2"
+    fi
+
+    # put out the Copyright header with leading '# '
+    /bin/sed 's/^/'"$hash_sed"' /'
+
+    echo "$long$hash$hash2"
+    [[ -n "$NSF" ]] && echo "$hash $NSF"
+
+    if [[ -n "$pflag" ]]; then
+	[[ -n "$version" ]] && echo "Screen Generator version: $version"
+	[[ $brace = 0 ]] && echo "}"
+    fi
+
+    # skip over input lines that are comments.
+    # TODO: cope with JavaScript comments
+    while [[ "$1" = *([	 ])@([\{#\}])* ]]; do
+	shift
+    done
+
+    # also skip blank lines
+    while [[ $# -gt 0 && "$1" = *([\ \	]) ]]; do
+	shift
+    done
+
+    if [[ $# -gt 0 ]]; then
+	echo	# spit out a separator
+	# followed by the remaining non-comment lines.
+	while [[ $# -gt 0 ]]; do
+	    print -R "$1"
+	    shift
+	done
+    fi
+elif [[ -n "$lflag" ]]; then
+    echo "#!$lflag$fflag"
+    /bin/sed -n '
+	/Sccsid:/s/^/'"$hash_sed"' /p
+	/$Id\$/s/^/'"$hash_sed"' /p
+	/Copyright/s/^/'"$hash_sed"' /p
+    '
+
+    if [[ -n "$tflag" ]]; then
+	while [[ $# -gt 0 ]]; do
+	    print -R "$1"
+	    shift
+	done
+    fi
+
+    case "$which" in
+      ksh)
+	echo 'myname=${0##*/}		# a useful identifying variable'
+	echo 'mydir=${0%$myname}	# where this script is'
+	;;
+
+      perl)
+	echo '($mydir = "$0") =~ s:[^/]*$::;	# where this script is'
+	echo '$0 =~ s:.*/::;			# tidy up the program name'
+	;;
+    esac
+elif [[ -n "$pflag" ]]; then
+    echo "{$long$hash2"
+    /bin/sed 's/^/'"$hash_sed"' /'
+    echo "$long$hash2}"
+elif [[ -n "$Cflag" ]]; then
+    echo '/*'
+    /bin/sed 's/^/ * /'
+    echo ' */'
+else
+    echo "$hash$long$hash2"
+    /bin/sed 's/^/'"$hash_sed"' /'
+    echo "$hash$long$hash2"
+fi < $fname
+
+if [[ -n "$cflag" ]]; then
+    echo
+    cat
+fi
+

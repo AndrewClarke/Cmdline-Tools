@@ -1,0 +1,21 @@
+
+function wm {
+    typeset f result
+    wac.make "$@"
+    result=$?
+
+    if [[ -z "$_WAC_ERR" ]]; then
+	ls 2>/dev/null *.err
+    else
+	for f in *.err; do
+	    case "$f" in
+	      \*.err) : ;;
+	      wacpp.err) : ;;
+	      *) vi "+/^|/" $f ;;
+	    esac
+	done
+    fi
+
+    return $result
+}
+

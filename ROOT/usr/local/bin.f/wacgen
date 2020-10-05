@@ -1,0 +1,91 @@
+
+function wacgen {
+    typeset ch all list base chat=echo now target
+
+    while getopts :alq ch; do
+        case "$ch" in
+          a) all=1 ;;
+          l) list=1 ;;
+          q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-alq] [version]"; return 1 ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    # determine base of all wacgen installs
+    base=${wacgen%%/tools-*}
+
+    # fake an all-powerful pattern if -a given
+    [[ -n "$all$list" ]] && set -- ''
+
+    if [[ $# -eq 0 ]]; then
+        chat=echo
+    else
+	if [[ -n "$all$list" ]]
+	  then set -- $base/tools-*
+	  else set -- $base/tools-$1*
+	fi
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    typeset n mark
+	    typeset -R2 i=0
+	    for n; do
+		mark=; [[ $n = $wacgen ]] && mark=' *'
+                let $((++i))
+		if [[ -n "$list" ]]
+		  then print -n "  "
+		  else print -n "$i) "
+		fi
+	        print "$n$mark"
+	    done
+
+	    [[ -n "$list" ]] && return 0
+	    read n?'Select wacgen: ' || echo
+	    [[ -z "$n" ]] && return 0
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which wacgen? $*"
+	    return 1
+	fi
+
+	target="$1"
+	if [[ ! -d "$target" ]]; then
+	    echo >&2 "wacgen $target does not exist"
+	    return 1
+	fi
+
+	[[ "$wacgen" = "$target" ]] && return 0
+
+	# the paths of wacgen and wacgenlib can unfortunately overlap
+	# so wacgenlib values must be protected!
+	typeset crap=blahblahblahblahblah
+
+	varSubs PATH $wacgenlib $crap
+	varSubs IPATH $wacgenlib $crap
+	varSubs CDPATH $wacgenlib $crap
+	varSubs FGLDBPATH $wacgenlib $crap
+
+	varSubs PATH $wacgen $target
+	varSubs IPATH $wacgen $target
+	varSubs CDPATH $wacgen $target
+	varSubs FGLDBPATH $wacgen $target
+
+	varSubs PATH $crap $wacgenlib
+	varSubs IPATH $crap $wacgenlib
+	varSubs CDPATH $crap $wacgenlib
+	varSubs FGLDBPATH $crap $wacgenlib
+
+	export wacgen=$target
+	export PATH IPATH CDPATH FGLDBPATH
+	now=now
+    fi
+
+    ch=$(ls -dl $wacgen | sed 's/->/=>/')
+    $chat Current wacgen is $now $wacgen ${ch##*$wacgen}
+
+    return 0
+
+}   # wacgen
+

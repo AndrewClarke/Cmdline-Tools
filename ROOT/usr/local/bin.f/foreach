@@ -1,0 +1,16 @@
+
+function foreach {
+    typeset var cmd
+
+    [[ $# -le 3 ]] && {
+	echo >&2 usage: foreach var cmd arg...
+	return 1
+    }
+
+    var="$1"
+    cmd="$2"
+    shift 2
+
+    eval set -A FOREACH_$var "$@"
+    eval function _FOREACH_$var \{ $cmd \; \}
+}   # foreach

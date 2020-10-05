@@ -1,0 +1,6 @@
+
+function vidd {
+    for i in "$@"; do
+        vi -d "$i" ~-/"$i" || break
+    done
+}   # vidd

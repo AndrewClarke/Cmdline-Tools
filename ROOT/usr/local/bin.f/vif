@@ -1,0 +1,4 @@
+
+function vif {
+    vi "+/$1" $(grep -ils "$1" *.org *.src *.trg *.ext)
+}   # vif

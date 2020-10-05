@@ -1,0 +1,5 @@
+
+ast() {
+    cd /opt/ast
+    exec bin/package use
+}

@@ -1,0 +1,4 @@
+
+function vit {
+    vi -t "$1"
+}   # vit

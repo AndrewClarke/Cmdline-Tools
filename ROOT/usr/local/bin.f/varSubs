@@ -1,0 +1,46 @@
+
+function varSubs {
+    typeset var value old new l r n x
+
+    var=$1
+    old="$2"
+    new="$3"
+    x=xxxxxxxxxx
+
+    [[ -z "$var$old" || "$old" = "$new" ]] && return
+
+    eval value=\"\$$var\"
+
+    # if one string is a substring of the other, then loops become infinite...
+    # so i'm temporarily doing it the hard way before I do it the smart way
+    #
+
+    let n=0
+    while [[ "$value" = *$old* ]]; do
+	let n=$n+1
+	if [[ $n -ge 20 ]]; then
+	    echo >&2 varSubs: too many attempts on $var
+	    break
+	fi
+
+	l=${value%%$old*}
+	r=${value#*$old}
+	value="$l$x$r"
+    done
+    eval $var=\""$value"\"
+
+    let n=0
+    while [[ "$value" = *$x* ]]; do
+	let n=$n+1
+	if [[ $n -ge 20 ]]; then
+	    echo >&2 varSubs: too many attempts on $var
+	    break
+	fi
+
+	l=${value%%$x*}
+	r=${value#*$x}
+	value="$l$new$r"
+    done
+    eval $var=\""$value"\"
+
+}   # varSubs

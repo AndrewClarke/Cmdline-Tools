@@ -1,0 +1,4 @@
+
+function vid {
+    vi -d "$@"
+}   # vid

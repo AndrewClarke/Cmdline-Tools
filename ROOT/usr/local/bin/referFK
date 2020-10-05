@@ -1,0 +1,15 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+TABNAME="${2:?Pass tabname as the 2nd parameter}"
+
+runSql -q "$DBNAME" <<SQL
+    select st1.tabname[1,30] table, st2.tabname[1,30] references
+      from systables st1, sysreferences sr, sysconstraints sc, systables st2
+
+     where st1.tabname = "$TABNAME"
+       and sr.ptabid = st1.tabid
+       and sc.constrid = sr.constrid
+       and st2.tabid = sc.tabid
+SQL
+

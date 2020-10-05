@@ -1,0 +1,82 @@
+
+function wacgenlib {
+    typeset ch all list base chat=echo now target
+
+    while getopts :alq ch; do
+        case "$ch" in
+          a) all=1 ;;
+          l) list=1 ;;
+          q) chat=: ;;
+	  *) echo >&2 "usage: $0 [-aq] [version]"; return 1 ;;
+        esac
+    done
+    shift $((OPTIND-1))
+
+    # determine base of all wacgenlib installs
+    base=${wacgenlib%%/lib*}
+
+    # fake an all-powerful pattern if -a given
+    [[ -n "$all$list" ]] && set -- ''
+
+    if [[ $# -eq 0 ]]; then
+        chat=echo
+    else
+	if [[ -n "$all$list" ]]
+	  then set -- $base/lib-*
+	  else set -- $base/lib-$1*
+	fi
+
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    typeset n mark
+	    typeset -R2 i=0
+	    for n; do
+		mark=; [[ $n = $wacgenlib ]] && mark=' *'
+                let $((++i))
+		if [[ -n "$list" ]]
+		  then print -n "  "
+		  else print -n "$i) "
+		fi
+	        print "$n$mark"
+	    done
+
+	    [[ -n "$list" ]] && return 0
+	    read n?'Select wacgenlib: ' || echo
+	    [[ -z "$n" ]] && return 0
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which wacgenlib? $*"
+	    return 1
+	fi
+
+	target="$1"
+	if [[ ! -d "$target" ]]; then
+	    echo >&2 "wacgenlib $target does not exist"
+	    return 1
+	fi
+
+	[[ "$wacgenlib" = "$target" ]] && return 0
+
+	# if $wacgenlib is a SUBSTRING of $wacgen (which would
+	# be incredibly wierd) then we might end up in big trouble
+
+	varSubs DBPATH $wacgenlib $target
+	varSubs DBSRC $wacgenlib $target
+	varSubs FGLDBPATH $wacgenlib $target
+	varSubs CDPATH $wacgenlib $target
+	varSubs FGLSOURCEPATH $wacgenlib $target
+	varSubs FGLLDPATH $wacgenlib $target
+
+	export wacgenlib=$target
+	export DBPATH DBSRC FGLDBPATH CDPATH FGLSOURCEPATH FGLLDPATH
+	now=now
+    fi
+
+    ch=$(ls -dl $wacgenlib)
+    $chat Current wacgenlib is $now $wacgenlib ${ch##*$wacgenlib}
+
+    return 0
+
+}   # wacgenlib
+

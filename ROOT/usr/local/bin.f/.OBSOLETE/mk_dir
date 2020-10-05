@@ -1,0 +1,15 @@
+
+function mk_dir {
+    typeset i
+
+    if [[ "$PWD" = $wasp/*.4gm/*.@(4gs|4gc|crt) ]]; then
+	for i in "$@"; do
+	    if [[ "$i" != .* ]]; then
+		echo >&2 All sub-directories of programs must begin with .
+		return 1
+	    fi
+	done
+    fi
+
+    /bin/mkdir "$@"
+}   # mk_dir

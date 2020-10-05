@@ -1,0 +1,426 @@
+#!/usr/bin/env perl
+# Copyright (C) 1992-2006 Civica Pty. Limited
+# All rights reserved.
+# Use, modification, duplication, and/or distribution of this
+# software is limited by the software license agreement.
+# @(#) $Id:$ Civica
+
+use strict;
+use warnings;
+no warnings qw(uninitialized);
+
+use Getopt::Long qw(:config bundling no_auto_abbrev no_permute no_ignore_case);
+use Pod::Usage;
+use FindBin;
+use DBI;
+
+my $VERSION = 0.1;
+
+
+my %Options;
+GetOptions(\%Options, qw(help|? man a|all l|list d|database=s q|quiet r|repeat=i s|server=s U|user=s)) or pod2usage(2);
+defined $Options{help} and pod2usage(1);
+defined $Options{man} and pod2usage(-exitval => 0, -verbose => 2);
+defined $Options{a} and defined $Options{l} and pod2usage(2);
+defined $Options{a} and $Options{l} = 1;	# for our personal excitement
+defined($Options{l}) != @ARGV >= 1 or pod2usage(2);
+
+my $server = $Options{s} || "";
+my $database = $Options{l} ? "" : $Options{d} || $ENV{DBNAME} || $ENV{company} || "";
+
+if($database =~ s/\@(\w+)//) {
+    pod2usage(-exitval => 1, -verbose => 1, -message => "Do not specify a server in -s and -d") if $server;
+    $server = $1;
+}
+
+my ($dbh, $c_syslocks, $c_database, $c_table);
+my $curSrv = ' un possible ';
+my $errors = 0;
+
+sub connectTo ($) {
+    my $newSrv = shift;
+
+    return if $newSrv eq $curSrv;
+    $curSrv = $newSrv;
+
+    $dbh->disconnect if $dbh;
+    $dbh = undef;
+
+    my $dbname = "sysmaster";
+    $dbname .= '@' . $curSrv if $curSrv;
+
+    unless($dbh = DBI->connect("dbi:Informix:$dbname", "", "", { PrintError => 0, AutoCommit => 0, ChopBlanks => 1 })) {
+	warn "$FindBin::Script: cannot connect to database $dbname:\n  $DBI::errstr\n";
+	++$errors;
+	return;
+    }
+
+    $dbh->do("set isolation to dirty read");
+
+    my ($and, $order);
+    if($Options{l}) {
+	$order = "order by 2, 3, 1";
+	if(length $database) {
+	    $and = "and x0.dbsname = ?";
+	}
+
+	unless($Options{a}) {
+	    $and .= " and x0.dbsname != 'sysmaster' and x0.tabname not matches 'sys*'";
+	}
+    }
+    else {
+	$and = "and x0.dbsname = ? and x0.tabname = ?";
+	# probable optimisation: no order clause if only asking about one row (sysmaster is famous for slow sorting)
+	$order = "order by 1";
+    }
+
+    $c_syslocks = prepare $dbh <<SELECT;
+select unique x0.owner, x0.dbsname, x0.tabname, x0.type,
+    x1.pid, x1.sid, x1.state, x1.tty, x1.hostname, x1.uid, x1.username
+  from syslocks x0, outer syssessions x1
+ where x1.sid = x0.owner $and $order
+SELECT
+
+    $c_database = prepare $dbh "select 1 from sysdatabases where name = ?";
+    $c_table = prepare $dbh "select 1 from systabnames where dbsname = ? and tabname = ?";
+}
+
+
+my ($badSrv, $badDb);
+sub checkDatabase ($$) {
+    my $srv = shift;
+    my $db = shift;
+
+    execute $c_database $db;
+    unless(fetchrow_hashref $c_database) {
+	if($db ne $badDb or $srv ne $badSrv) {	# only print a bad db once
+	    $badDb = $db;
+	    $badSrv = $srv;
+	    warn "no such database $db\n";
+	    ++$errors;
+	}
+	return 0;		# but a bad db is always a failure
+    }
+
+    return 1;			# wooo!
+}
+
+
+sub checkTable ($$) {
+    my $db = shift;
+    my $tab = shift;
+
+    execute $c_table $db, $tab;
+    unless(fetchrow_hashref $c_table) {
+	warn "no such table $tab\n";
+	++$errors;
+	return 0;
+    }
+
+    return 1;
+}
+
+
+my $printed;
+sub printHeader {
+    $printed = 0;
+    if(-x ($_ = "$ENV{INFORMIXDIR}/bin/onstat")) {
+	system "$_ -";
+    }
+    elsif(-x ($_ = "$ENV{INFORMIXDIR}/bin/dbschema")) {
+	$_ = `$_ -V`;
+	s/\s*Software Serial Number.*//;
+	print "\n$_\n";
+    }
+
+    print "Userlocks\n";
+    print "sessid   pid      flags   username     tty/client   lk   table\n";
+}
+
+
+sub printFooter {
+    printf "%4d active\n\n", $printed;
+}
+
+
+sub printLock($$) {
+    my $srv = shift;
+    my $lock = shift;
+
+    my $U = $Options{U};
+    return if $U and ($U =~ /^\d+$/ ? $U != $lock->{uid} : $U ne $lock->{username});
+
+    $lock->{hostname} =~ s/^([^.]*[^\d.][^.]*)\..*/$1/;
+    $lock->{tty} =~ y/A-Z/a-z/ unless $lock->{tty} =~ m:/:;
+    $lock->{tty} =~ s:^/dev/::;
+    $lock->{tty} = $lock->{hostname} unless $lock->{tty};
+    $lock->{tty} = "-" unless $lock->{tty};
+    $lock->{username} = "UNKNOWN" unless $lock->{username};
+    $lock->{pid} = "-" if $lock->{pid} == -1;
+
+    my $ch;
+    my $flags = "-------";
+
+    # The flag codes for position 1:
+    $ch = '?';
+    $ch = 'B' if $lock->{state} & 0x00000008;	# Waiting for a buffer
+    $ch = 'C' if $lock->{state} & 0x00000010;	# Waiting for a checkpoint
+    $ch = 'G' if $lock->{state} & 0x00001000;	# Waiting for write of log buffer
+    $ch = 'L' if $lock->{state} & 0x00000004;	# Waiting for a lock
+    $ch = 'S' if $lock->{state} & 0x00000002;	# Waiting for a latch
+    $ch = 'T' if $lock->{state} & 0x00040000;	# primary thread for session waiting for transaction
+    ## Y	Waiting for condition
+    ## X	Waiting for a transaction cleanup (rollback)
+    ## DEFUNCT The thread has incurred a serious assertion failure, and
+    ## has been suspended to allow other threads to continue their work.
+    substr($flags, 0, 1) = $ch;
+
+    # The flag code for position 2:
+    $ch = '?';
+    ## 3 *	Transaction active during an I/O failure
+    substr($flags, 1, 1) = $ch;
+
+    # The flag code for position 3:
+    $ch = '?';	# many codes unknown source
+    $ch = 'A' if $lock->{state} & 0x00000400;	#  Archiving
+    ## B	Begin work
+    ## P	Distributed query prepared for commit
+    ## X	TP/XA prepared for commit
+    ## C	Committing or committed
+    ## R	Rolling back or rolled back
+    ## H	Heuristically rolling back or rolled back
+    substr($flags, 2, 1) = $ch;
+
+    # The flag code for position 4:
+    $ch = "-";
+    $ch = "P" if $lock->{state} & 0x00080000;	# Primary thread for a session
+    substr($flags, 3, 1) = $ch;
+
+    # The flag codes for position 5:
+    $ch = "-";
+    $ch = "R" if $lock->{state} & 0x00000020;	# In a read call
+    $ch = "X" if $lock->{state} & 0x00000100;	# In a critical section
+    substr($flags, 4, 1) = $ch;
+
+    # The flag codes for position 7:
+    $ch = "-";
+    $ch = "B" if $lock->{state} & 0x00200000;	# B-tree cleaner thread
+    $ch = "C" if $lock->{state} & 0x00000800;	# Clean up dead processes
+    $ch = "D" if $lock->{state} & 0x00000200;	# Special daemon
+    $ch = "F" if $lock->{state} & 0x00002000;	# Special buffer-flushing thread
+    $ch = "M" if $lock->{state} & 0x00000080;	# ON-Monitor (UNIX)
+    substr($flags, 6, 1) = $ch;
+
+    my $tabname = $lock->{dbsname};
+    $tabname .= '@' . $srv if $srv;
+    $tabname .= ':' . $lock->{tabname};
+
+    ## $lock->{type} char(4) Type of lock
+    ## B Byte lock
+    ## IS Intent shared lock
+    ## S Shared lock
+    ## XS Shared key value held by a repeatable reader
+    ## U Update lock
+    ## IX Intent exclusive lock
+    ## SIX Shared intent exclusive lock
+    ## X Exclusive lock
+    ## XR Exclusive key value held by a repeatable reader
+
+    ++$printed;
+    write;
+
+# NOTE: about 60 lines down is a line to print "NONE" - if you edit this format it will need reformatting also
+format STDOUT =
+# sid    pid      flags   username     tty          type tabname
+@<<<<<<< @<<<<<<< @<<<<<< @<<<<<<<<<<< @<<<<<<<<<<< @<<< @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+$lock->{sid}, $lock->{pid}, $flags, $lock->{username}, $lock->{tty}, $lock->{type}, $tabname
+.
+}
+
+
+# -1 will count down indefinitely (almost)
+my $n = $Options{r} ? -1 : 1;
+while($n-- != 0) {
+    printHeader;
+
+    if($Options{l}) {
+	connectTo $server;
+	exit $errors unless $dbh;
+
+	if($database) {
+	    checkDatabase $server, $database or exit $errors;
+	    execute $c_syslocks $database;
+	}
+	else
+	    { execute $c_syslocks }
+
+	while(my $lock = fetchrow_hashref $c_syslocks) {
+	    printLock $server, $lock;
+	}
+    }
+    else {
+	TABLE: foreach my $table (@ARGV) {
+	    my ($db, $srv, $tab) = ($database, $server, $table);
+	    if($tab =~ s/^(?:(\w+)(?:\@(\w+))?:)?//) {
+		$db = $1 if $1;
+		$srv = $2 if $2;
+	    }
+
+	    if(! $db) {
+		warn "No database specified for table $table\n";
+		++$errors;
+		next TABLE;
+	    }
+
+	    connectTo $srv;
+
+	    next unless $dbh;	# can't do much if the connection failed. Maybe next table...
+
+	    # verify that $db exists
+	    checkDatabase $srv, $db or next TABLE;
+
+	    # verify that $tab exists
+	    checkTable $db, $tab or next TABLE;
+
+	    execute $c_syslocks $db, $tab;
+	    my $n = 0;
+	    while(my $lock = fetchrow_hashref $c_syslocks) {
+		++$n;
+		printLock $srv, $lock;
+	    }
+
+	    unless($n || $Options{q}) {
+		my $tabname = $db;
+		$tabname .= '@' . $srv if $srv;
+		$tabname .= ':' . $tab;
+
+		printf "%56s $tabname\n", "NONE";
+	    }
+	}
+    }
+
+    printFooter;
+}
+continue {
+    sleep $Options{r} if $Options{r} > 0;
+}
+
+$dbh->disconnect if $dbh;
+exit $errors;
+
+__END__
+
+=head1 NAME
+
+ifxlocks - find out who has locks on a particular table
+
+=head1 SYNOPSIS
+
+ifxlocks [options] [-a | -l | table ...]
+
+ Options (short or long):
+   -?  --help             brief help message
+       --man              full documentation
+   -q  --quiet            quiet - do not issue messages
+   -r  --repeat N         repeat every N seconds
+   -l  --list             list all locks on tables excluding sysmaster and sys*
+   -a  --all              list all locks on tables including sysmaster and sys*
+   -d  --database dbname  specify the default database
+   -s  --server srvname   default server ($INFORMIXSERVER)
+   -U  --user user        limit report to username or userid
+
+=over 0
+
+=item -l and -a are mutually exclusive
+
+=item Only -a -l or a list of table names is mandatory.
+
+=item dbname may be of the form C<database@server> unless B<-s> is given.
+
+=item The table names may be of the form C<database@server:tablename> where the C<@server> is optional, and the C<database> is optional.
+
+=item If -a is given but no database, all locks on the server are printed.
+
+=back
+
+=head1 OPTION DESCRIPTIONS
+
+=over 8
+
+=item B<-?> or B<--help>
+
+Print a brief help message and exits.
+
+=item B<--man>
+
+Prints the manual page and exits.
+
+=item B<-q> or B<--quiet>
+
+Quiet - do not issue error messages. (NOT IMPLEMENTED)
+
+=item B<-r> or B<--repeat>
+
+Repeat the report every N seconds.
+
+=item B<-d> or B<--database>
+
+Nominate database you are looking into.
+Defaults to the value of C<$DBNAME> if not specified.
+You may write C<database@server> unless the B<-s> option is also used.
+
+=item B<-l> or B<--list>
+
+List all locked tables excepting sysmaster tables and sys* tables.
+Mutually exclusive with the -a flag.
+
+=item B<-a> or B<--all>
+
+List all locked tables including sysmaster tables and sys* tables.
+Mutually exclusive with the -l flag.
+
+=item B<-s> or B<--server>
+
+Nominate server you are looking into.
+Defaults to the value of C<$INFORMIXSERVER> if not specified.
+
+=item B<-U> or B<--user>
+
+Limit report to nominated user. You may give a numerical user ID.
+
+=item B<table>
+
+Nominate the table(s) to be checked for locks.
+
+=back
+
+=head1 DESCRIPTION
+
+B<ifxlocks> will attempt to find out who holds
+locks on the nominated table.
+
+=head1 EXIT VALUES
+
+=over 4
+
+B<0>  success
+
+B<1>  error event
+
+=back
+
+=cut
+
+SysSession:
+    connected	integer		Time that user connected to the database server
+
+
+    state	integer		Flags Hexadecimal Meaning
+	1	0x00000001 User structure in use
+	64	0x00000040 Writing logical-log file to backup tape
+	16384	0x00004000 Remote database server
+	32768	0x00008000 Deadlock timeout used to set RS_timeout
+	65536	0x00010000 Regular lock timeout
+	262144	0x00040000 Waiting for a transaction
+	1048576	0x00100000 Thread for building indexes
+

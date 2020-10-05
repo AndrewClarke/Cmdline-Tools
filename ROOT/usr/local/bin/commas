@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+sub fixup($$) {
+    my ($l, $r) = @_;
+    $l =~ s/ ( \d+)$/$1/;
+    return "$l,$r";
+}
+
+while(<>) {
+    1 while s/(.*\d)(\d\d\d)/fixup $1, $2/e;
+    print;
+}

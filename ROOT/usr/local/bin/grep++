@@ -1,0 +1,635 @@
+#!/usr/bin/perl
+# Copyright (C) 1992-2012 Andrew Clarke
+# Free to a good home.
+$0 =~ s:.*/::;		# tidy up the program name
+
+use 5.8.0;              # should be sufficient
+use strict;
+use warnings;
+no warnings 'uninitialized';
+use re 'eval';
+
+my ($pattern, @patterns, $split, @F);
+my (@prefix, @postfix);
+our ($smso, $rmso);
+my $exit = 1;
+
+# flags: e:f:#BFHLchilnqstvx0:
+our ($contFlag, $ncount, $pcount);
+our ($Iflag, $nflag, $Fflag, $Hflag, $Lflag, $aflag, $cflag, $hflag, $Cflag);
+our ($Aflag, $iflag, $lflag, $qflag, $sflag, $tflag, $vflag, $xflag, $Xflag);
+our ($jflag, $Dflag, $Zflag, $_0flag);
+
+my $isWin = $^O =~ /Win/i;
+my $pathSep = $isWin ? ';' : ':';
+my $dirSep = $isWin ? '\\' : '/';
+
+sub usage {
+    if($_[0] eq -helping)
+        { shift }
+    else
+	{ select STDERR };
+
+    print "$0: @_\n" if @_;
+    print <<MESSAGE;;
+$0 [FLAGS] [[-e] pattern_list] [-f pattern_file] [pattern] [file...]
+
+FLAGS:	-c	count matching lines
+        -l	list files containing a match
+        -q	just test matching status without printing
+        -Z	Apply \$XGREPOPTS as if typed on command line
+        	IF \$XGREPOPTS starts with -Z then it is auto-applied
+        -0ooo	set line terminator to oct(ooo)
+
+        -I file file supplies list of input files: may use - for STDIN
+        -D      treat arguments as \$PATH type lists. Search all files found.
+        -h	don't print file name in front of matching lines
+        -H	print file name even if only one file listed
+        -s	be silent about unreadable or missing files
+        -t	ignore non-text files only (takes a damn good guess)
+
+        -a	AND - all expressions must match (default behaviour is OR)
+        -B	compress blanks and remove leading and trailing blanks
+        -#	delete #comments first (doesn't understand strings (YET))
+        -/      delete // comments first
+        -\\	recognise continuation lines in source and glue together
+        -j expr execute Perl expression to join lines into one masse
+        -{      delete {comments} first (doesn't understand strings (YET))
+        -F	split multiple patterns at newline, and ignore magic chars
+        -i	ignore upper/lower case distinctions
+        -n	print line number of matching lines
+        -N	print line number of matching lines as file[lineno]
+        -v	invert the sense of a match - even behaves properly with -[clq]
+        -x	lines must match exactly - implicit ^pattern\$
+        -X      extract match - print each match on one line (NI)
+        -p expr	execute Perl expression prior to matching
+        -P file	execute Perl expressions in file prior to matching
+        -o expr	execute Perl expression prior to output
+        -O file	execute Perl expressions in file prior to output
+        -S pat  split line to \@F and treat patterns as boolan exprs
+        +<nxt>  print <nxt> lines after matching line
+        -<pre>  print <pre> lines before matchine line
+	-A      annotate context lines from +digits or -digits
+
+        -C[#]	print first N lines matching per file (default 1).
+
+Features marked (NI) are not implemented (or not properly)
+
+Many of the flags (hopefully all the relevant ones) support use of +X to switch
+off the setting. This allows you to override the options in \$XGREPOPTS. Use of
++Z in particular switches off \$XGREPOPTS containing -Z - but you must use it
+as the first option and not bundled.
+
+-E and -b flags of grep and egrep are not supported - grepp goes way beyond -E
+and who cares about -b? Any {comments} are only recognised on one line. To do
+more would require building a smarter state machine into $0. -{ understands
+Wacro ie it knows that \@{something} is not a comment.
+
+If -n or +n is given, the other one is assigned the same value unless you
+explicitly give it a value.
+
+-D uses the platform-specific path separator character to suit your O/S.
+-D makes -I assume all lines from specified file are also \$PATH type values.
+
+-C is new, and:
+  may not work with -v
+  may need to be exclusive with other flags I haven't considered
+  may not work with other flags I haven't considered
+
+-X is new, and:
+  may not work with many flags...
+  should be exclusive with several other flags...
+MESSAGE
+
+        ## -L      highlight matching text (experimental)
+
+    exit 2;
+}   # usage
+
+
+sub Options {
+    my $OPTARG;
+
+    $vflag = 0;
+
+    $_ = $ENV{XGREPOPTS};
+    if($ARGV[0] ne '-Z' && s/^-?Z//) {
+        $Zflag++;
+        foreach (split / /) {
+            s/^/-/ unless /^[-+]/;
+            unshift @ARGV, $_;
+        }
+    }
+
+    while($ARGV[0] =~ /^[-+].*/) {
+        $_ = shift @ARGV;
+        last if $_ eq '--';
+
+        s/^(.)//;
+        my $op = $1;
+        my $val = $op eq '-' ? 1 : 0;
+
+        while($_) {
+            s/^(.)//;
+            my $ch = $1;	# parameter or remaining flags are in $_
+
+            if($val) {	# collect options which REQUIRE leading -
+                if($ch eq 'I') {
+                    $Iflag = $_ || shift @ARGV;
+                    last;
+                }
+
+                if($ch eq '0') {
+                    $_0flag = $_ || shift @ARGV;
+                    last;
+                }
+
+                if($ch eq 'e' || $ch eq 'f') {
+                    $OPTARG = $_ || shift @ARGV;
+
+                    if($ch eq 'e')
+                        { push @patterns, $OPTARG }
+                    else {
+                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+			chomp, push @patterns, $_ while <FFD>;
+                        close FFD;
+                    }
+
+                    last;
+                }
+
+		if($ch eq 'C') {
+		    $Cflag = s/^(\d+)// ? $1 : 1;
+		    last;
+		}
+
+                if($ch eq 'p' || $ch eq 'P' || $ch eq 'j' || $ch eq 'J') {
+                    $OPTARG = $_ || shift @ARGV;
+
+                    if($ch eq 'p')
+                        { push @prefix, $OPTARG }
+                    elsif($ch eq 'j')
+                        { $jflag = $OPTARG }
+                    else {
+                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                        chomp, push @prefix, $_ while <FFD>;
+                        close FFD;
+                    }
+
+                    last;
+                }
+
+                if($ch eq 'o' || $ch eq 'O') {
+                    $OPTARG = $_ || shift @ARGV;
+
+                    if($ch eq 'o')
+                        { push @postfix, $OPTARG }
+                    else {
+                        open FFD, $OPTARG or die "$0: cannot open $OPTARG: $!\n";
+                        chomp, push @postfix, $_ while <FFD>;
+                        close FFD;
+                    }
+
+                    last;
+                }
+
+                if($ch eq 'B') {
+                    push @prefix, 's/^\s+//; s/\s+/ /g; s/\s*$//';
+                    next;
+                }
+
+                if($ch eq 'S') {
+                    $OPTARG = $_ || shift @ARGV;
+
+                    $split = $OPTARG;
+                    last;
+                }
+
+                if($ch eq '#') {
+                    push @prefix, 's/#.*//';
+                    next;
+                }
+
+                if($ch eq '/') {
+                    push @prefix, 's!//.*!!';
+                    next;
+                }
+
+                if($ch eq '{') {
+                    require 5.005;      # {
+                    push @prefix, 's/(?<!@){[^}]*}/ /g';
+                    next;
+                }
+
+                if($ch eq 'Z') {
+                    unless($Zflag++) {  # apply it first time only
+                        # push back any unconsumed options
+                        unshift @ARGV, "-$_" if $_;
+                        if($_ = $ENV{XGREPOPTS}) {
+                            foreach (split / /) {
+                                s/^/-/ unless /^[-+]/;
+                                unshift @ARGV, $_;
+                            }
+                        }
+                    }
+
+                    last;
+                }
+            }
+
+            if($ch =~ /[1-9]/) {
+                $ch .= $1 while s/^(\d)//;
+                ($val ? $pcount : $ncount) = $ch + 0;
+                next;
+            }
+
+            $nflag = $val ? 'n' : '', next if $ch eq 'n';
+            $nflag = $val ? 'N' : '', next if $ch eq 'N';
+
+            $Aflag = $val, next if $ch eq 'A';
+            $Dflag = $val, next if $ch eq 'D';
+            $Fflag = $val, next if $ch eq 'F';
+            $Hflag = $val, next if $ch eq 'H';
+            $Lflag = $val, next if $ch eq 'L';
+            $Xflag = $val, next if $ch eq 'X';
+
+            $aflag = $val, next if $ch eq 'a';
+            $cflag = $val, next if $ch eq 'c';
+            $hflag = $val, next if $ch eq 'h';
+            $iflag = $val, next if $ch eq 'i';
+            $lflag = $val, next if $ch eq 'l';
+            $qflag = $val, next if $ch eq 'q';
+            $sflag = $val, next if $ch eq 's';
+            $tflag = $val, next if $ch eq 't';
+            $vflag = $val, next if $ch eq 'v';
+            $xflag = $val, next if $ch eq 'x';
+
+            $contFlag = $val, next if $ch eq "\\";
+
+	    usage -helping if "$op$ch" eq '-?';
+            usage "unknown flag: $op$ch";
+        }
+    }
+
+    push @patterns, shift @ARGV unless @patterns || ! @ARGV;
+
+    if(defined $pcount or defined $ncount) {
+	$pcount = $ncount unless defined $pcount;
+	$ncount = $pcount unless defined $ncount;
+    }
+    elsif($Aflag) {
+	usage "-A only valid with -digits or +digits";
+    }
+
+    usage "-n and -[clqL] are mutually exclusive"  if $nflag && length "$cflag$lflag$qflag$Lflag";
+    usage "-c and -[ClqL] are mutually exclusive"  if $cflag && length "$Cflag$lflag$qflag$Lflag";
+    usage "-H and -h are mutually exclusive"       if $hflag && $Hflag;
+
+    usage "-L and -S are mutually exclusive (without work)" if $Lflag && $split;
+    usage "-L and -a are mutually exclusive (without work)" if $Lflag && $aflag;
+    usage "-L and -v are mutually exclusive"                if $Lflag && $vflag;
+    usage "-I and list of filenames are mutually exclusive" if $Iflag && @ARGV;
+    usage "patterns expected" unless @patterns;
+
+    if($Lflag) {
+        $smso = `tput smso`;
+        $rmso = `tput rmso`;
+    }
+
+    if($Fflag) {	# like dumb old fgrep
+        # split all patterns at a newline character
+        my @pats = @patterns;
+        @patterns = ();
+
+        foreach my $i (@pats) {
+            foreach (split /\n/, $i) {
+                next unless $_;
+                s/(\W)/\\$1/g;		# escape all magic chars
+                push @patterns, $i;
+            }
+        }
+    }
+
+    if(!$aflag && !$split) {
+        # protect each component pattern from its compatriots (precedence)
+        foreach my $pat (@patterns)
+            { $pat = "(?:$pat)" }
+
+        $pattern = join '|', @patterns;
+        $pattern = "^($pattern)\$" if $xflag;
+    }
+
+    if(defined $_0flag) {
+        $_0flag = $_0flag =~ /^([0-8]+)$/ ? oct($1) : ord($1);
+    }
+
+}   # Options
+
+
+my @blue;       # colour the matched parts if -L
+sub match_a_line() {
+    my ($match, $pat, $elmatcho, $p);
+
+    @blue = ();
+    if($split) {
+        @F = split $split;
+
+        foreach $pat (@patterns) {
+            $match = eval $pat;         # TODO precompile to sub refs
+            $@ and die "$0: bad-expr: $pat\n$@\n";
+            last if $aflag && !$match || !$aflag && $match;
+        }
+    }
+    elsif($aflag) {             # AND all patterns
+        $match = 1;
+
+        foreach $pat (@patterns) {
+            $elmatcho = $iflag ? /$pat/i : /$pat/;
+
+            $match = 0 unless $elmatcho;
+            last unless $match;
+        }
+    }
+    elsif($Lflag) {
+        while($iflag ? /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/gio
+                     : /(?{$p = pos})$pattern(?{push @blue, [$p, pos]})/go) {
+            $match = 1;
+            last unless $Lflag;
+        }
+    }
+    elsif($/ eq '\n') {
+        $match = 1 if $iflag ? /$pattern/gio : /$pattern/go;
+    }
+    else {
+        $match = 1 if $iflag ? /$pattern/gmio : /$pattern/gmo;
+    }
+
+    return $match;
+
+}   # match_a_line
+
+
+sub enque(\@$) {
+    my $aref = shift;
+    local $_ = shift;
+    shift @$aref while @$aref > 0 && @$aref >= $pcount;
+    push @$aref, $_ if $pcount;
+}
+
+
+my $printed;
+my $FD;
+my $lineno;
+
+sub process ($$) {
+    (my $fname, $FD) = @_;
+    my ($nextra, $count, $line) = (0, 0, 0);
+    my ($last, $match, $prefix, $enque, @queue);
+    $lineno = 0;
+
+
+    sub getline {
+        my $x = <$FD>;
+        ## print "*** ", length($x), " $.\n";
+        return undef unless $x;
+        ++$lineno;
+        $_ .= $x;
+        return $_;
+    }
+
+    local $/ = $/;
+    $/ = chr $_0flag if defined $_0flag;
+
+    LINE: while(($_ = ''), getline) {
+	$enque = 1;
+
+	# gather up continuation lines if command flag says to
+        if($contFlag) {
+            while(/\\$/) {
+                getline || last;
+            }
+        }
+        elsif($jflag) {
+            my $ff = 0;
+            while(&$jflag) {
+                $ff = 1;
+                getline || last;
+            }
+        }
+
+        chomp;
+        $line = $_;	# save the unadulterated line. pattern matching may do damage to $_
+
+        foreach my $expr (@prefix) {
+            eval $expr;
+            $@ and die "$0: sick pre-expr: $expr\n$@\n";
+        }
+
+        $match = match_a_line;
+
+	# under -v with (-q or -l) will consider success if NO matches ie $count == 0
+	# filename or exit status will be emitted after the end of the LINE loop
+	#
+        if($vflag && ($qflag || $lflag)) {
+            ++$count if $match;
+	    next LINE;
+	}
+
+	# a quick exit status for a positive match with -q
+	exit 0 if $qflag && $match;
+
+	if($match != $vflag) {
+            $exit = 0 if $exit == 1;		# ultimately success if we get a match and no other errors
+
+	    ++$count;
+	    next LINE if $cflag;
+
+	    if($lflag) {
+		print "$fname\n";
+		last LINE;
+	    }
+	}
+
+	$prefix = '';
+	unless($hflag) {
+	    $prefix .= $fname;
+	    $prefix .= ':' unless $nflag eq 'N';
+	}
+
+	if($nflag) {
+	    $prefix .= '[' if $nflag eq 'N';
+	    $prefix .= $lineno;
+	    $prefix .= ']' if $nflag eq 'N';
+	    $prefix .= ':' if $nflag ne 'N';
+	}
+
+	$prefix .= ' ' unless $hflag;
+
+	if($Aflag && ($pcount || $ncount)) {
+	    $prefix .= $match != $vflag ? '@' : ' ';
+	}
+
+        if($match != $vflag or $nextra > 0) {
+	    $enque = 0;
+            unless($Lflag) {
+                $_ = $line;
+            }
+            else {
+	        # highlighting crap
+                $_ = '';
+                my ($p, $lo, $hi) = 0;
+
+                while(my $n = shift @blue) {
+                    ($lo, $hi) = @$n;
+                    $_ .= substr($line, $p, $lo - $p) . $smso . substr($line, $lo, $hi - $lo) . $rmso;
+                    $p = $hi;
+                }
+
+                $_ .= substr($line, $p);
+            }
+
+            foreach my $expr (@postfix) {
+                eval $expr;
+                $@ and die "$0: sick post-expr: $expr\n$@\n";
+            }
+
+            if($match != $vflag)
+		{ $nextra = $ncount }
+            else
+		{ --$nextra }
+
+	    if($Aflag && (defined($last) || $printed) && @queue && $last + $pcount < $lineno - 1) {
+		my $ch = defined $last ? '-' : '=';
+		print '  ', $ch x 40, "\n";
+	    }
+
+	    foreach $line (@queue) {
+		print "$line$/";
+	    }
+	    @queue = ();
+            print "$prefix$_";
+            print $/ if $/ eq "\n" || ! /^\s*$/;
+	    $last = $lineno;
+	    $printed = 1;
+
+	    last LINE if $Cflag && $count >= $Cflag && $nextra == 0;
+        }
+    }
+    continue {
+	# stash lines that might be needed for -<num> context printing
+	if($enque && ! ($cflag || $qflag || $lflag)) {
+	    enque @queue, "$prefix$line";
+	}
+    }
+
+    print "$fname:$count\n" if $cflag && $count;
+
+    # under -v with (-q or -l) we only consider success if NO matches ie $count == 0
+    if($count == 0 && $vflag && ($qflag || $lflag)) {
+        exit 0 if $qflag;	# not sure if this should be after ALLLLL files
+        print "$fname\n";
+    }
+
+}   # process
+
+
+sub oneFile ($) {
+    my $fname = shift;
+
+    stat $fname;
+
+    unless(-r _) {
+        $exit = 2;
+        warn "$0: cannot access $fname: $!\n" unless $sflag;
+        return;
+    }
+
+    return if $tflag && ! -T $fname;
+
+    if(open FFD, '<', $fname) {
+        process $fname, \*FFD;
+        close \*FFD;
+    }
+    else
+        { warn "$0: cannot open $fname: $!\n" }
+
+}   # oneFile
+
+
+sub oneIndirect ($) {
+    my $name = $_[0];
+
+    if($name eq '-')
+	{ *IFD = *STDIN }
+    else
+	{ open IFD, '<', $name or die "cannot open $name: $!\n" }
+
+    if($Dflag) {
+        my $path;
+        onePath $path while $path = <IFD>;
+    }
+    else {
+        my $file;
+        oneFile $file while $file = <IFD>;
+    }
+}   # oneIndirect
+
+
+my %visited;
+sub onePath ($) {
+    my $path = $_[0];
+
+    PIECE: foreach my $dir (split /:/, $path) {
+        next PIECE if $visited{$dir}++;
+
+        unless(opendir DFD, $dir) {
+            # TODO: appropriate warnings unless $sflag
+            next PIECE;
+        }
+
+        while(my $fname = readdir DFD) {
+            next if '.' eq substr $fname, 0, 1;
+            local $sflag = 1;
+            oneFile "$dir$dirSep$fname";
+        }
+
+        closedir DFD;
+    }
+
+}   # onePath
+
+
+Options;
+if(length $jflag) {
+    $_ = $jflag;
+    $jflag = eval "sub { $_ }";
+    $@ and die "$0: bad-expr for -j $_\n$@\n";
+}
+
+
+if($Iflag) {
+    oneIndirect $Iflag;
+}
+elsif(! @ARGV) {
+    if($Dflag) {
+        oneIndirect '-';
+    }
+    else {
+        $hflag = ! $Hflag;
+        process 'stdin', \*STDIN;
+    }
+}
+else {
+    $hflag = 1 if ! defined $hflag and ! $Hflag && @ARGV == 1;
+    ARG: foreach my $file (@ARGV) {
+        if($Dflag)
+            { onePath $file }
+        elsif($file eq '-')
+            { process 'stdin', \*STDIN }
+        else
+            { oneFile $file }
+    }
+}
+
+exit $exit;
+

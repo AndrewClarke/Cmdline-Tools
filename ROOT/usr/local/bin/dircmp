@@ -1,0 +1,307 @@
+:
+
+#	@(#) dircmp.sh 25.2 94/12/01
+#
+#	Copyright (C) 1988-1994 The Santa Cruz Operation, Inc.
+#		All Rights Reserved.
+#	The information in this file is provided for the exclusive use of
+#	the licensees of The Santa Cruz Operation, Inc.  Such users have the
+#	right to use, modify, and incorporate this code into other products
+#	for purposes authorized by the license agreement provided they include
+#	this notice and the associated copyright notice with any such product.
+#	The information in this file is provided "AS IS" without warranty.
+#
+#	Copyright (c) 1984, 1986, 1987, 1988 AT&T
+#	  All Rights Reserved
+
+#	THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF AT&T
+#	The copyright notice above does not evidence any
+#	actual or intended publication of such source code.
+
+PNAME=`basename $0`
+PATH=/bin:/usr/bin${wacgen:+:$wacgen/bin}
+USAGE="usage: $PNAME -H -s -M -d -wn directory directory"
+trap "rm -f /usr/tmp/dc$$*;exit" 1 2 3 15
+unset Sflag Dflag Hflag Mflag
+width=${COLUMNS:=80}
+
+
+######################################################################
+cmpfile () {
+######################################################################
+#  $1 is directory 1
+#  $2 is directory 2
+#  $3 is the filename
+#
+    FILE1="$1/$3"
+    FILE2="$2/$3"
+
+    # first check that files are readable before doing comparison
+    if [ ! -r "$FILE1" ]; then
+         echo "unknown		$3	$FILE1   not readable"
+         return 0         # return true so that unreadable files aren't diff'd
+    elif [ ! -r "$FILE2" ]; then
+         echo "unknown		$3	$FILE2   not readable"
+         return 0      # return true so that unreadable files aren't diff'd
+    fi
+
+    # compare readable files
+    if cmp -s "$FILE1" "$FILE2"; then
+        [ "$Sflag" != "yes" ] && echo "same		$3"
+    else
+         echo "different	$3"    # know they are different
+         return 1               # so return false
+    fi
+
+    return 0
+}   # cmpfile
+
+
+######################################################################
+cmpdir () {
+######################################################################
+# $1 is directory 1
+# $2 is directory 2
+# $3 is the file name
+#
+    FILE1="$1/$3"
+    FILE2="$2/$3"
+
+    # first check that directories are readable and searchable
+
+    if [ ! -x "$FILE1" ]; then
+        echo "directory	$3	$FILE1   not searchable"
+    elif [ ! -r "$FILE1" ]; then
+        echo "directory $3	$FILE1   not readable"
+    elif [ ! -x "$FILE2" ]; then
+        echo "directory $3	$FILE2   not searchable"
+    elif [ ! -r "$FILE2" ]; then
+        echo "directory $3	$FILE2   not readable"
+    elif [ "$Sflag" != yes ]; then
+        echo "directory	$3"
+    fi
+
+    return 0
+}   # cmpdir
+
+
+######################################################################
+files_differ () {
+######################################################################
+# definition of comparison function for like-named files
+#  $1 is directory 1
+#  $2 is directory 2
+#  $3 is the file name
+#
+    FILE1="$1/$3"
+    FILE2="$2/$3"
+
+    # loop through test options for file types
+    for type in -f -d -c -b -p -H -M; do
+        if [ "$type" "$FILE1" ]; then           # true if first file is identified
+            if [ "$type" "$FILE2" ]; then       # true if second file same type as first
+                case "$type" in     # if same then return files_differ false
+                  -f) if cmpfile "$1" "$2" "$3"; then return 1; else return 0; fi ;;
+                  -d) if cmpdir "$1" "$2" "$3"; then return 1; else return 0; fi ;;
+                  -c) if [ "$Sflag" != "yes" ]; then echo "chr special	$3"; fi; return 1 ;;
+                  -b) if [ "$Sflag" != "yes" ]; then echo "blk special	$3"; fi; return 1 ;;
+                  -p) if [ "$Sflag" != "yes" ]; then echo "named pipe	$3"; fi; return 1 ;;
+                  -H) if [ "$Sflag" != "yes" ]; then echo "semaphore	$3"; fi; return 1 ;;
+                  -M) if [ "$Sflag" != "yes" ]; then echo "shared mem	$3"; fi; return 1 ;;
+                  *) echo "unknown		$3";                             return 0 ;;
+                esac
+            else
+                echo "different	$3"             # types don't match
+                return 0                        # return true
+            fi
+       fi
+    done
+
+    # should never reach this point but in case test can't identify file
+    echo "unknown		$3"           # don't know what it is
+    return 0                                  # return true
+}   # files_differ
+
+
+######################################################################
+compare_files () {
+######################################################################
+# $1 is directory 1
+# $2 is directory 2
+# $3 is the file name
+#
+    FILE1="$1/$3"
+    FILE2="$2/$3"
+    TYPFILE1=`file -L "$FILE1" | cut -d: -f2 | sed 's/^[ 	]*//'`
+    TYPFILE2=`file -L "$FILE2" | cut -d: -f2 | sed 's/^[ 	]*//'`
+
+    # Conditions for actually diff'ing a file are: one, that the file is *text
+    # (English, ascii, MMDF spooler, etc.), a sccs file or a *roff* file
+    # (troff, nroff, etc.) and two, that the files are of the same type.
+    # Otherwise just print the file types.
+
+    DIFFABLE=                    # files are diff'able?
+    case "$TYPFILE1" in
+      *text* | *sccs* | *roff*) [ "$TYPFILE1" = "$TYPFILE2" ] && DIFFABLE=TRUE ;;    # files can be diff'd
+    esac
+
+    # print the file types and diff if applicable - pipe through pr and
+    # into tmp file
+
+    if [ $DIFFABLE ]; then
+        ## echo "Type of $FILE1 is: $TYPFILE1\nType of $FILE2 is: $TYPFILE2\n"
+        diff -b "$FILE1" "$FILE2"
+    else
+        echo "Type of $FILE1 is: $TYPFILE1\nType of $FILE2 is: $TYPFILE2\n"
+    fi | pr -w${width} -h "diff of $3 in $1 and $2" >> /usr/tmp/dc$$g
+
+}
+
+
+# beginning of actual script
+# process command line
+
+if type getopts | grep 'not found' > /dev/null; then
+    eval set -- "`getopt Mdsw: "$@"`"
+    if [ $? != 0 ]; then
+        echo $USAGE >&2
+        exit 1
+    fi
+
+    for i in "$@"; do
+        case $i in
+          -M) Mflag="yes"; shift;;
+          -d) Dflag="yes"; shift;;
+          -s) Sflag="yes"; shift;;
+          -w) width=`expr $2 + 0 2>/dev/null`
+              if [ $? = 2 ]; then
+                  echo "$PNAME: numeric argument required" >&2
+		  exit 2
+	      fi
+	      shift 2
+              ;;
+          --) shift; break;;
+	esac
+    done
+else
+    while getopts MHdsw: i 2> /dev/null; do
+        case $i in
+          M) Mflag="yes";;
+          H) Hflag="yes";;
+          d) Dflag="yes";;
+          s) Sflag="yes";;
+          w) width=`expr $OPTARG + 0 2>/dev/null`
+             if [ $? = 2 ]; then
+                 echo "$PNAME: numeric argument required" >&2
+	         exit 2
+	     fi
+	     ;;
+	  *) echo $USAGE >&2
+	     exit 1;;
+	esac
+    done
+    shift `expr $OPTIND - 1`
+fi
+
+Mflag=yes
+
+# check that both directory arguments are in fact directories
+
+D0=`pwd`
+D1="$1"
+D2="$2"
+if [ $# -ne 2 ]; then
+    echo $USAGE >&2
+    exit 1
+elif [ ! -d "$D1" ]; then
+    echo "$PNAME: $D1 not a directory/not found" >&2
+    exit 2
+elif [ ! -d "$D2" ]; then
+    echo "$PNAME: $D2 not a directory/not found" >&2
+    exit 2
+fi
+
+#  ensure that directories are both readable and searchable
+if [ ! -r "$D1" ]; then
+    echo "$PNAME: No read permission on directory $D1" >&2
+    exit 2
+elif [ ! -x "$D1" ]; then
+    echo "$PNAME: No search permission on directory $D1" >&2
+    exit 2
+fi
+
+
+if [ ! -r "$D2" ]; then
+    echo "$PNAME: No read permission on directory $D2" >&2
+    exit 2
+elif [ ! -x "$D2" ]; then
+    echo "$PNAME: No search permission on directory $D2" >&2
+    exit 2
+fi
+
+# create lists of the contents of both directories
+cd "$D1"
+find . \( -name '.svn' -prune \) -o -print 2> /dev/null | sort > /usr/tmp/dc$$a
+
+cd "$D0"
+
+cd "$D2"
+find . \( -name '.svn' -prune \) -o -print 2> /dev/null | sort > /usr/tmp/dc$$b
+
+# Contents of the dc$$? temporary files:
+#
+#  a  is a listing of all the files in directory 1
+#  b  is a listing of all the files in directory 2
+#  c  is a listing of file names that appear in both directories
+#  d  is a listing of file names that appear only in directory 2
+#  e  is a listing of file names that appear only in directory 1
+#  f  is identical to  c  but with the initial tabs stripped away
+#  g  is output of diff for each pair of like-named files whose
+#        contents are different - only created if -d specified
+
+comm /usr/tmp/dc$$a /usr/tmp/dc$$b | sed -n \
+	-e "/^		/w /usr/tmp/dc$$c" \
+	-e "/^	[^	]/w /usr/tmp/dc$$d" \
+	-e "/^[^	]/w /usr/tmp/dc$$e"
+rm -f /usr/tmp/dc$$a /usr/tmp/dc$$b
+
+# print the files that are unique to either directory 1 or directory 2
+
+pr -w${width} -h "$D1 only and $D2 only" -m /usr/tmp/dc$$e /usr/tmp/dc$$d
+
+rm -f /usr/tmp/dc$$e /usr/tmp/dc$$d
+
+# strip out leading tabs
+
+sed -e s/..// < /usr/tmp/dc$$c > /usr/tmp/dc$$f
+rm -f /usr/tmp/dc$$c
+
+cd "$D0"
+
+if [ "$Dflag" = "yes" ]; then
+    > /usr/tmp/dc$$g     # only need to create diff file if -d specified
+fi
+
+# reading from temporary file f - file names common to both directories
+
+cat /usr/tmp/dc$$f | \
+  while read a; do
+      if files_differ "$D1" "$D2" "$a" && [ "$Dflag" = "yes" ]; then
+          compare_files "$D1" "$D2" "$a"
+      fi
+  done | if [[ -z "$Hflag" ]]
+           then pr -w${width} -r -h "Comparison of $D1 $D2"
+           else cat
+         fi
+
+# option -d specfied print out diff
+
+if [ "$Dflag" = yes ]; then
+   cat /usr/tmp/dc$$g
+fi
+
+# remove temporary files
+
+rm -f /usr/tmp/dc$$*
+
+exit 0                                    # return success

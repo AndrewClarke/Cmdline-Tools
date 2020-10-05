@@ -1,0 +1,11 @@
+#!/bin/ksh
+
+DBNAME="${1:?Pass dbname as the 1st parameter}"
+
+runSql -qC "$DBNAME" <<SQL
+    select tabid, tabtype, tabname[1,50]
+      from systables
+     where tabid >= 100
+       and nvl(tabtype, ' ') <> 'T'
+SQL
+

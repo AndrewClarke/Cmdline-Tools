@@ -1,0 +1,58 @@
+
+function informix {
+    typeset ch all base chat now target
+
+    chat=echo
+    while getopts :aq ch; do
+        case "$ch" in
+	    q) chat=: ;;
+	    a) all=1 ;;
+	    *) echo >&2 "usage: $0 [-aq] [version]"; return 1 ;;
+	esac
+    done
+    shift $((OPTIND-1))
+
+    # determine base of all informix installs
+    base=${INFORMIXDIR%%/informix-*}
+
+    [[ -n "$all" ]] && set -- '*'
+    if [[ $# -eq 0 ]]; then
+        chat=echo
+    else
+	set -- $base/informix-$1*
+	if [[ $# -gt 1 ]] && [[ -t 0 && -t 1 ]]; then
+	    typeset n mark i=0
+	    for n; do
+		mark=; [[ $n = $INFORMIXDIR ]] && mark=' *'
+	        print "$((++i))) $n$mark"
+	    done
+	    read n?'Select INFORMIXDIR: ' || echo
+	    [[ "$n" = [1-9]*([0-9]) && $n -le $# ]] && eval set -- \${$n}
+	fi
+
+	if [[ $# -gt 1 ]]; then
+	    echo >&2 "which INFORMIXDIR? $*"
+	    return 1
+	fi
+
+	target="$1"
+	if [[ ! -d "$target" ]]; then
+	    echo >&2 "INFORMIXDIR $target does not exist"
+	    return 1
+	fi
+
+	[[ "$INFORMIXDIR" = "$target" ]] && return 0
+
+	varSubs LD_LIBRARY_PATH $INFORMIXDIR "$target"
+	varSubs PATH $INFORMIXDIR "$target"
+	export INFORMIXDIR="$target"
+	export INFORMIXDIR PATH LD_LIBRARY_PATH
+	export IDIR=$INFORMIXDIR
+	now=now
+    fi
+
+    $chat Current INFORMIXDIR is $now $INFORMIXDIR
+
+    return 0
+
+}   # informix
