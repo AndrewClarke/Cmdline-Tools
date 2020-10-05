@@ -70,11 +70,12 @@ show_dbs= cleanit=
 if [[ "$DBNAME" = '?' ]]; then
     show_dbs=1 cleanit=1
     DBNAME=mysql
+elif [[ -n "$lflag" && $# -eq 0 ]]; then
+    cleanit=1
 fi
 
 if [[ -n "$show_dbs" ]]; then
     echo "show databases;"
-    cleanit=1
 elif [[ -z "$lflag" ]]; then
     [[ $# -eq 0 ]] && usage
 
@@ -111,7 +112,7 @@ fi | mysql -D $DBNAME $tflag $Bflag | {
         esac
     done
 } | if [[ -n "$cleanit" ]]; then
-        sed 's/^| //; s/  *|$//; /^Database$/d; /^mysql$/d; /^information_schema$/d; /^performance_schema$/d'
+        sed 's/^| //; s/  *|$//; /^Database$/d; /^Tables_in_/d; /^sys$/d; /^mysql$/d; /^information_schema$/d; /^performance_schema$/d; /^ar_internal_metadata$/d; /^schema_migrations$/d;'
     else
         cat
     fi

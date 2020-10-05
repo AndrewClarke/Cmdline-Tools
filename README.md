@@ -98,3 +98,60 @@ SUDO improvements
     # TODO: limit the following to speshul-person
     Defaults    env_keep += "SSH_AGENT_PID SSH_AUTH_SOCK SSH_ASKPASS"
 
+
+
+RVM stuffs
+
+    rvm --default use jruby-1.7
+    rvm @global do rvm INSTALL GEMS TO BE SHARED BY ALL GEMSETS
+
+creating gemsets
+
+    rvm 2.1.1
+    rvm gemset create teddy rosie
+
+using one
+
+    rvm gemset use teddy
+
+setting one as the default (per interpreter)
+
+    rvm use 2.1.1@teddy --default
+
+
+
+Setting credentials for RubyGems.org
+
+    bundle config https://rubygems.org/ AndrewClarke:'PASSWORD'
+
+NOTE: the password (and username!) needs to be CGI-escaped eg &#22 for fugly characters
+
+
+BUILDING Unicon
+
+    svn checkout http://svn.code.sf.net/p/unicon/code/trunk/unicon
+
+    sudo yum install libX11-devel
+
+\*-develop packages for:
+
+    opengl
+    libz
+    libjpeg
+    libpng
+    ogg/vorbis
+    sdl
+    ftgl
+    and others.
+
+Unfortunately, the names of packages change over time and between distributions. If you are having trouble finding the right package, you can e-mail the unicon-group mailing list for advice. For 3D OpenGL capabilities, see also this OpenGL reference for advice on Linux.
+
+Expand the bundle, and then add it's bin directory to $PATH
+
+    make Configure name=x86_64_linux    # use your OS name from config/unix
+-or-
+    make X-Configure name=x86_64_linux  # if you have X11 libs/headers
++
+    make Unicon
+
+

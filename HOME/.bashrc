@@ -1,4 +1,6 @@
 
+shopt -s extglob globstar
+
 case $- in
   *i*) ;;
     *) return;;
@@ -10,6 +12,7 @@ shopt -s cmdhist histappend lithist cdspell extglob globstar checkwinsize
 set -o vi histexpand
 set +H  # do not like ! expansion - ugh.
 unset -f command_not_found_handle
+unalias grep fgrep egrep l. 2>&-
 
 export VISUAL=vi FCEDIT=vi EDITOR=vi
 export HISTSIZE=1000 HISTFILESIZE=2000
@@ -69,7 +72,6 @@ function rebuildPS1 {
 }
 
 rebuildPS1
-
 
 [[ -s ~/.rvm/scripts/rvm ]] && . ~/.rvm/scripts/rvm     # Load RVM into a shell session *as a function*
 

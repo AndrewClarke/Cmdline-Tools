@@ -1,8 +1,10 @@
 
 IRB.conf[:SAVE_HISTORY] = 1000
+IRB.conf[:PROMPT_MODE] = :SIMPLE
+IRB.conf[:AUTO_INDENT_MODE] = false
 
 require 'rubygems'
-require 'ruby-debug'
+## require 'ruby-debug'
 
 if ENV['RAILS_ENV'] == 'development' && ENV['GEM_HOME']
   require 'rubygems'
